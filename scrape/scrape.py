@@ -48,15 +48,33 @@ def get_menus():
     return result
 
 def get_prince():
+    url = "https://www.dailyprincetonian.com/"
+    text = requests.get(url).text
+    soup = BeautifulSoup(text, features="lxml")
+    articles = list(soup.find("h1", {"class" : "headline"}))
+
+    articles.append(soup.findAll("h2", {"class" : "headline"}))
+
+    print(articles)
+
+
+
+
     return {
-        "_id": "prince",
-        "articles": [
-            {"title": "After visual arts professor used n-word in seminar, Princeton finds no violation of policy", "link": "/"},
-            {"title": "Fintan O’Toole warns of the danger of ‘aestheticized politics’ in campus talk", "link": "/"},
-            {"title": "University officially announces new upperclass student dining pilot", "link": "/"}
-        ]
+     
+        
+     
+     
+        # "_id": "prince",
+        # "articles": [
+        #     {"title": "After visual arts professor used n-word in seminar, Princeton finds no violation of policy", "link": "/"},
+        #     {"title": "Fintan O’Toole warns of the danger of ‘aestheticized politics’ in campus talk", "link": "/"},
+        #     {"title": "University officially announces new upperclass student dining pilot", "link": "/"}
+        # ]
     }
 
-db.widgets.replace_one({"_id": "weather"}, get_weather(), True)
-db.widgets.replace_one({"_id": "dhall"}, get_menus(), True)
-db.widgets.replace_one({"_id": "prince"}, get_prince(), True)
+# db.widgets.replace_one({"_id": "weather"}, get_weather(), True)
+# db.widgets.replace_one({"_id": "dhall"}, get_menus(), True)
+# db.widgets.replace_one({"_id": "prince"}, get_prince(), True)
+
+get_prince()

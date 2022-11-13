@@ -5,8 +5,6 @@ import requests
 
 
 load_dotenv()
-
-
 dateTime = {
     '00:00:00': '9 pm',
     '03:00:00': '12 am',
@@ -39,14 +37,12 @@ def weatherEmoji(code):
     else:
         return '☀️'
 
-
-
-
 def getWeather():
     client = pymongo.MongoClient(os.getenv("DB_CONN"))
     db = client.data
 
     weatherPton = db.widgets.find_one({'_id': 'weather'})
+    print(weatherPton)
     weatherData = []
 
     for i in range(5):
@@ -58,7 +54,3 @@ def getWeather():
         weatherData.append(temp)
 
     return weatherData
-
-myWeather = getWeather()
-
-print(myWeather)

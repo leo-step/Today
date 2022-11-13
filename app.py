@@ -1,18 +1,20 @@
-from flask import Flask, request
-import pymongo
+from flask import Flask, jsonify
 from dotenv import load_dotenv
-import os
 from weather import getWeather
+from dining import getDhall
+from prince import getArticles
+
 load_dotenv()
-client = pymongo.MongoClient(os.getenv("DB_CONN"))
-db = client.data
 
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return getWeather()
-
+    return jsonify({
+        "weather": getWeather(),
+        "dhall": getDhall(),
+        "prince": getArticles()
+    })
 
 if __name__ == "__main__":
     app.run()
