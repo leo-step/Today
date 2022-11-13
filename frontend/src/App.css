@@ -18,7 +18,6 @@ td {
   display: inline-block;
 }
 .App-header {
-  background-color: #FFFFFF;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -61,4 +60,25 @@ mark {
 
 .dropdown-item {
   color: black !important;
+}
+
+body {
+  background-image: url('https://www.princeton.edu/sites/default/files/styles/half_2x/public/images/2020/06/20191024_CL_DJA_179.jpg?itok=cpVdGAfr') !important;
+}
+
+
+
+.largefont {
+
+  font-size: 24 !important;;
+}
+
+.mediumfont {
+
+  font-size: 20 !important;;
+}
+
+.smallfont {
+
+  font-size: 16 !important;;
 }

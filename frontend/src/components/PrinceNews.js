@@ -13,14 +13,15 @@ function PrinceNewsTable(props) {
         "paddingBottom": "10px",
         "borderRadius": "25px",
         "backgroundColor": "#212529",
-        width: "700px",
+        width: "500px",
+        
       }}
     >
       <Table variant="dark" borderless>
         <tbody>
-          <tr className="centered">
+          <tr className="centered mediumfont">
             <td>
-              <h1 style={{"fontWeight": "bold"}}>The Prince 🗞️</h1>
+              <h3 style={{"fontWeight": "bold"}}>The Prince 🗞️</h3>
             </td>
           </tr>
           <div
@@ -30,11 +31,12 @@ function PrinceNewsTable(props) {
               "borderBottomStyle": "solid",
               "borderBottomColor": "#FF2A0D",
               "borderBottomWidth": "thin",
-                "color" : "white"
+                "color" : "white",
+                "fontSize": 20
             }}
           >
-            <tr>
-              <td> <a href = {articles[0].link} ><b>{articles[0].title}</b> </a> </td>
+            <tr >
+              <td > <a href = {articles[0].link} ><b>{articles[0].title}</b> </a> </td>
             </tr>
           </div>
           <div
@@ -44,13 +46,18 @@ function PrinceNewsTable(props) {
               "borderBottomStyle": "solid",
               "borderBottomColor": "#41EAEA",
               "borderBottomWidth": "thin",
+              "fontSize": 20
             }}
           >
             <tr>
                 <td  > <a href = {articles[1].link} ><b>{articles[1].title}</b> </a> </td>
             </tr>
           </div>
-          <div style={{ "paddingTop": "10px", "paddingBottom": "10px" }}>
+          <div style={{
+              "paddingTop": "10px",
+              "paddingBottom": "10px",
+              "fontSize": 20
+            }}>
             <tr>
                 <td  > <a href = {articles[2].link} ><b>{articles[2].title}</b> </a> </td>
             </tr>

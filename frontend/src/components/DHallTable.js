@@ -26,10 +26,10 @@ function DHallTable(props) {
   return (
     <div
       style={{
-        "paddingLeft": "20px",
-        "paddingRight": "20px",
-        "paddingTop": "10px",
-        "paddingBottom": "10px",
+        "paddingLeft": "10px",
+        "paddingRight": "10px",
+        "paddingTop": "5px",
+        "paddingBottom": "5px",
         "borderRadius": "25px",
         "backgroundColor": "#212529",
         width: "700px",
