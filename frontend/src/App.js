@@ -3,6 +3,7 @@ import './App.css';
 import Weather from './components/Weather';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import SneakyLinksTable from "./components/SneakyLinks";
+import PrinceNewsTable from './components/PrinceNews';
 
 function App() {
   return (
@@ -10,7 +11,8 @@ function App() {
       <header className="App-header">
 
         <Weather></Weather>
-          <SneakyLinksTable></SneakyLinksTable>
+        <SneakyLinksTable></SneakyLinksTable>
+        <PrinceNewsTable></PrinceNewsTable>
 
       </header>
     </div>
