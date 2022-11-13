@@ -7,12 +7,12 @@ import GCal  from '../images/gcal.png';
 function SneakyLinksTable() {
 
   return (
-      <div style={{"padding-left": "20px", "padding-right": "20px", "padding-top": "10px", "padding-bottom": "10px", "border-radius": "25px", "background-color": "#212529"}}>
+      <div style={{"paddingLeft": "20px", "paddingRight": "20px", "paddingTop": "10px", "paddingBottom": "10px", "borderRadius": "25px", "backgroundColor": "#212529"}}>
 
     <Table variant="dark" borderless>
         <tbody>
             <tr>
-                <td colSpan={3}> <h1>Sneaky Links</h1></td>
+                <td colSpan={3}> <h1 style={{"fontWeight": "bold"}}>Sneaky Links</h1></td>
                 <td></td>
             </tr>
             <tr>

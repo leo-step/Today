@@ -6,14 +6,14 @@ import requests
 
 load_dotenv()
 dateTime = {
-    '00:00:00': '9 pm',
-    '03:00:00': '12 am',
-    '06:00:00': '3 am',
-    '09:00:00': '6 am',
-    '12:00:00': '9 am',
-    '15:00:00': '12 pm',
-    '18:00:00': '3 pm',
-    '21:00:00': '6 pm'
+    '00:00:00': '7 pm',
+    '03:00:00': '10 pm',
+    '06:00:00': '1 am',
+    '09:00:00': '4 am',
+    '12:00:00': '7 am',
+    '15:00:00': '10 am',
+    '18:00:00': '1 pm',
+    '21:00:00': '4 pm'
 }
 
 def weatherEmoji(code):
@@ -42,7 +42,7 @@ def getWeather():
     db = client.data
 
     weatherPton = db.widgets.find_one({'_id': 'weather'})
-    print(weatherPton)
+
     weatherData = []
 
     for i in range(5):

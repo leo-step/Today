@@ -11,6 +11,5 @@ def getArticles():
     db = client.data
 
     articles = db.widgets.find_one({'_id': 'prince'})
-    
 
     return articles

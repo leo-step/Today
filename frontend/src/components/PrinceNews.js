@@ -1,21 +1,18 @@
 import Table from "react-bootstrap/Table";
 
-function PrinceNewsTable() {
-  const dummyText = [
-    "After visual arts professor used n-word in seminar, Princeton finds no violation of policy.",
-    "Fintan O’Toole warns of the danger of ‘aestheticized politics’ in campus talk.",
-    "University officially announces new upperclass student dining pilot.",
-  ];
+function PrinceNewsTable(props) {
+
+    const articles = props.data["articles"]
 
   return (
     <div
       style={{
-        "padding-left": "20px",
-        "padding-right": "20px",
-        "padding-top": "10px",
-        "padding-bottom": "10px",
-        "border-radius": "25px",
-        "background-color": "#212529",
+        "paddingLeft": "20px",
+        "paddingRight": "20px",
+        "paddingTop": "10px",
+        "paddingBottom": "10px",
+        "borderRadius": "25px",
+        "backgroundColor": "#212529",
         width: "700px",
       }}
     >
@@ -23,39 +20,39 @@ function PrinceNewsTable() {
         <tbody>
           <tr className="centered">
             <td>
-              {" "}
-              <h1>The Prince 🗞️</h1>
+              <h1 style={{"fontWeight": "bold"}}>The Prince 🗞️</h1>
             </td>
           </tr>
           <div
             style={{
-              "padding-top": "10px",
-              "padding-bottom": "10px",
-              "border-bottom-style": "solid",
-              "border-bottom-color": "#FF2A0D",
-              "border-bottom-width": "thin",
+              "paddingTop": "10px",
+              "paddingBottom": "10px",
+              "borderBottomStyle": "solid",
+              "borderBottomColor": "#FF2A0D",
+              "borderBottomWidth": "thin",
+                "color" : "white"
             }}
           >
             <tr>
-              <td> {dummyText[0]}</td>
+              <td> <a href = {articles[0].link} ><b>{articles[0].title}</b> </a> </td>
             </tr>
           </div>
           <div
             style={{
-              "padding-top": "10px",
-              "padding-bottom": "10px",
-              "border-bottom-style": "solid",
-              "border-bottom-color": "#41EAEA",
-              "border-bottom-width": "thin",
+              "paddingTop": "10px",
+              "paddingBottom": "10px",
+              "borderBottomStyle": "solid",
+              "borderBottomColor": "#41EAEA",
+              "borderBottomWidth": "thin",
             }}
           >
             <tr>
-              <td> {dummyText[1]}</td>
+                <td  > <a href = {articles[1].link} ><b>{articles[1].title}</b> </a> </td>
             </tr>
           </div>
-          <div style={{ "padding-top": "10px", "padding-bottom": "10px" }}>
+          <div style={{ "paddingTop": "10px", "paddingBottom": "10px" }}>
             <tr>
-              <td> {dummyText[2]}</td>
+                <td  > <a href = {articles[2].link} ><b>{articles[2].title}</b> </a> </td>
             </tr>
           </div>
         </tbody>
