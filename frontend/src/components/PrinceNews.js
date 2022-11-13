@@ -14,6 +14,7 @@ function PrinceNewsTable(props) {
         "borderRadius": "25px",
         "backgroundColor": "#212529",
         width: "500px",
+        "margin-right": "100px"
         
       }}
     >
@@ -27,12 +28,12 @@ function PrinceNewsTable(props) {
           <div
             style={{
               "paddingTop": "10px",
-              "paddingBottom": "10px",
+              "paddingBottom": "20px",
               "borderBottomStyle": "solid",
               "borderBottomColor": "#FF2A0D",
               "borderBottomWidth": "thin",
                 "color" : "white",
-                "fontSize": 20
+                "fontSize": 22
             }}
           >
             <tr >
@@ -41,12 +42,12 @@ function PrinceNewsTable(props) {
           </div>
           <div
             style={{
-              "paddingTop": "10px",
-              "paddingBottom": "10px",
+              "paddingTop": "20px",
+              "paddingBottom": "20px",
               "borderBottomStyle": "solid",
               "borderBottomColor": "#41EAEA",
               "borderBottomWidth": "thin",
-              "fontSize": 20
+              "fontSize": 22
             }}
           >
             <tr>
@@ -54,9 +55,9 @@ function PrinceNewsTable(props) {
             </tr>
           </div>
           <div style={{
-              "paddingTop": "10px",
+              "paddingTop": "20px",
               "paddingBottom": "10px",
-              "fontSize": 20
+              "fontSize": 22
             }}>
             <tr>
                 <td  > <a href = {articles[2].link} ><b>{articles[2].title}</b> </a> </td>

@@ -3,7 +3,7 @@
 }
 
 .emoji {
-  font-size: 60px
+  font-size: 30px
 }
 
 td {
@@ -18,11 +18,18 @@ td {
   display: inline-block;
 }
 .App-header {
-  min-height: 100vh;
+  /* min-height: 100vh; */
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
+ 
+  font-size: calc(10px + 2vmin);
+  color: black;
+}
+
+.App-body {
+  /* min-height: 100vh; */
+  display: flex;
+  flex-direction: column !important;
   font-size: calc(10px + 2vmin);
   color: black;
 }
@@ -68,17 +75,3 @@ body {
 
 
 
-.largefont {
-
-  font-size: 24 !important;;
-}
-
-.mediumfont {
-
-  font-size: 20 !important;;
-}
-
-.smallfont {
-
-  font-size: 16 !important;;
-}

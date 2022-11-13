@@ -46,23 +46,26 @@ function App() {
 
         return (
           <div className="App">
-          <header className="App-header">
-            <h1 style={{"color": "white", "fontSize": "84px"}}><b>Good {timeOfDay} Aaliyah</b></h1>
-            <h1 style={{"color": "white"}}><b>{moment().format('LL')}</b></h1>
-            <Container>
-              <Row>
-                <Col>
+            <div style={{"margin": "100px"}}>
+              <h1 className="centered" style={{"color": "white", "fontSize": "90px"}}><b>Good {timeOfDay} Aaliyah</b></h1>
+              <h1 className="centered" style={{"color": "white", "fontSize": "50px"}}><b>{moment().format('dddd') + ", " + moment().format('LL')}</b></h1>
+            </div>
+
+     
+            <header className="App-header">
+            
+          
                   <DHallTable data = {data['dhall']}></DHallTable>
-                </Col>
-              <Col>
+          
+                  <Container className="App-body" style={{"alignItems": "center", "maxWidth": "600px"}}>
               <WeatherTable data = {data['weather']} ></WeatherTable>
               <SneakyLinksTable></SneakyLinksTable>
-              </Col>
-              <Col><PrinceNewsTable data = {data['prince']}></PrinceNewsTable></Col>
-              </Row>
-            </Container>
+              </Container>
+             <PrinceNewsTable data = {data['prince']}></PrinceNewsTable>
+            
+         
           </header>
-        </div>
+          </div>
         
       );
           }

@@ -32,14 +32,17 @@ function DHallTable(props) {
         "paddingBottom": "5px",
         "borderRadius": "25px",
         "backgroundColor": "#212529",
-        width: "700px",
+        width: "500px",
+        "margin-left": "100px"
       }}
     >
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered">
             <td>
-              <h1 style={{"fontWeight": "bold"}}>What's for <mark>Lunch</mark>?</h1>
+              <h3 style={{
+              "fontWeight": "bold"
+            }}>What's for <mark>Lunch</mark>?</h3>
                 <Dropdown onSelect={(e) => {setCollege(e)}}>
                   <Dropdown.Toggle id="dropdown">
                       {college}
@@ -62,10 +65,12 @@ function DHallTable(props) {
               "borderBottomStyle": "solid",
               "borderBottomColor": "#00FF00",
               "borderBottomWidth": "thin",
-                "color" : "white"
+              "color" : "white",
+              "fontSize": 22
+              
             }}
           ><tr>
-              <td> <h2 style={{"fontWeight": "bold"}}>Main Entree</h2> </td>
+              <td> <h4 style={{"fontWeight": "bold"}}>Main Entree</h4> </td>
             </tr>
             <tr>
               <td> {dhallData["Main Entree"].join(", ")} </td>
@@ -78,21 +83,22 @@ function DHallTable(props) {
               "borderBottomStyle": "solid",
               "borderBottomColor": "#FF00DD",
               "borderBottomWidth": "thin",
+              "fontSize": 22
             }}
           >
             <tr>
-              <td> <h2 style={{"fontWeight": "bold"}}>{Object.keys(dhallData).filter((val) => val != "Main Entree")[0]}</h2> </td>
+              <td> <h4 style={{"fontWeight": "bold"}}>{Object.keys(dhallData).filter((val) => val != "Main Entree")[0]}</h4> </td>
             </tr>
             <tr>
-              <td> {dhallData[Object.keys(dhallData).filter((val) => val != "Main Entree")[0]].join(", ")} </td>
+              <td> {dhallData[Object.keys(dhallData).filter((val) => val != "Main Entree")[0]].slice(0,3).join(", ")} </td>
             </tr>
           </div>
-          <div style={{ "paddingTop": "10px", "paddingBottom": "10px" }}>
+          <div style={{ "paddingTop": "10px", "paddingBottom": "10px",  "fontSize": 22 }}>
             <tr>
-              <td> <h2 style={{"fontWeight": "bold"}}>{Object.keys(dhallData).filter((val) => val != "Main Entree")[1]}</h2> </td>
+              <td> <h4 style={{"fontWeight": "bold"}}>{Object.keys(dhallData).filter((val) => val != "Main Entree")[1]}</h4> </td>
             </tr>
             <tr>
-              <td> {dhallData[Object.keys(dhallData).filter((val) => val != "Main Entree")[1]].join(", ")} </td>
+              <td> {dhallData[Object.keys(dhallData).filter((val) => val != "Main Entree")[1]].slice(0,3).join(", ")} </td>
             </tr>
           </div>
         </tbody>

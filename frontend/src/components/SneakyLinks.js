@@ -7,19 +7,26 @@ import GCal  from '../images/gcal.png';
 function SneakyLinksTable() {
 
   return (
-      <div style={{"paddingLeft": "20px", "paddingRight": "20px", "paddingTop": "10px", "paddingBottom": "10px", "borderRadius": "25px", "backgroundColor": "#212529"}}>
+      <div style={{"paddingLeft": "10px", 
+      "paddingRight": "10px",
+       "paddingTop": "10px", 
+       "paddingBottom": "10px",
+        "borderRadius": "25px", 
+        "backgroundColor": "#212529",
+        width: "500px"
+        }}>
 
     <Table variant="dark" borderless>
         <tbody>
             <tr>
-                <td colSpan={3}> <h1 style={{"fontWeight": "bold"}}>Sneaky Links</h1></td>
+                <td colSpan={3}> <h3 style={{"fontWeight": "bold"}}>Sneaky Links</h3></td>
                 <td></td>
             </tr>
             <tr>
-                <td><a href = "https://canvas.princeton.edu/"><img src={Canvas}/></a></td>
-                <td><a href = "https://mail.google.com/"><img src={Gmail}/></a></td>
-                <td><a href = "https://calendar.google.com/"><img src={GCal}/></a></td>
-                <td><a href = "https://edstem.org/us/"><img src={EdStem}/></a></td>
+                <td><a href = "https://canvas.princeton.edu/"><img style={{"width": 60}} src={Canvas}/></a></td>
+                <td><a href = "https://mail.google.com/"><img style={{"width": 60}} src={Gmail}/></a></td>
+                <td><a href = "https://calendar.google.com/"><img style={{"width": 60}} src={GCal}/></a></td>
+                <td><a href = "https://edstem.org/us/"><img style={{"width": 60}} src={EdStem}/></a></td>
             </tr>
         </tbody>
       {/*<tbody>*/}

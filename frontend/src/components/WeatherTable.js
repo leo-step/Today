@@ -7,15 +7,25 @@ function WeatherTable(props) {
   const weather = props.data
 
   return (
-      <div style={{"paddingLeft": "20px", "paddingRight": "20px", "paddingTop": "10px", "paddingBottom": "10px", "borderRadius": "25px", "backgroundColor": "#212529"}}>
+      <div style={{"paddingLeft": "10px", 
+      "paddingRight": "10px", 
+      "paddingTop": "10px", 
+      "paddingBottom": "10px",
+       "borderRadius": "25px", 
+       "backgroundColor": "#212529",
+       width: "500px",
+       margin: "50px"
+       }}>
     <Table variant="dark" borderless>
       <tbody>
-        <tr>
-          <td colSpan={3}> <h1 style={{"fontWeight": "bold"}}>Weather</h1> </td>
-          <td style={{"fontWeight": "bold"}}> H 51° </td>
-           <td style={{"fontWeight": "bold"}}> L 30° </td>
+        <tr >
+          <td colSpan={3} > <h3 style={{"fontWeight": "bold"}}>Weather</h3> </td>
+          <td colSpan={2} className = "centered" > <p style={{"fontWeight": "bold", "fontSize": 18}}>H 51˚ L 30˚</p>
+          </td>
+      
+
         </tr>
-        <tr className = "centered" style={{"fontWeight": "bold"}}>
+        <tr className = "centered" style={{"fontWeight": "bold", "fontSize": 18 }}>
 
           <td> {weather[0][1]}</td>
           <td>{weather[1][1]}</td>
@@ -31,7 +41,7 @@ function WeatherTable(props) {
           <td>{weather[3][2]}</td>
           <td>{weather[4][2]}</td>
         </tr>
-        <tr className = "centered" style={{"fontWeight": "bold"}}>
+        <tr className = "centered" style={{"fontWeight": "bold", "fontSize": 15 }}>
           <td> {weather[0][0]}°</td>
           <td>{weather[1][0]}°</td>
           <td>{weather[2][0]}°</td>
