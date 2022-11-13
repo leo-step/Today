@@ -33,15 +33,15 @@ function App() {
         const currentDate = new Date();
         const currentHour = currentDate.getHours();
 
-        let timeOfDay = "morning";
+        let timeOfDay = "night";
         if (currentHour >= 12 && currentHour < 17) {
           timeOfDay = "afternoon";
         }
         else if (currentHour >= 17 && currentHour < 21) {
           timeOfDay = "evening"
         }
-        else {
-          timeOfDay = "night"
+        else if (currentHour >= 5 && currentHour < 12) {
+          timeOfDay = "morning"
         }
 
         return (
