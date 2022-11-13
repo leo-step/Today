@@ -22,7 +22,7 @@ function App() {
     useEffect(() => {
 
     // Update the document title using the browser API
-       axios.get('http://127.0.0.1:5000')
+       axios.get('/api')
            .then((res) => {
                setData(res.data)
            })
