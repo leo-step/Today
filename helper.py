@@ -62,6 +62,4 @@ def get_data():
         "prince": articles
     }
 
-    print(result)
-
     return result

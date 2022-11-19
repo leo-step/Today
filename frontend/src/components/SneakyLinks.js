@@ -24,7 +24,7 @@ function SneakyLinksTable() {
             </tr>
             <tr>
                 <td><a href = "https://canvas.princeton.edu/"><img style={{"width": 60}} src={Canvas}/></a></td>
-                <td><a href = "https://mail.google.com/"><img style={{"width": 60}} src={Gmail}/></a></td>
+                <td><a href = "https://mail.google.com/"><img style={{"width": 60, "paddingTop": "8px"}} src={Gmail}/></a></td>
                 <td><a href = "https://calendar.google.com/"><img style={{"width": 60}} src={GCal}/></a></td>
                 <td><a href = "https://edstem.org/us/"><img style={{"width": 60}} src={EdStem}/></a></td>
             </tr>

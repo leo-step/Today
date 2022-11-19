@@ -21,7 +21,40 @@ function DHallTable(props) {
         meal = "Dinner";
     }
 
-    const dhallData = props.data[college][meal]
+    let firstSectionKey = null;
+    let firstSection = null;
+    let secondSectionKey = null;
+    let secondSection = null;
+    let thirdSectionKey = null
+    let thirdSection = null;
+
+    const dhallData = props.data[college][meal];
+    
+    if (dhallData) {
+      firstSectionKey = "Main Entree";
+      firstSection = dhallData[firstSectionKey];
+      const other = Object.keys(dhallData).filter((val) => val != "Main Entree");
+      if (firstSection) {
+        if (other.length > 0)
+          secondSectionKey = other[0]
+          secondSection = dhallData[secondSectionKey]
+        if (other.length > 1)
+          thirdSectionKey = other[1]
+          thirdSection = dhallData[thirdSectionKey]
+      }
+      else {
+        if (other.length > 0)
+          firstSectionKey = other[0]
+          firstSection = dhallData[firstSectionKey]
+        if (other.length > 1)
+          secondSectionKey = other[1]
+          secondSection = dhallData[secondSectionKey]
+        if (other.length > 2)
+          thirdSectionKey = other[2]
+          thirdSection = dhallData[thirdSectionKey]
+      }
+    }
+
 
   return (
     <div
@@ -42,7 +75,7 @@ function DHallTable(props) {
             <td>
               <h3 style={{
               "fontWeight": "bold"
-            }}>What's for <mark>Lunch</mark>?</h3>
+            }}>What's for <mark>{meal}</mark>?</h3>
                 <Dropdown onSelect={(e) => {setCollege(e)}}>
                   <Dropdown.Toggle id="dropdown">
                       {college}
@@ -69,12 +102,13 @@ function DHallTable(props) {
               "fontSize": 22
               
             }}
-          ><tr>
-              <td> <h4 style={{"fontWeight": "bold"}}>Main Entree</h4> </td>
-            </tr>
+          >{firstSectionKey && <tr>
+              <td> <h4 style={{"fontWeight": "bold"}}>{firstSectionKey}</h4> </td>
+            </tr>}
+            {firstSection && 
             <tr>
-              <td> {dhallData["Main Entree"].join(", ")} </td>
-            </tr>
+              <td> {firstSection.slice(0,3).join(", ")} </td>
+            </tr>}
           </div>
           <div
             style={{
@@ -86,20 +120,20 @@ function DHallTable(props) {
               "fontSize": 22
             }}
           >
-            <tr>
-              <td> <h4 style={{"fontWeight": "bold"}}>{Object.keys(dhallData).filter((val) => val != "Main Entree")[0]}</h4> </td>
-            </tr>
-            <tr>
-              <td> {dhallData[Object.keys(dhallData).filter((val) => val != "Main Entree")[0]].slice(0,3).join(", ")} </td>
-            </tr>
+            {secondSectionKey && <tr>
+              <td> <h4 style={{"fontWeight": "bold"}}>{secondSectionKey}</h4> </td>
+            </tr>}
+            {secondSection && <tr>
+              <td> {secondSection.slice(0,3).join(", ")} </td>
+            </tr>}
           </div>
           <div style={{ "paddingTop": "10px", "paddingBottom": "10px",  "fontSize": 22 }}>
-            <tr>
-              <td> <h4 style={{"fontWeight": "bold"}}>{Object.keys(dhallData).filter((val) => val != "Main Entree")[1]}</h4> </td>
-            </tr>
-            <tr>
-              <td> {dhallData[Object.keys(dhallData).filter((val) => val != "Main Entree")[1]].slice(0,3).join(", ")} </td>
-            </tr>
+            {thirdSectionKey && <tr>
+              <td> <h4 style={{"fontWeight": "bold"}}>{thirdSectionKey}</h4> </td>
+            </tr>}
+            {thirdSection && <tr>
+              <td> {thirdSection.slice(0,3).join(", ")} </td>
+            </tr>}
           </div>
         </tbody>
       </Table>
