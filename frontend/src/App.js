@@ -22,7 +22,7 @@ function App() {
     useEffect(() => {
 
     // Update the document title using the browser API
-       axios.get('http://127.0.0.1:5000/api')
+       axios.get('https://todayatprinceton.onrender.com/api')
            .then((res) => {
                setData(res.data)
            })
@@ -47,7 +47,7 @@ function App() {
         return (
           <div className="App">
             <div style={{"margin": "100px"}}>
-              <h1 className="centered" style={{"color": "white", "fontSize": "90px"}}><b>Good {timeOfDay} Aaliyah</b></h1>
+              <h1 className="centered" style={{"color": "white", "fontSize": "90px"}}><b>Good {timeOfDay} </b></h1>
               <h1 className="centered" style={{"color": "white", "fontSize": "50px"}}><b>{moment().format('dddd') + ", " + moment().format('LL')}</b></h1>
             </div>
 
