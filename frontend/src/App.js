@@ -4,29 +4,21 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import SneakyLinksTable from "./components/SneakyLinks";
 import PrinceNewsTable from './components/PrinceNews';
 import DHallTable from "./components/DHallTable";
+import EditableLabel from './components/EditableLabel';
 import axios from "axios";
 import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
-
-
 
 function App() {
-
     const [data, setData] = useState(null);
 
-
-
     useEffect(() => {
-
     // Update the document title using the browser API
        axios.get('https://todayatprinceton.onrender.com/api')
            .then((res) => {
                setData(res.data)
            })
-
   }, [])
 
     if (data) {
@@ -47,7 +39,7 @@ function App() {
         return (
           <div className="App">
             <div style={{"margin": "100px"}}>
-              <h1 className="centered" style={{"color": "white", "fontSize": "90px"}}><b>Good {timeOfDay} </b></h1>
+              <h1 className="centered" style={{"color": "white", "fontSize": "90px"}}><b>Good {timeOfDay} <EditableLabel value={"________"}/></b></h1>
               <h1 className="centered" style={{"color": "white", "fontSize": "50px"}}><b>{moment().format('dddd') + ", " + moment().format('LL')}</b></h1>
             </div>
 
