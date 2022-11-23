@@ -1,3 +1,5 @@
+/* global chrome */
+
 import { useState, useEffect } from "react";
 
 function EditableLabel(props) {
@@ -6,27 +8,43 @@ function EditableLabel(props) {
   const [editor, setEditor] = useState(null);
 
   useEffect(() => {
-    setEditor(
-      <input
-        type="text"
-        size="8"
-        onKeyPress={(event) => {
-          console.log(event);
-          if (event.key === "Enter") {
-            // enter key
-            console.log("pressed enter");
-            setText(event.target.value);
-            setEditing(false);
-          }
-        }}
-        autoFocus={true}
-        style={{
-          backgroundColor: "transparent",
-          color: "white",
-          fontWeight: "bold",
-        }}
-      />
-    );
+    chrome.storage.sync.get(["name"], (result) => {
+      if (result.name) {
+        setText(result.name);
+      }
+      else {
+        setText("_______");
+      }
+      setEditor(
+        <input
+          type="text"
+          size="8"
+          defaultValue={result.name}
+          onKeyPress={(event) => {
+            if (event.key === "Enter") {
+              // enter key
+              let enteredValue = event.target.value;
+              if (enteredValue === "") {
+                enteredValue = props.value;
+              }
+              console.log("name:", enteredValue);
+              
+              setText(enteredValue);
+              setEditing(false);
+              chrome.storage.sync.set({name: enteredValue}, function() {
+                console.log('Name is set to ' + enteredValue);
+              });
+            }
+          }}
+          autoFocus={true}
+          style={{
+            backgroundColor: "transparent",
+            color: "white",
+            fontWeight: "bold",
+          }}
+        />
+      );
+    });
   }, []);
 
   return editing ? (
