@@ -35,7 +35,7 @@ function App() {
         else if (currentHour >= 5 && currentHour < 12) {
           timeOfDay = "morning"
         }
-
+        console.log("baby pie")
         return (
           <div className="App">
             <div style={{"margin": "100px"}}>

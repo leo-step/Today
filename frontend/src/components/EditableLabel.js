@@ -7,45 +7,45 @@ function EditableLabel(props) {
   const [editing, setEditing] = useState(false);
   const [editor, setEditor] = useState(null);
 
-  useEffect(() => {
-    chrome.storage.sync.get(["name"], (result) => {
-      if (result.name) {
-        setText(result.name);
-      }
-      else {
-        setText("_______");
-      }
-      setEditor(
-        <input
-          type="text"
-          size="8"
-          defaultValue={result.name}
-          onKeyPress={(event) => {
-            if (event.key === "Enter") {
-              // enter key
-              let enteredValue = event.target.value;
-              if (enteredValue === "") {
-                enteredValue = props.value;
-              }
-              console.log("name:", enteredValue);
+  // useEffect(() => {
+  //   chrome.storage.sync.get(["name"], (result) => {
+  //     if (result.name) {
+  //       setText(result.name);
+  //     }
+  //     else {
+  //       setText("_______");
+  //     }
+  //     setEditor(
+  //       <input
+  //         type="text"
+  //         size="8"
+  //         defaultValue={result.name}
+  //         onKeyPress={(event) => {
+  //           if (event.key === "Enter") {
+  //             // enter key
+  //             let enteredValue = event.target.value;
+  //             if (enteredValue === "") {
+  //               enteredValue = props.value;
+  //             }
+  //             console.log("name:", enteredValue);
               
-              setText(enteredValue);
-              setEditing(false);
-              chrome.storage.sync.set({name: enteredValue}, function() {
-                console.log('Name is set to ' + enteredValue);
-              });
-            }
-          }}
-          autoFocus={true}
-          style={{
-            backgroundColor: "transparent",
-            color: "white",
-            fontWeight: "bold",
-          }}
-        />
-      );
-    });
-  }, []);
+  //             setText(enteredValue);
+  //             setEditing(false);
+  //             chrome.storage.sync.set({name: enteredValue}, function() {
+  //               console.log('Name is set to ' + enteredValue);
+  //             });
+  //           }
+  //         }}
+  //         autoFocus={true}
+  //         style={{
+  //           backgroundColor: "transparent",
+  //           color: "white",
+  //           fontWeight: "bold",
+  //         }}
+  //       />
+  //     );
+  //   });
+  // }, []);
 
   return editing ? (
     editor
