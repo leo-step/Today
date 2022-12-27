@@ -28,7 +28,7 @@ function DHallTable(props) {
     let thirdSectionKey = null
     let thirdSection = null;
 
-    const dhallData = props.data[college][meal];
+    const dhallData = props.data ? props.data[college][meal] : null;
     
     if (dhallData) {
       firstSectionKey = "Main Entree";

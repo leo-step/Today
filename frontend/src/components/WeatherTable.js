@@ -25,29 +25,43 @@ function WeatherTable(props) {
       
 
         </tr>
-        <tr className = "centered" style={{"fontWeight": "bold", "fontSize": 18 }}>
+        {weather.length !== 0 &&
+            <tr className="centered" style={{"fontWeight": "bold", "fontSize": 18}}>
 
-          <td> {weather[0][1]}</td>
-          <td>{weather[1][1]}</td>
-          <td>{weather[2][1]}</td>
-          <td>{weather[3][1]}</td>
-          <td>{weather[4][1]}</td>
-        </tr>
+                <td> {weather[0][1]}</td>
+                <td>{weather[1][1]}</td>
+                <td>{weather[2][1]}</td>
+                <td>{weather[3][1]}</td>
+                <td>{weather[4][1]}</td>
 
+            </tr>
+               }
+
+        {weather.length !== 0 &&
         <tr className = "centered emoji">
-          <td> {weather[0][2]}</td>
-          <td>{weather[1][2]}</td>
-          <td>{weather[2][2]}</td>
-          <td>{weather[3][2]}</td>
-          <td>{weather[4][2]}</td>
-        </tr>
+
+
+
+                <td> {weather[0][2]}</td>
+                <td>{weather[1][2]}</td>
+                <td>{weather[2][2]}</td>
+                <td>{weather[3][2]}</td>
+                <td>{weather[4][2]}</td>
+
+
+        </tr>   }
+
+         {weather.length !== 0 &&
         <tr className = "centered" style={{"fontWeight": "bold", "fontSize": 15 }}>
-          <td> {weather[0][0]}°</td>
-          <td>{weather[1][0]}°</td>
-          <td>{weather[2][0]}°</td>
-          <td>{weather[3][0]}°</td>
-          <td>{weather[4][0]}°</td>
-        </tr>
+
+
+                <td> {weather[0][0]}</td>
+                <td>{weather[1][0]}</td>
+                <td>{weather[2][0]}</td>
+                <td>{weather[3][0]}</td>
+                <td>{weather[4][0]}</td>
+
+        </tr>}
       </tbody>
     </Table>
         </div>

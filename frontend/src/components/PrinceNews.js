@@ -37,7 +37,7 @@ function PrinceNewsTable(props) {
             }}
           >
             <tr >
-              <td > <a href = {articles[0].link} ><b>{articles[0].title}</b> </a> </td>
+                { articles.length !== 0 && <td > <a href = {articles[0].link} ><b>{articles[0].title}</b> </a> </td> }
             </tr>
           </div>
           <div
@@ -51,7 +51,7 @@ function PrinceNewsTable(props) {
             }}
           >
             <tr>
-                <td  > <a href = {articles[1].link} ><b>{articles[1].title}</b> </a> </td>
+              { articles.length !== 0 &&   <td  > <a href = {articles[1].link} ><b>{articles[1].title}</b> </a> </td> }
             </tr>
           </div>
           <div style={{
@@ -60,7 +60,7 @@ function PrinceNewsTable(props) {
               "fontSize": 22
             }}>
             <tr>
-                <td  > <a href = {articles[2].link} ><b>{articles[2].title}</b> </a> </td>
+               { articles.length !== 0 &&  <td  > <a href = {articles[2].link} ><b>{articles[2].title}</b> </a> </td> }
             </tr>
           </div>
         </tbody>
