@@ -15,7 +15,7 @@ function App() {
 
     useEffect(() => {
     // Update the document title using the browser API
-       axios.get('https://todayatprinceton.onrender.com/api')
+       axios.get('https://today-nujm46x7ta-ue.a.run.app')
            .then((res) => {
                setData(res.data)
            })
@@ -59,9 +59,6 @@ function App() {
       </div>
 
   );
-
-
-return <div></div>
 
 }
 
