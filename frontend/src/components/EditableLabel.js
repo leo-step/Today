@@ -28,7 +28,7 @@ function EditableLabel(props) {
   //               enteredValue = props.value;
   //             }
   //             console.log("name:", enteredValue);
-              
+
   //             setText(enteredValue);
   //             setEditing(false);
   //             chrome.storage.sync.set({name: enteredValue}, function() {
