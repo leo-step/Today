@@ -13,7 +13,7 @@ function PrinceNewsTable(props) {
         borderRadius: "25px",
         backgroundColor: "#212529",
         width: "500px",
-        "margin-right": "100px",
+        marginRight: "100px",
       }}
     >
       <Table variant="dark" borderless>

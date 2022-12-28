@@ -58,11 +58,11 @@ function WeatherTable(props) {
               className="centered"
               style={{ fontWeight: "bold", fontSize: 15 }}
             >
-              <td> {weather[0][0]}</td>
-              <td>{weather[1][0]}</td>
-              <td>{weather[2][0]}</td>
-              <td>{weather[3][0]}</td>
-              <td>{weather[4][0]}</td>
+              <td> {weather[0][0]}˚</td>
+              <td>{weather[1][0]}˚</td>
+              <td>{weather[2][0]}˚</td>
+              <td>{weather[3][0]}˚</td>
+              <td>{weather[4][0]}˚</td>
             </tr>
           )}
         </tbody>

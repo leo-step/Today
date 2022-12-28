@@ -32,7 +32,7 @@ function DHallTable(props) {
   if (dhallData) {
     firstSectionKey = "Main Entree";
     firstSection = dhallData[firstSectionKey];
-    const other = Object.keys(dhallData).filter((val) => val != "Main Entree");
+    const other = Object.keys(dhallData).filter((val) => val !== "Main Entree");
     if (firstSection) {
       if (other.length > 0) secondSectionKey = other[0];
       secondSection = dhallData[secondSectionKey];
@@ -58,7 +58,7 @@ function DHallTable(props) {
         borderRadius: "25px",
         backgroundColor: "#212529",
         width: "500px",
-        "margin-left": "100px",
+        marginLeft: "100px",
       }}
     >
       <Table variant="dark" borderless>

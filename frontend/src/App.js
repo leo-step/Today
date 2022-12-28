@@ -36,7 +36,7 @@ function App() {
       <div style={{ margin: "100px" }}>
         <h1 className="centered" style={{ color: "white", fontSize: "90px" }}>
           <b>
-            Good {timeOfDay} <EditableLabel value={"________"} />
+            Good {timeOfDay} <EditableLabel />
           </b>
         </h1>
         <h1 className="centered" style={{ color: "white", fontSize: "50px" }}>
