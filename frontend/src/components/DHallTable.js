@@ -3,7 +3,7 @@ import { useState } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 
 function DHallTable(props) {
-  const [college, setCollege] = useState("Yeh West College");
+  const [college, setCollege] = useState("Yeh/NCW");
 
   const currentDate = new Date();
   const currentDay = currentDate.getDay();
@@ -82,18 +82,18 @@ function DHallTable(props) {
                   <Dropdown.Item eventKey="Center for Jewish Life">
                     CJL
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="Forbes College">
+                  <Dropdown.Item eventKey="Forbes">
                     Forbes
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="Rockefeller and Mathey Colleges">
+                  <Dropdown.Item eventKey="Roma">
                     Roma
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="Whitman College">
+                  <Dropdown.Item eventKey="Whitman">
                     Whitman
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="Butler College">Wucox</Dropdown.Item>
-                  <Dropdown.Item eventKey="Yeh West College">
-                    Yeh/New College West
+                  <Dropdown.Item eventKey="Wucox">Wucox</Dropdown.Item>
+                  <Dropdown.Item eventKey="Yeh/NCW">
+                    Yeh/NCW
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>

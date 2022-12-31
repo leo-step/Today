@@ -25,12 +25,12 @@ def get_weather():
 
 def get_menus():
     dining_halls = {
-        "Whitman College": 8,
-        "Butler College": 2,
-        "Rockefeller and Mathey Colleges": 1,
-        "Forbes College": 3,
+        "Whitman": 8,
+        "Wucox": 2,
+        "Roma": 1,
+        "Forbes": 3,
         "Center for Jewish Life": 5,
-        "Yeh West College": 6
+        "Yeh/NCW": 6
     }
     result = {}
     for dhall, index in dining_halls.items():

@@ -27,7 +27,8 @@ function WeatherTable(props) {
             </td>
             <td colSpan={2} className="centered">
               {" "}
-              <p style={{ fontWeight: "bold", fontSize: 18 }}>H 51˚ L 30˚</p>
+
+              <p style={{ fontWeight: "bold", fontSize: 18 }}> Currently:{weather[5]['current']} H {weather[5]['max']}˚ L {weather[5]['min']}˚</p>
             </td>
           </tr>
           {weather.length !== 0 && (
