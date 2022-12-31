@@ -9,6 +9,7 @@ load_dotenv()
 app = Flask(__name__) #, static_folder='frontend/build', static_url_path='/'
 CORS(app)
 
+nightTimes = ['7 pm', '10 pm','1 am','4 am']
 dateTime = {
     '00:00:00': '7 pm',
     '03:00:00': '10 pm',
@@ -20,16 +21,18 @@ dateTime = {
     '21:00:00': '4 pm'
 }
 
-def weatherEmoji(code):
+def weatherEmoji(code, time):
+    if code == 804:
+        return '☁️'
     if code >= 800:
+        if time in nightTimes:
+            return '🌙'
         if code < 802:
             return '☀️'
         if code == 802:
             return '🌤'
         if code == 803:
             return '⛅️'
-        if code == 804:
-            return '☁️'
     if code < 300:
         return '🌩'
     elif code < 600:
@@ -53,9 +56,10 @@ def index():
     for i in range(5):
         temp = []
         temp.append(int(weatherPton['list'][i]['main']['temp']))
-        temp.append(dateTime[weatherPton['list'][i]['dt_txt'][-8:]])
+        timeOfDay = dateTime[weatherPton['list'][i]['dt_txt'][-8:]]
+        temp.append(timeOfDay)
         stringCode = weatherPton['list'][i]['weather'][0]['id']
-        temp.append(weatherEmoji(int(stringCode)))
+        temp.append(weatherEmoji(int(stringCode), timeOfDay))
         weatherData.append(temp)
 
     dhallData = db.widgets.find_one({'_id': 'dhall'})
