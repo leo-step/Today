@@ -15,15 +15,15 @@ function App() {
 
   useEffect(() => {
     const data = window.localStorage.getItem("data");
-    if (data && !(new Date().getHours() > new Date(JSON.parse(data).timestamp).getHours()-5)) {
+    if (data) {
       setData(JSON.parse(data))
-    } else {
+    }
+    if (!(data && moment.utc().hours() <= moment.utc(JSON.parse(data).timestamp).hours())) {
       axios.get("https://today-nujm46x7ta-ue.a.run.app").then((res) => {
         window.localStorage.setItem("data", JSON.stringify(res.data));
         setData(res.data);
       });
     }
-
   }, []);
 
   const currentDate = new Date();
