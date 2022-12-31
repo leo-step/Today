@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 import pymongo
 import os
+from datetime import datetime
 
 load_dotenv()
 
@@ -70,7 +71,8 @@ def index():
     result = {
         "weather": weatherData,
         "dhall": dhallData,
-        "prince": articles
+        "prince": articles,
+        "timestamp": str(datetime.now())
     }
 
     return jsonify(result)
