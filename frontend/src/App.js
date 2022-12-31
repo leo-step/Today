@@ -14,10 +14,16 @@ function App() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    // Update the document title using the browser API
-    axios.get("https://today-nujm46x7ta-ue.a.run.app").then((res) => {
-      setData(res.data);
-    });
+    const data = window.localStorage.getItem("data");
+    if (data && !(new Date().getHours() > new Date(JSON.parse(data).timestamp).getHours()-5)) {
+      setData(JSON.parse(data))
+    } else {
+      axios.get("https://today-nujm46x7ta-ue.a.run.app").then((res) => {
+        window.localStorage.setItem("data", JSON.stringify(res.data));
+        setData(res.data);
+      });
+    }
+
   }, []);
 
   const currentDate = new Date();
