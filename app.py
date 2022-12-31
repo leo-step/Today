@@ -61,6 +61,7 @@ def index():
         stringCode = weatherPton['list'][i]['weather'][0]['id']
         temp.append(weatherEmoji(int(stringCode), timeOfDay))
         weatherData.append(temp)
+    weatherData.append(weatherPton['current_data'])
 
     dhallData = db.widgets.find_one({'_id': 'dhall'})
 

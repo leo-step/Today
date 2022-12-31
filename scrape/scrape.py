@@ -8,10 +8,20 @@ load_dotenv()
 client = pymongo.MongoClient(os.getenv("DB_CONN"))
 db = client.data
 
+def get_weather_daily():
+    result = {}
+    weatherDaily = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
+    result['current'] = round(weatherDaily['main']['temp'])
+    result['min'] = round(weatherDaily['main']['temp_min'])
+    result['max'] = round(weatherDaily['main']['temp_max'])
+    return result
+
 def get_weather():
     weatherPton = requests.get(f'https://api.openweathermap.org/data/2.5/forecast?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
     weatherPton['_id'] = 'weather'
+    weatherPton['current_data'] = get_weather_daily()
     return weatherPton
+
 
 def get_menus():
     dining_halls = {
