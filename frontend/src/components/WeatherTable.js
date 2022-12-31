@@ -4,7 +4,7 @@ function WeatherTable(props) {
   // const weather = [[ 68,  "6 pm",  "☀️" ],  [ 65, "9 pm", "☀️"], [62, "12 am", "⛅️"], [54, "3 am", "🌧"], [50, "6 am", "🌧"]]
 
   const weather = props.data;
-
+    console.log(weather)
   return (
     <div
       style={{
@@ -21,14 +21,14 @@ function WeatherTable(props) {
       <Table variant="dark" borderless>
         <tbody>
           <tr>
-            <td colSpan={3}>
+            <td colSpan={2}>
               {" "}
               <h3 style={{ fontWeight: "bold" }}>Weather</h3>{" "}
             </td>
-            <td colSpan={2} className="centered">
+            <td colSpan={3} className="centered">
               {" "}
-
-              <p style={{ fontWeight: "bold", fontSize: 18 }}> Currently:{weather[5]['current']} H {weather[5]['max']}˚ L {weather[5]['min']}˚</p>
+            {weather.length !== 0 &&
+              <p style={{ fontWeight: "bold", fontSize: 18 }}> Now: {weather[5]['current']}˚   H {weather[5]['max']}˚  L {weather[5]['min']}˚</p>}
             </td>
           </tr>
           {weather.length !== 0 && (
