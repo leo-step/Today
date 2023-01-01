@@ -17,7 +17,7 @@ function App() {
     const data = window.localStorage.getItem("data");
     if (data) {
       setData(JSON.parse(data))
-      if (moment.utc().hours() !== moment.utc(JSON.parse(data).timestamp).hours()) {
+      if (moment.utc().diff(moment.utc(JSON.parse(data).timestamp), "hours") >= 1) {
         axios.get("https://today-nujm46x7ta-ue.a.run.app").then((res) => {
           window.localStorage.setItem("data", JSON.stringify(res.data));
           setData(res.data);
