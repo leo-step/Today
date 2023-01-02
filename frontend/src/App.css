@@ -69,9 +69,18 @@ mark {
   color: black !important;
 }
 
+/*body {*/
+/*  background-image: url('images/background.jpeg') !important;*/
+/*}*/
+
 body {
-  background-image: url('images/background.jpeg') !important;
+
+
+   background-size: cover;
+
+
 }
+
 
 
 

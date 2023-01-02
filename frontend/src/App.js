@@ -13,6 +13,21 @@ import Container from "react-bootstrap/Container";
 function App() {
   const [data, setData] = useState(null);
 
+var backgrounds = [
+  "https://media.npr.org/assets/img/2021/08/11/gettyimages-1279899488_wide-f3860ceb0ef19643c335cb34df3fa1de166e2761.jpg",
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/2880px-Cat_August_2010-4.jpg",
+  "https://st1.latestly.com/wp-content/uploads/2021/08/31-6.jpg"
+]
+
+var i = 0;
+setInterval(function() {
+      document.body.style.backgroundImage = "url(" + backgrounds[i] + ")";
+      i = i + 1;
+      if (i == backgrounds.length) {
+      	i =  0;
+      }
+}, 1000);
+
   useEffect(() => {
     const data = window.localStorage.getItem("data");
     if (data) {
@@ -47,6 +62,7 @@ function App() {
   }
   return (
     <div className="App">
+      <div id="images" className="images">
       <div style={{ margin: "100px" }}>
         <h1 className="centered" style={{ color: "white", fontSize: "90px" }}>
           <b>
@@ -71,7 +87,9 @@ function App() {
         <PrinceNewsTable
           data={data ? data["prince"] : { articles: [] }}
         ></PrinceNewsTable>
+
       </header>
+ </div>
     </div>
   );
 }
