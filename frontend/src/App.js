@@ -13,18 +13,18 @@ import Container from "react-bootstrap/Container";
 function App() {
   const [data, setData] = useState(null);
 
-var backgrounds = [
-  "https://media.npr.org/assets/img/2021/08/11/gettyimages-1279899488_wide-f3860ceb0ef19643c335cb34df3fa1de166e2761.jpg",
-  "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/2880px-Cat_August_2010-4.jpg",
-  "https://st1.latestly.com/wp-content/uploads/2021/08/31-6.jpg"
-]
+// var backgrounds = [
+//   "https://media.npr.org/assets/img/2021/08/11/gettyimages-1279899488_wide-f3860ceb0ef19643c335cb34df3fa1de166e2761.jpg",
+//   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/2880px-Cat_August_2010-4.jpg",
+//   "https://st1.latestly.com/wp-content/uploads/2021/08/31-6.jpg"
+// ]
 
-var i = 0;
+var i = 1;
 setInterval(function() {
-      document.body.style.backgroundImage = "url(" + backgrounds[i] + ")";
+      document.body.setAttribute("style", `background:url(${i}.jpeg) !important`);
       i = i + 1;
-      if (i == backgrounds.length) {
-      	i =  0;
+      if (i > 5) {
+      	i =  1;
       }
 }, 1000);
 
