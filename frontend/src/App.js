@@ -19,14 +19,14 @@ function App() {
 //   "https://st1.latestly.com/wp-content/uploads/2021/08/31-6.jpg"
 // ]
 
-var i = 1;
-setInterval(function() {
-      document.body.setAttribute("style", `background:url(${i}.jpeg) !important`);
-      i = i + 1;
-      if (i > 5) {
-      	i =  1;
-      }
-}, 1000);
+// var i = 1;
+// setInterval(function() {
+//       document.body.setAttribute("style", `background:url(${i}.jpeg) !important`);
+//       i = i + 1;
+//       if (i > 5) {
+//       	i =  1;
+//       }
+// }, 1000);
 
   useEffect(() => {
     const data = window.localStorage.getItem("data");

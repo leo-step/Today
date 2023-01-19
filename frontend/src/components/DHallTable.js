@@ -1,9 +1,15 @@
 import Table from "react-bootstrap/Table";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 
 function DHallTable(props) {
-  const [college, setCollege] = useState("Yeh/NCW");
+  const [college, setCollege] = useState(
+    window.localStorage.getItem("dhall") || "Yeh/NCW"
+  );
+
+  useEffect(() => {
+    window.localStorage.setItem("dhall", college);
+  }, [college]);
 
   const currentDate = new Date();
   const currentDay = currentDate.getDay();
@@ -49,18 +55,7 @@ function DHallTable(props) {
   }
 
   return (
-    <div
-      style={{
-        paddingLeft: "10px",
-        paddingRight: "10px",
-        paddingTop: "5px",
-        paddingBottom: "5px",
-        borderRadius: "25px",
-        backgroundColor: "#212529",
-        width: "500px",
-        marginLeft: "100px",
-      }}
-    >
+    <div class="dining-hall">
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered">
@@ -82,34 +77,16 @@ function DHallTable(props) {
                   <Dropdown.Item eventKey="Center for Jewish Life">
                     CJL
                   </Dropdown.Item>
-                  <Dropdown.Item eventKey="Forbes">
-                    Forbes
-                  </Dropdown.Item>
-                  <Dropdown.Item eventKey="Roma">
-                    Roma
-                  </Dropdown.Item>
-                  <Dropdown.Item eventKey="Whitman">
-                    Whitman
-                  </Dropdown.Item>
+                  <Dropdown.Item eventKey="Forbes">Forbes</Dropdown.Item>
+                  <Dropdown.Item eventKey="Roma">Roma</Dropdown.Item>
+                  <Dropdown.Item eventKey="Whitman">Whitman</Dropdown.Item>
                   <Dropdown.Item eventKey="Wucox">Wucox</Dropdown.Item>
-                  <Dropdown.Item eventKey="Yeh/NCW">
-                    Yeh/NCW
-                  </Dropdown.Item>
+                  <Dropdown.Item eventKey="Yeh/NCW">Yeh/NCW</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             </td>
           </tr>
-          <div
-            style={{
-              paddingTop: "10px",
-              paddingBottom: "10px",
-              borderBottomStyle: "solid",
-              borderBottomColor: "#00FF00",
-              borderBottomWidth: "thin",
-              color: "white",
-              fontSize: 22,
-            }}
-          >
+          <div class="divider divider-green">
             {firstSectionKey && (
               <tr>
                 <td>
@@ -124,16 +101,7 @@ function DHallTable(props) {
               </tr>
             )}
           </div>
-          <div
-            style={{
-              paddingTop: "10px",
-              paddingBottom: "10px",
-              borderBottomStyle: "solid",
-              borderBottomColor: "#FF00DD",
-              borderBottomWidth: "thin",
-              fontSize: 22,
-            }}
-          >
+          <div class="divider divider-pink">
             {secondSectionKey && (
               <tr>
                 <td>
@@ -150,9 +118,7 @@ function DHallTable(props) {
               </tr>
             )}
           </div>
-          <div
-            style={{ paddingTop: "10px", paddingBottom: "10px", fontSize: 22 }}
-          >
+          <div class="divider no-divider">
             {thirdSectionKey && (
               <tr>
                 <td>

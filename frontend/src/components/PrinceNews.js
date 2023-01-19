@@ -4,18 +4,7 @@ function PrinceNewsTable(props) {
   const articles = props.data["articles"];
 
   return (
-    <div
-      style={{
-        paddingLeft: "20px",
-        paddingRight: "20px",
-        paddingTop: "10px",
-        paddingBottom: "10px",
-        borderRadius: "25px",
-        backgroundColor: "#212529",
-        width: "500px",
-        marginRight: "100px",
-      }}
-    >
+    <div class="prince">
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered mediumfont">
@@ -23,17 +12,7 @@ function PrinceNewsTable(props) {
               <h3 style={{ fontWeight: "bold" }}>The Prince 🗞️</h3>
             </td>
           </tr>
-          <div
-            style={{
-              paddingTop: "10px",
-              paddingBottom: "20px",
-              borderBottomStyle: "solid",
-              borderBottomColor: "#FF2A0D",
-              borderBottomWidth: "thin",
-              color: "white",
-              fontSize: 22,
-            }}
-          >
+          <div class="divider divider-red">
             <tr>
               {articles.length !== 0 && (
                 <td>
@@ -45,16 +24,7 @@ function PrinceNewsTable(props) {
               )}
             </tr>
           </div>
-          <div
-            style={{
-              paddingTop: "20px",
-              paddingBottom: "20px",
-              borderBottomStyle: "solid",
-              borderBottomColor: "#41EAEA",
-              borderBottomWidth: "thin",
-              fontSize: 22,
-            }}
-          >
+          <div class="divider divider-blue">
             <tr>
               {articles.length !== 0 && (
                 <td>
@@ -66,13 +36,7 @@ function PrinceNewsTable(props) {
               )}
             </tr>
           </div>
-          <div
-            style={{
-              paddingTop: "20px",
-              paddingBottom: "10px",
-              fontSize: 22,
-            }}
-          >
+          <div class="divider no-divider">
             <tr>
               {articles.length !== 0 && (
                 <td>
