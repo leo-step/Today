@@ -84,8 +84,8 @@ body {
   padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
-  width: 500px;
-  margin-left: 100px;
+  /* width: 500px;
+  margin-left: 100px; */
 }
 
 .divider {
@@ -123,7 +123,7 @@ body {
   padding-bottom: 10px;
   border-radius: 25px;
   background-color: #212529;
-  width: 500px;
+  /* width: 500px; */
 }
 
 .weather {
@@ -133,8 +133,8 @@ body {
   padding-bottom: 10px;
   border-radius: 25px;
   background-color: #212529;
-  width: 500px;
-  margin: 50px;
+  /* width: 500px;
+  margin: 50px; */
   font-weight: bold !important;
 }
 
@@ -145,6 +145,6 @@ body {
   padding-bottom: 10px;
   border-radius: 25px;
   background-color: #212529;
-  width: 500px;
-  margin-right: 100px;
+  /* width: 500px;
+  margin-right: 100px; */
 }

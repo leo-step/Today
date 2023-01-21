@@ -16,13 +16,13 @@ function WeatherTable(props) {
             </td>
             <td colSpan={2} className="centered">
               {" "}
-              {weather.length !== 0 && (
+              {/* {weather.length !== 0 && (
                 <p style={{ fontSize: 18 }}>Now: {weather[5]["current"]}˚</p>
-              )}
+              )} */}
             </td>
           </tr>
           {weather.length !== 0 && (
-            <tr className="centered" style={{ fontSize: 18 }}>
+            <tr className="centered" style={{ fontSize: 17 }}>
               <td> {weather[0][1]}</td>
               <td>{weather[1][1]}</td>
               <td>{weather[2][1]}</td>
