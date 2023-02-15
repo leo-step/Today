@@ -14,6 +14,20 @@ import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
   const [data, setData] = useState(null);
 
+  // console.log(window.innerWidth);
+
+  // useEffect(() => {
+  //   function handleResize() {
+  //     const viewport = document.getElementById("viewport-meta");
+  //     viewport.setAttribute("content", "width=" + window.outerWidth + ", initial-scale=1");
+  //     // // eslint-disable-next-line no-restricted-globals
+
+  //     // document.body.setAttribute("style", "transform: scale(" + screen.width/1728 + "); transform-origin: top;")
+  //   }
+  //   window.addEventListener('resize', handleResize);
+  //   handleResize();
+  // }, [])
+
   // var backgrounds = [
   //   "https://media.npr.org/assets/img/2021/08/11/gettyimages-1279899488_wide-f3860ceb0ef19643c335cb34df3fa1de166e2761.jpg",
   //   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/2880px-Cat_August_2010-4.jpg",
