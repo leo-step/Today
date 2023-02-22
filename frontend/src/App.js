@@ -46,6 +46,7 @@ function App() {
   useEffect(() => {
     const numBackgrounds = 5
     const currentTime = moment.utc();
+    console.log(currentTime.day())
     const i = currentTime.day() % numBackgrounds;
     document.body.setAttribute("style", `background:url(backgrounds/${i}.jpeg) !important`);
   }, []);
