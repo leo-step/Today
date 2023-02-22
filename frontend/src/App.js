@@ -44,6 +44,13 @@ function App() {
   // }, 1000);
 
   useEffect(() => {
+    const numBackgrounds = 5
+    const currentTime = moment.utc();
+    const i = currentTime.day() % numBackgrounds;
+    document.body.setAttribute("style", `background:url(backgrounds/${i}.jpeg) !important`);
+  }, []);
+
+  useEffect(() => {
     const data = window.localStorage.getItem("data");
     if (data) {
       setData(JSON.parse(data));
@@ -77,9 +84,10 @@ function App() {
   } else if (currentHour >= 5 && currentHour < 12) {
     timeOfDay = "morning";
   } // style={{ margin: "100px" }}
+  
   return (
     <Container fluid className="m-0">
-      <div className="App">
+      <div className="App" style={{marginLeft: "2.5%", marginRight: "2.5%"}}>
         <Row style={{marginTop: "5%", marginBottom: "7%"}}>
           <Col>
             <h1
@@ -98,7 +106,7 @@ function App() {
             </h1>
           </Col>
         </Row>
-        <Row className="gx-5" style={{marginLeft: "5%", marginRight: "5%"}}>
+        <Row className="gx-5">  
           <Col>
             <DHallTable data={data ? data["dhall"] : null} />
           </Col>

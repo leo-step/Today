@@ -7,8 +7,8 @@
 }
 
 td {
-  padding-left: 25px !important;
-  padding-right: 25px !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
   padding-top: 0px !important;
   padding-bottom: 0px !important;
   /*font-weight: bold;*/
@@ -95,6 +95,32 @@ body {
   border-bottom-width: thin;
   font-size: 22px;
 }
+
+.weather {
+  font-size: 18px;
+}
+
+@media (max-width: 1450px) {
+  .divider {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom-style: solid;
+    border-bottom-width: thin;
+    font-size: 18px !important;
+  }
+
+
+}
+
+@media (max-width: 1650px) {
+
+  .weather {
+    font-size: 15px !important;
+  }
+
+}
+
+
 
 .no-divider {
   border-style: none;

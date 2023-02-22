@@ -17,24 +17,24 @@ function SneakyLinksTable() {
             <td></td>
           </tr>
           <tr>
-            <td>
+            <td style={{textAlign: "center"}}>
               <a href="https://canvas.princeton.edu/">
-                <img alt="Canvas" style={{ width: 60 }} src={Canvas} />
+                <img alt="Canvas" style={{ width: 56 }} src={Canvas} />
               </a>
             </td>
-            <td>
+            <td style={{textAlign: "center"}}>
               <a href="https://mail.google.com/">
-                <img alt="Gmail" style={{ width: 60, paddingTop: "8px" }} src={Gmail} />
+                <img alt="Gmail" style={{ width: 56, paddingTop: "8px" }} src={Gmail} />
               </a>
             </td>
-            <td>
+            <td style={{textAlign: "center"}}>
               <a href="https://calendar.google.com/">
-                <img alt="GCal" style={{ width: 60 }} src={GCal} />
+                <img alt="GCal" style={{ width: 56 }} src={GCal} />
               </a>
             </td>
-            <td>
+            <td style={{textAlign: "center"}}>
               <a href="https://docs.google.com/">
-                <img alt="Docs" style={{ width: 60 }} src={Docs} />
+                <img alt="Docs" style={{ width: 56 }} src={Docs} />
               </a>
             </td>
           </tr>

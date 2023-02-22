@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 function EditableLabel() {
-  const [text, setText] = useState(window.localStorage.getItem("name") || "_______");
+  const [text, setText] = useState(window.localStorage.getItem("name") || "[enter name]");
   const [editing, setEditing] = useState(false);
   const [editor, setEditor] = useState(null);
 
@@ -18,7 +18,7 @@ function EditableLabel() {
         onKeyPress={(event) => {
           if (event.key === "Enter") {
             let enteredValue = event.target.value;
-            setText(enteredValue ? enteredValue : "_______");
+            setText(enteredValue ? enteredValue : "[enter name]");
             setEditing(false);
             window.localStorage.setItem("name", enteredValue);
           }
