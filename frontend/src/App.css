@@ -70,12 +70,15 @@ mark {
 }
 
 body {
+  background-color: #212529 !important;
+}
+/* body {
   background-image: url("images/background.jpeg") !important;
 }
 
 body {
   background-size: cover;
-}
+} */
 
 .dining-hall {
   padding-left: 10px;

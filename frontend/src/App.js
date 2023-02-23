@@ -14,41 +14,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
   const [data, setData] = useState(null);
 
-  // console.log(window.innerWidth);
-
-  // useEffect(() => {
-  //   function handleResize() {
-  //     const viewport = document.getElementById("viewport-meta");
-  //     viewport.setAttribute("content", "width=" + window.outerWidth + ", initial-scale=1");
-  //     // // eslint-disable-next-line no-restricted-globals
-
-  //     // document.body.setAttribute("style", "transform: scale(" + screen.width/1728 + "); transform-origin: top;")
-  //   }
-  //   window.addEventListener('resize', handleResize);
-  //   handleResize();
-  // }, [])
-
-  // var backgrounds = [
-  //   "https://media.npr.org/assets/img/2021/08/11/gettyimages-1279899488_wide-f3860ceb0ef19643c335cb34df3fa1de166e2761.jpg",
-  //   "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Cat_August_2010-4.jpg/2880px-Cat_August_2010-4.jpg",
-  //   "https://st1.latestly.com/wp-content/uploads/2021/08/31-6.jpg"
-  // ]
-
-  // var i = 1;
-  // setInterval(function() {
-  //       document.body.setAttribute("style", `background:url(${i}.jpeg) !important`);
-  //       i = i + 1;
-  //       if (i > 5) {
-  //       	i =  1;
-  //       }
-  // }, 1000);
-
   useEffect(() => {
-    const numBackgrounds = 5
-    const currentTime = moment.utc();
-    console.log(currentTime.day())
-    const i = (currentTime.day() + 1) % numBackgrounds;
-    document.body.setAttribute("style", `background:url(backgrounds/${i}.jpeg) !important`);
+    const numBackgrounds = 7;
+    const currentTime = moment();
+    const i = currentTime.day() % numBackgrounds;
+    document.body.setAttribute(
+      "style",
+      `background:url(backgrounds/${i}.jpeg) !important; background-size: cover !important; background-repeat: no-repeat !important;`
+    );
   }, []);
 
   useEffect(() => {
@@ -85,11 +58,11 @@ function App() {
   } else if (currentHour >= 5 && currentHour < 12) {
     timeOfDay = "morning";
   } // style={{ margin: "100px" }}
-  
+
   return (
     <Container fluid className="m-0">
-      <div className="App" style={{marginLeft: "2.5%", marginRight: "2.5%"}}>
-        <Row style={{marginTop: "5%", marginBottom: "7%"}}>
+      <div className="App" style={{ marginLeft: "2.5%", marginRight: "2.5%" }}>
+        <Row style={{ marginTop: "5%", marginBottom: "7%" }}>
           <Col>
             <h1
               className="centered"
@@ -107,7 +80,7 @@ function App() {
             </h1>
           </Col>
         </Row>
-        <Row className="gx-5">  
+        <Row className="gx-5">
           <Col>
             <DHallTable data={data ? data["dhall"] : null} />
           </Col>
