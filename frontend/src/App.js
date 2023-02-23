@@ -47,7 +47,7 @@ function App() {
     const numBackgrounds = 5
     const currentTime = moment.utc();
     console.log(currentTime.day())
-    const i = currentTime.day() % numBackgrounds;
+    const i = (currentTime.day() + 1) % numBackgrounds;
     document.body.setAttribute("style", `background:url(backgrounds/${i}.jpeg) !important`);
   }, []);
 
