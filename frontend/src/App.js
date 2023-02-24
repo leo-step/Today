@@ -15,7 +15,7 @@ function App() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    const numBackgrounds = 7;
+    const numBackgrounds = 6;
     const currentTime = moment();
     const i = currentTime.day() % numBackgrounds;
     document.body.setAttribute(
