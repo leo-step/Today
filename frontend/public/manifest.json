@@ -8,5 +8,8 @@
   "permissions": ["storage"],
   "chrome_url_overrides": {
     "newtab": "index.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'"
   }
 }

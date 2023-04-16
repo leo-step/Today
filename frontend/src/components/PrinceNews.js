@@ -1,8 +1,13 @@
+/* global _gaq */
 import Table from "react-bootstrap/Table";
 import PrinceLogo from "../images/prince.png"
 
 function PrinceNewsTable(props) {
   const articles = props.data["articles"];
+
+  function trackClick(e) {
+    _gaq.push(['_trackEvent', 'princeArticle', 'clicked']);
+  };
 
   return (
     <div class="prince">
@@ -18,7 +23,7 @@ function PrinceNewsTable(props) {
               {articles.length !== 0 && (
                 <td>
                   {" "}
-                  <a href={articles[0].link}>
+                  <a href={articles[0].link} onClick={trackClick}>
                     <b>{articles[0].title}</b>{" "}
                   </a>{" "}
                 </td>
@@ -30,7 +35,7 @@ function PrinceNewsTable(props) {
               {articles.length !== 0 && (
                 <td>
                   {" "}
-                  <a href={articles[1].link}>
+                  <a href={articles[1].link} onClick={trackClick}>
                     <b>{articles[1].title}</b>{" "}
                   </a>{" "}
                 </td>
@@ -42,7 +47,7 @@ function PrinceNewsTable(props) {
               {articles.length !== 0 && (
                 <td>
                   {" "}
-                  <a href={articles[2].link}>
+                  <a href={articles[2].link} onClick={trackClick}>
                     <b>{articles[2].title}</b>{" "}
                   </a>{" "}
                 </td>
