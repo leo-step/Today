@@ -2,6 +2,7 @@ import "./App.css";
 import WeatherTable from "./components/WeatherTable";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
+import Dance from "./components/Dance";
 import PrinceNewsTable from "./components/PrinceNews";
 import DHallTable from "./components/DHallTable";
 import EditableLabel from "./components/EditableLabel";
@@ -88,6 +89,11 @@ function App() {
             <Row className="my-4">
               <WeatherTable data={data ? data["weather"] : []} />
             </Row>
+
+              <Row className="my-4">
+              <Dance />
+            </Row>
+
             <Row className="my-4">
               <SneakyLinksTable />
             </Row>
