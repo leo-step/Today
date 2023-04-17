@@ -103,6 +103,10 @@ body {
   font-size: 18px;
 }
 
+.promo {
+  width: 300px;
+}
+
 @media (max-width: 1450px) {
   .divider {
     padding-top: 10px;
@@ -112,7 +116,9 @@ body {
     font-size: 18px !important;
   }
 
-
+  .promo {
+    width: 300px;
+  }
 }
 
 @media (max-width: 1650px) {
@@ -121,6 +127,9 @@ body {
     font-size: 15px !important;
   }
 
+  .promo {
+    width: 300px;
+  }
 }
 
 
@@ -143,6 +152,15 @@ body {
 
 .divider-blue {
   border-bottom-color: #41EAEA;
+}
+
+.dance {
+  /* padding-left: 10px;
+  padding-right: 10px; */
+  padding-top: 10px;
+  /* padding-bottom: 10px; */
+  border-radius: 25px;
+  background-color: #212529;
 }
 
 .sneaky-links {

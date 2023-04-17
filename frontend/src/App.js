@@ -94,9 +94,9 @@ function App() {
               <Dance />
             </Row>
 
-            <Row className="my-4">
+            {/* <Row className="my-4">
               <SneakyLinksTable />
-            </Row>
+            </Row> */}
           </Col>
           <Col>
             <PrinceNewsTable data={data ? data["prince"] : { articles: [] }} />
