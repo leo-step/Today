@@ -10,6 +10,7 @@ import axios from "axios";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import { Container, Row, Col } from "react-bootstrap";
+import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
@@ -35,13 +36,13 @@ function App() {
         currentTime.hour() !== requestTime.hour() ||
         !currentTime.isSame(requestTime, "date")
       ) {
-        axios.get("https://today-nujm46x7ta-ue.a.run.app").then((res) => {
+        axios.get(config.URL).then((res) => {
           window.localStorage.setItem("data", JSON.stringify(res.data));
           setData(res.data);
         });
       }
     } else {
-      axios.get("https://today-nujm46x7ta-ue.a.run.app").then((res) => {
+      axios.get(config.URL).then((res) => {
         window.localStorage.setItem("data", JSON.stringify(res.data));
         setData(res.data);
       });

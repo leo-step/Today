@@ -47,6 +47,7 @@ def weatherEmoji(code, time):
 
 @app.route("/")
 def index():
+    print("working")
     client = pymongo.MongoClient(os.getenv("DB_CONN"))
     db = client.data
 
