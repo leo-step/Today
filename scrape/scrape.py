@@ -75,7 +75,7 @@ def get_prince():
     link2 = secondArticles[0].find('a').get("href")
     link3 = secondArticles[2].find('a').get("href")
 
-    articles.append({'title': "development", 'link': link1})
+    articles.append({'title': text1, 'link': link1})
     articles.append({'title': text2, 'link': link2})
     articles.append({'title': text3, 'link': link3})
 
