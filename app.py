@@ -50,7 +50,7 @@ def weatherEmoji(code, time):
 def index():
     print("working")
     client = pymongo.MongoClient(os.getenv("DB_CONN"))
-    db = client.data
+    db = client[os.getenv("DATABASE")]
 
     weatherPton = db.widgets.find_one({'_id': 'weather'})
 
