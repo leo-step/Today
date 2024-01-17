@@ -91,13 +91,13 @@ function App() {
               <WeatherTable data={data ? data["weather"] : []} />
             </Row>
 
-              <Row className="my-4">
+              {/* <Row className="my-4">
               <Dance />
-            </Row>
-
-            {/* <Row className="my-4">
-              <SneakyLinksTable />
             </Row> */}
+
+            <Row className="my-4">
+              <SneakyLinksTable />
+            </Row>
           </Col>
           <Col>
             <PrinceNewsTable data={data ? data["prince"] : { articles: [] }} />
