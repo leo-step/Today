@@ -23,3 +23,4 @@ jobs:
         env:
           WEATHER: ${{ secrets.WEATHER }}
           DB_CONN: ${{ secrets.DB_CONN }}
+          DATABASE: ${{ secrets.DATABASE }}
