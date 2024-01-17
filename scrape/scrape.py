@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 load_dotenv()
 client = pymongo.MongoClient(os.getenv("DB_CONN"))
-db = client.data
+db = client[os.getenv("DATABASE")]
 
 def get_weather_daily():
     result = {}
