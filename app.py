@@ -9,6 +9,7 @@ load_dotenv()
 
 app = Flask(__name__) #, static_folder='frontend/build', static_url_path='/'
 CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 nightTimes = ['7 pm', '10 pm','1 am','4 am']
 dateTime = {

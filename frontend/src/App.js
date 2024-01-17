@@ -33,7 +33,7 @@ function App() {
       const currentTime = moment.utc();
       const requestTime = moment.utc(JSON.parse(data).timestamp);
       if (
-        currentTime.hour() !== requestTime.hour() ||
+        config.URL === config.DEV || currentTime.hour() !== requestTime.hour() ||
         !currentTime.isSame(requestTime, "date")
       ) {
         axios.get(config.URL).then((res) => {
