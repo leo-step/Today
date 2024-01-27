@@ -23,7 +23,7 @@ function PrinceNewsTable(props) {
               {articles.length !== 0 && (
                 <td>
                   {" "}
-                  <a href={articles[0].link} onClick={trackClick}>
+                  <a href={articles[0].link} onClick={trackClick} style={{textDecoration: "none"}}>
                     <b>{articles[0].title}</b>{" "}
                   </a>{" "}
                 </td>
@@ -35,7 +35,7 @@ function PrinceNewsTable(props) {
               {articles.length !== 0 && (
                 <td>
                   {" "}
-                  <a href={articles[1].link} onClick={trackClick}>
+                  <a href={articles[1].link} onClick={trackClick} style={{textDecoration: "none"}}>
                     <b>{articles[1].title}</b>{" "}
                   </a>{" "}
                 </td>
@@ -47,7 +47,7 @@ function PrinceNewsTable(props) {
               {articles.length !== 0 && (
                 <td>
                   {" "}
-                  <a href={articles[2].link} onClick={trackClick}>
+                  <a href={articles[2].link} onClick={trackClick} style={{textDecoration: "none"}}>
                     <b>{articles[2].title}</b>{" "}
                   </a>{" "}
                 </td>

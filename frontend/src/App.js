@@ -1,5 +1,6 @@
 import "./App.css";
 import WeatherTable from "./components/WeatherTable";
+import StreetWeek from "./components/StreetWeek";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import Dance from "./components/Dance";
@@ -87,17 +88,18 @@ function App() {
             <DHallTable data={data ? data["dhall"] : null} />
           </Col>
           <Col>
-            <Row className="my-4">
+            <StreetWeek data={data ? data["dhall"] : null} />
+            {/* <Row className="my-4">
               <WeatherTable data={data ? data["weather"] : []} />
-            </Row>
+            </Row> */}
 
               {/* <Row className="my-4">
               <Dance />
             </Row> */}
 
-            <Row className="my-4">
+            {/* <Row className="my-4">
               <SneakyLinksTable />
-            </Row>
+            </Row> */}
           </Col>
           <Col>
             <PrinceNewsTable data={data ? data["prince"] : { articles: [] }} />
