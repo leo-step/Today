@@ -1,11 +1,11 @@
 { "manifest_version": 3,
-  "version": "1.2.4",
+  "version": "1.2.5",
   "short_name": "New Tab",
   "name": "Today @ Princeton",
    "action": {
     "default_icon": "logo.png"
   },
-  "permissions": ["storage"],
+  "permissions": [],
   "chrome_url_overrides": {
     "newtab": "index.html"
   }

@@ -138,14 +138,25 @@ function StreetWeek(props) {
   
     "Terrace": [
       {
-        "event": "Sunday, 2/4 2:30-4:30: Student Craft Fair",
-        "rsvp": "https://docs.google.com/forms/d/e/1FAIpQLSdlpOCddWSWzyyqaG5iR-P_4779be1plEM5BhJWkap81H2jCg/viewform?usp=sf_link"
+        "event": "Tuesday, 1/30 4:30-5:30pm: Financial Aid Info Session ‼️🤑",
+        "rsvp": null
       },
       {
-        "event": "Thursday, Feb. 29 from 10pm: Battle of the Bands",
-        "rsvp": "https://forms.gle/EEZLPsnTA5rNJWwR9"
+        "event": "Wednesday, 1/31 5:30pm-7:30pm: Dinner and Trivia 💜💚",
+        "rsvp": null
+      },
+      {
+        "event": "Thursday, 2/1 10:00-12:00pm: REEEEECCCEEESSSSSSSSSS 🛝",
+        "rsvp": "https://forms.gle/4jui3Gi25e8KsdDr6"
+      },
+      {
+        "event": "Saturday, 2/3, 11pm: Punk's Not Dead",
+        "rsvp": null
+      },
+      {
+        "event": "Sunday, 2/4 2:30-4:30: Art!!! Market!!! 🎨",
+        "rsvp": "https://docs.google.com/forms/d/e/1FAIpQLSdlpOCddWSWzyyqaG5iR-P_4779be1plEM5BhJWkap81H2jCg/viewform?usp=sf_link"
       }
-  
     ],
   
   
@@ -217,9 +228,37 @@ function StreetWeek(props) {
   
     "Quad": [
       {
-        "event": "Check back soon!",
+        "event": "Sunday, 1/28, 11am: House Tours & Jousting",
         "rsvp": null
-      }
+      },
+      {
+        "event": "Monday, 1/29, 8pm: Milkshake Monday",
+        "rsvp": "https://forms.gle/fvTPLfyhysKHcduS8"
+      },
+      {
+        "event": "Tuesday, 1/30, 8pm: Murder Mystery",
+        "rsvp": "https://forms.gle/RSTTvnjnsFeeDViz6"
+      },
+      {
+        "event": "Wednesday, 1/31, 9:30pm: Lazer Capture the Flag",
+        "rsvp": "https://forms.gle/zWc8XrQ45Y4isZcDA"
+      },
+      {
+        "event": "Thursday, 2/1, 5:30pm: Pub Night + Fin Aid Info Session",
+        "rsvp": "https://forms.gle/2G4ZEtL5tGCgHoVw5"
+      },
+      {
+        "event": "Friday, 2/2, 4pm: Quad Quick Pick-Me-Ups",
+        "rsvp": "https://forms.gle/vqgniNkJtZJf9CMp6"
+      },
+      {
+        "event": "Saturday, 2/3, 11pm: 7 Deadly Sins",
+        "rsvp": null
+      },
+      {
+        "event": "Sunday, 2/4, 4pm: Pawsitive Perspectives",
+        "rsvp": null
+      },
     ],
   
     "Cannon": [
@@ -281,10 +320,10 @@ function StreetWeek(props) {
                   <Dropdown.Item eventKey="Colonial">Colonial</Dropdown.Item>
                   <Dropdown.Item eventKey="Tower">Tower</Dropdown.Item>
                   <Dropdown.Item eventKey="Tiger Inn">Tiger Inn</Dropdown.Item>
+                  <Dropdown.Item eventKey="Quad">Quad</Dropdown.Item>
                   <Dropdown.Item eventKey="Terrace">Terrace</Dropdown.Item>
                   <Dropdown.Item eventKey="Ivy">Ivy</Dropdown.Item>
                   <Dropdown.Item eventKey="Cannon">Cannon</Dropdown.Item>
-                  <Dropdown.Item eventKey="Quad">Quad</Dropdown.Item>
                   <Dropdown.Item eventKey="Cottage">Cottage</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
