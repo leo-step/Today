@@ -2,9 +2,14 @@ import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 
+
 function DHallTable(props) {
+
+  console.log(props.colors)
   const [college, setCollege] = useState(
     window.localStorage.getItem("dhall") || "Yeh/NCW"
+
+
   );
 
   useEffect(() => {
@@ -86,7 +91,7 @@ function DHallTable(props) {
               </Dropdown>
             </td>
           </tr>
-          <div class="divider divider-green">
+          <div class="divider " style = {{ borderBottomColor: props.colors.accent }}>
             {firstSectionKey && (
               <tr>
                 <td>
@@ -101,7 +106,7 @@ function DHallTable(props) {
               </tr>
             )}
           </div>
-          <div class="divider divider-pink">
+          <div class="divider " style = {{ borderBottomColor: props.colors.main }}>
             {secondSectionKey && (
               <tr>
                 <td>

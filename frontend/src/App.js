@@ -15,16 +15,30 @@ import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
+  const colorCodes = {0: {'main': '#d86c0d', 'accent': '#4c8300'},
+                      1: {'main': '#978cff', 'accent': '#ffa84b'},
+                      2: {'main': '#1aa5ae', 'accent': '#ffa84b'},
+                      3: {'main': '#2ba7f9', 'accent': '#f67205'},
+                      4: {'main': '#137d5e', 'accent': '#f2efde'} }
+
+
   const [data, setData] = useState(null);
+  const [colors, setColors] = useState(colorCodes[0]);
+
 
   useEffect(() => {
-    const numBackgrounds = 6;
+    const numBackgrounds = 5;
     const currentTime = moment();
     const i = currentTime.day() % numBackgrounds;
+
     document.body.setAttribute(
       "style",
       `background:url(backgrounds/${i}.jpeg) !important; background-size: cover !important; background-repeat: no-repeat !important;`
     );
+
+     setColors(colorCodes[i])
+
+
   }, []);
 
   useEffect(() => {
@@ -85,10 +99,10 @@ function App() {
         </Row>
         <Row className="gx-5">
           <Col>
-            <DHallTable data={data ? data["dhall"] : null} />
+            <DHallTable colors = {colors} data={data ? data["dhall"] : null} />
           </Col>
           <Col>
-            <StreetWeek data={data ? data["dhall"] : null} />
+            <StreetWeek colors = {colors} data={data ? data["dhall"] : null} />
             {/* <Row className="my-4">
               <WeatherTable data={data ? data["weather"] : []} />
             </Row> */}
@@ -102,7 +116,7 @@ function App() {
             </Row> */}
           </Col>
           <Col>
-            <PrinceNewsTable data={data ? data["prince"] : { articles: [] }} />
+            <PrinceNewsTable colors = {colors} data={data ? data["prince"] : { articles: [] }} />
           </Col>
         </Row>
       </div>

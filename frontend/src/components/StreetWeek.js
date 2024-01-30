@@ -269,7 +269,7 @@ function StreetWeek(props) {
     ]
   }
   const rows = clubData[club].map(event => {
-    return <div class="divider divider-orange">  
+    return <div class="divider " style = {{ borderBottomColor: props.colors.main }}>
         <tr>
             <td>
                 <h5>{event["event"]} {event["rsvp"] && "-"} {event["rsvp"] && <a href={event["rsvp"]}>RSVP</a>}</h5>

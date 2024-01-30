@@ -13,7 +13,7 @@ function PrinceNewsTable(props) {
               <h3 style={{ fontWeight: "bold" }}>The ‘Prince’ <img alt="Prince" style={{ width: 40, marginLeft: 5, marginBottom: 5}} src={PrinceLogo} /> </h3>
             </td>
           </tr>
-          <div class="divider divider-red">
+          <div class="divider" style = {{ borderBottomColor: props.colors.accent }}>
             <tr>
               {articles.length !== 0 && (
                 <td>
@@ -25,7 +25,7 @@ function PrinceNewsTable(props) {
               )}
             </tr>
           </div>
-          <div class="divider divider-blue">
+          <div class="divider" style = {{ borderBottomColor: props.colors.main }}>
             <tr>
               {articles.length !== 0 && (
                 <td>
