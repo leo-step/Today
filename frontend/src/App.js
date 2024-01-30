@@ -6,7 +6,7 @@ import SneakyLinksTable from "./components/SneakyLinks";
 import Dance from "./components/Dance";
 import PrinceNewsTable from "./components/PrinceNews";
 import DHallTable from "./components/DHallTable";
-import EditableLabel from "./components/EditableLabel";
+import Name from "./components/Name";
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
@@ -72,7 +72,7 @@ function App() {
               style={{ color: "white", fontSize: "90px" }}
             >
               <b>
-                Good {timeOfDay} <EditableLabel />
+                Good {timeOfDay} <Name />
               </b>
             </h1>
             <h1
