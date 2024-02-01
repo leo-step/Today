@@ -102,7 +102,7 @@ function DHallTable(props) {
                   <Dropdown.Item eventKey="Forbes">Forbes</Dropdown.Item>
                   <Dropdown.Item eventKey="Roma">Roma</Dropdown.Item>
                   <Dropdown.Item eventKey="Whitman">Whitman</Dropdown.Item>
-                  <Dropdown.Item eventKey="Wucox">Wucox</Dropdown.Item>
+                  {/* <Dropdown.Item eventKey="Wucox">Wucox</Dropdown.Item> */}
                   <Dropdown.Item eventKey="Yeh/NCW">Yeh/NCW</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
