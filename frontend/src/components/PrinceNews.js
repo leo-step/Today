@@ -10,7 +10,7 @@ function PrinceNewsTable(props) {
         <tbody>
           <tr className="centered mediumfont">
             <td>
-              <h3 style={{ fontWeight: "bold" }}>The ‘Prince’ <img alt="Prince" style={{ width: 40, marginLeft: 5, marginBottom: 5}} src={PrinceLogo} /> </h3>
+              <h3 style={{ fontWeight: "bold" }}>The Prince <img alt="Prince" style={{ width: 40, marginLeft: 5, marginBottom: 5}} src={PrinceLogo} /> </h3>
             </td>
           </tr>
           <div class="divider" style = {{ borderBottomColor: props.colors.accent }}>
