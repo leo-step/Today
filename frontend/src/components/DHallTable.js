@@ -40,23 +40,40 @@ function DHallTable(props) {
 
   const dhallData = props.data ? props.data[college][meal] : null;
 
+  const priority = [
+    "Main Entree",
+    "Early Entree",
+    "Vegetarian & Vegan Entree",
+    "Vegan/Vegetarian",
+    "Pasta",
+    "Specialty Bars",
+    "Breakfast Bars",
+    "On the Side",
+    "Sides",
+    "Grill",
+    "Action Station",
+    "Pasta Station",
+    "Desserts",
+    "Breakfast Cereal",
+    "Composed Salads",
+    "Soup of the Day",
+    "Soups",
+    "Salads"
+  ]
+
   if (dhallData) {
-    firstSectionKey = "Main Entree";
-    firstSection = dhallData[firstSectionKey];
-    const other = Object.keys(dhallData).filter((val) => val !== "Main Entree");
-    if (firstSection) {
-      if (other.length > 0) secondSectionKey = other[0];
-      secondSection = dhallData[secondSectionKey];
-      if (other.length > 1) thirdSectionKey = other[1];
-      thirdSection = dhallData[thirdSectionKey];
-    } else {
-      if (other.length > 0) firstSectionKey = other[0];
-      firstSection = dhallData[firstSectionKey];
-      if (other.length > 1) secondSectionKey = other[1];
-      secondSection = dhallData[secondSectionKey];
-      if (other.length > 2) thirdSectionKey = other[2];
-      thirdSection = dhallData[thirdSectionKey];
+    const data = Array(6).fill(null);
+    let i = 0;
+    for (let j = 0; j < priority.length; j += 1) {
+      if (data[data.length-1] != null) break; // all data full
+      if (!(priority[j] in dhallData)) continue; // key not in menu
+      data[i] = priority[j]
+      data[i+1] = dhallData[priority[j]]
+      i += 2
     }
+    [firstSectionKey, firstSection, 
+     secondSectionKey, secondSection,
+     thirdSectionKey, thirdSection] = data;
   }
 
   return (
