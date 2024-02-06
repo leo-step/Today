@@ -4,12 +4,8 @@ import Dropdown from "react-bootstrap/Dropdown";
 
 
 function DHallTable(props) {
-
-  console.log(props.colors)
   const [college, setCollege] = useState(
     window.localStorage.getItem("dhall") || "Yeh/NCW"
-
-
   );
 
   useEffect(() => {
@@ -77,7 +73,7 @@ function DHallTable(props) {
   }
 
   return (
-    <div class="dining-hall">
+    <div className={"dining-hall"}>
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered">
@@ -94,7 +90,7 @@ function DHallTable(props) {
                   setCollege(e);
                 }}
               >
-                <Dropdown.Toggle id="dropdown">{college}</Dropdown.Toggle>
+                <Dropdown.Toggle className="dropdown">{college}</Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item eventKey="Center for Jewish Life">
                     CJL
@@ -108,53 +104,39 @@ function DHallTable(props) {
               </Dropdown>
             </td>
           </tr>
-          <div class="divider " style = {{ borderBottomColor: props.colors.accent }}>
-            {firstSectionKey && (
-              <tr>
+            {firstSectionKey && firstSection && (
+              <tr className={"divider"} style = {{ borderBottomColor: props.colors.accent }}>
                 <td>
                   {" "}
-                  <h4 style={{ fontWeight: "bold" }}>{firstSectionKey}</h4>{" "}
+                  <div className="row-content">
+                    <h4 style={{ fontWeight: "bold" }}>{firstSectionKey}</h4>{" "}
+                    {firstSection.slice(0, 3).join(", ")}
+                  </div>
                 </td>
               </tr>
             )}
-            {firstSection && (
-              <tr>
-                <td> {firstSection.slice(0, 3).join(", ")} </td>
-              </tr>
-            )}
-          </div>
-          <div class="divider " style = {{ borderBottomColor: props.colors.main }}>
-            {secondSectionKey && (
-              <tr>
+            {secondSectionKey && secondSection && (
+              <tr className={"divider"} style = {{ borderBottomColor: props.colors.main }}>
                 <td>
-                  {" "}
-                  <h4 style={{ fontWeight: "bold" }}>
-                    {secondSectionKey}
-                  </h4>{" "}
+                  <div className="row-content">
+                    <h4 style={{ fontWeight: "bold" }}>
+                      {secondSectionKey}
+                    </h4>
+                    {secondSection.slice(0, 3).join(", ")}
+                  </div>
                 </td>
               </tr>
             )}
-            {secondSection && (
-              <tr>
-                <td> {secondSection.slice(0, 3).join(", ")} </td>
-              </tr>
-            )}
-          </div>
-          <div class="divider no-divider">
-            {thirdSectionKey && (
-              <tr>
+            {thirdSectionKey && thirdSection &&  (
+              <tr className={"divider no-divider"}>
                 <td>
-                  {" "}
-                  <h4 style={{ fontWeight: "bold" }}>{thirdSectionKey}</h4>{" "}
+                  <div className="row-content">
+                    <h4 style={{ fontWeight: "bold" }}>{thirdSectionKey}</h4>
+                    {thirdSection.slice(0, 3).join(", ")}
+                  </div>   
                 </td>
               </tr>
             )}
-            {thirdSection && (
-              <tr>
-                <td> {thirdSection.slice(0, 3).join(", ")} </td>
-              </tr>
-            )}
-          </div>
         </tbody>
       </Table>
     </div>

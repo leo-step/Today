@@ -1,6 +1,7 @@
 import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
+import { Button } from "react-bootstrap";
 
 function StreetWeek(props) {
   const [club, setClub] = useState(
@@ -268,65 +269,73 @@ function StreetWeek(props) {
       }
     ]
   }
-  const rows = clubData[club].map(event => {
-    return <div class="divider " style = {{ borderBottomColor: props.colors.main }}>
-        <tr>
-            <td>
-                <h5>{event["event"]} {event["rsvp"] && "-"} {event["rsvp"] && <a href={event["rsvp"]}>RSVP</a>}</h5>
+  const rows = clubData[club].map((event,i ) => {
+    return <tr className={i === clubData[club].length-1 ? 'divider no-divider' : 'divider'} 
+            style = {{ borderBottomColor: props.colors.accent }} key={i}>
+            <td colSpan={3}>
+                <div className="row-content">
+                  <h5>{event["event"]} {event["rsvp"] && "-"} {event["rsvp"] && <a href={event["rsvp"]}>RSVP</a>}</h5>
+                </div>
             </td>
         </tr>
-    </div>;
   });
-//   console.log(club, clubData[club], rows);
-
-  /*
-  
-  <tr>
-    <td>
-        {" "}
-        <h4>Monday, 1/29 @ 8pm: Friendship Bracelets with Queer and Gown - <a href="#">RSVP</a></h4>{" "}
-    </td>
-  </tr>
-  
-  */
 
   return (
-    <div class="street-week">
-      <Table variant="dark" borderless>
+    <div className="street-week">
+      <Table variant="dark" borderless style={{width: "100%"}}>
         <tbody>
           <tr className="centered">
             <td>
+              <Button style={{
+                  paddingLeft: "8px",
+                  paddingRight: "8px",
+                  visibility: "hidden"
+                }} 
+                onClick={() => {props.switchTo("prince")}}>&lsaquo;&nbsp;Prince</Button>
+            </td>
+            <td style={{width: "100%"}}>
               <h3
-                style={{
-                  fontWeight: "bold",
-                }}
-              >
-                Street Week 2024!
+                  style={{
+                    fontWeight: "bold",
+                  }}
+                >
+                  Street Week!
               </h3>
-              <Dropdown
-                onSelect={(e) => {
-                  setClub(e);
-                }}
-              >
-                <Dropdown.Toggle id="dropdown">{club}</Dropdown.Toggle>
-                <Dropdown.Menu>
-                <Dropdown.Item eventKey="Cap">
-                    Cap
-                  </Dropdown.Item>
-                  <Dropdown.Item eventKey="Charter">
-                    Charter
-                  </Dropdown.Item>
-                  <Dropdown.Item eventKey="Cloister">Cloister</Dropdown.Item>
-                  <Dropdown.Item eventKey="Colonial">Colonial</Dropdown.Item>
-                  <Dropdown.Item eventKey="Tower">Tower</Dropdown.Item>
-                  <Dropdown.Item eventKey="Tiger Inn">Tiger Inn</Dropdown.Item>
-                  <Dropdown.Item eventKey="Quad">Quad</Dropdown.Item>
-                  <Dropdown.Item eventKey="Terrace">Terrace</Dropdown.Item>
-                  <Dropdown.Item eventKey="Ivy">Ivy</Dropdown.Item>
-                  <Dropdown.Item eventKey="Cannon">Cannon</Dropdown.Item>
-                  <Dropdown.Item eventKey="Cottage">Cottage</Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+            </td>
+            <td>
+              <Button style={{
+                  paddingLeft: "8px",
+                  paddingRight: "8px",
+                }} 
+                onClick={() => {props.switchTo("prince")}}>Prince&nbsp;&rsaquo;</Button>
+            </td>
+          </tr>
+          <tr className="centered">
+              <td colSpan={3}>
+                <Dropdown
+                  onSelect={(e) => {
+                    setClub(e);
+                  }}
+                >
+                  <Dropdown.Toggle className="dropdown">{club}</Dropdown.Toggle>
+                  <Dropdown.Menu>
+                  <Dropdown.Item eventKey="Cap">
+                      Cap
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="Charter">
+                      Charter
+                    </Dropdown.Item>
+                    <Dropdown.Item eventKey="Cloister">Cloister</Dropdown.Item>
+                    <Dropdown.Item eventKey="Colonial">Colonial</Dropdown.Item>
+                    <Dropdown.Item eventKey="Tower">Tower</Dropdown.Item>
+                    <Dropdown.Item eventKey="Tiger Inn">Tiger Inn</Dropdown.Item>
+                    <Dropdown.Item eventKey="Quad">Quad</Dropdown.Item>
+                    <Dropdown.Item eventKey="Terrace">Terrace</Dropdown.Item>
+                    <Dropdown.Item eventKey="Ivy">Ivy</Dropdown.Item>
+                    <Dropdown.Item eventKey="Cannon">Cannon</Dropdown.Item>
+                    <Dropdown.Item eventKey="Cottage">Cottage</Dropdown.Item>
+                  </Dropdown.Menu>
+                </Dropdown>
             </td>
           </tr>
           {rows}

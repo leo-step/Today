@@ -48,7 +48,7 @@ mark {
   color: #ef853b !important;
 }
 
-#dropdown {
+.dropdown {
 
   --bs-btn-bg: #ef853b !important;
   --bs-btn-border-color: #ef853b !important;
@@ -59,6 +59,17 @@ mark {
   --bs-btn-active-bg: #ef853b !important;
   --bs-btn-active-border-color: #ef853b !important;
 
+}
+
+button {
+  --bs-btn-bg: #ef853b !important;
+  --bs-btn-border-color: #ef853b !important;
+
+  --bs-btn-hover-bg: #ef853b !important;
+  --bs-btn-hover-border-color: #ef853b !important;
+
+  --bs-btn-active-bg: #ef853b !important;
+  --bs-btn-active-border-color: #ef853b !important;
 }
 
 .dropdown-item {
@@ -79,7 +90,7 @@ body {
 .street-week {
   padding-left: 10px;
   padding-right: 10px;
-  padding-top: 5px;
+  padding-top: 10px;
   padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
@@ -101,7 +112,7 @@ body {
 .dining-hall {
   padding-left: 10px;
   padding-right: 10px;
-  padding-top: 5px;
+  padding-top: 10px;
   padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
@@ -109,12 +120,29 @@ body {
   margin-left: 100px; */
 }
 
+.banner {
+  position: fixed;
+  bottom: 0px;
+  left: 25%;
+  width: 50%;
+  text-align: center;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 12px;
+  padding-bottom: 5px;
+  border-radius: 15px;
+  background-color: pink;
+}
+
 .divider {
-  padding-top: 10px;
-  padding-bottom: 10px;
   border-bottom-style: solid;
   border-bottom-width: thin;
   font-size: 22px;
+}
+
+.row-content {
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .weather {
@@ -211,9 +239,19 @@ body {
   padding-left: 20px;
   padding-right: 20px;
   padding-top: 10px;
-  padding-bottom: 10px;
+  padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
   /* width: 500px;
   margin-right: 100px; */
 }
+
+/* .dining-hall {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 25px;
+  background-color: #212529;
+  /* width: 500px;
+  margin-left: 100px; */

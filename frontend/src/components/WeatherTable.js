@@ -6,7 +6,7 @@ function WeatherTable(props) {
   const weather = props.data;
 
   return (
-    <div class="weather">
+    <div className={"weather"}>
       <Table variant="dark" borderless>
         <tbody>
           <tr>

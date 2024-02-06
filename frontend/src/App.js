@@ -7,6 +7,7 @@ import Dance from "./components/Dance";
 import PrinceNewsTable from "./components/PrinceNews";
 import DHallTable from "./components/DHallTable";
 import Name from "./components/Name";
+import EditableLabel from "./components/EditableLabel";
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
@@ -19,15 +20,27 @@ function App() {
                       1: {'main': '#978cff', 'accent': '#ffa84b'},
                       2: {'main': '#1aa5ae', 'accent': '#ffa84b'},
                       3: {'main': '#2ba7f9', 'accent': '#f67205'},
-                      4: {'main': '#137d5e', 'accent': '#f2efde'} }
+                      4: {'main': '#137d5e', 'accent': '#f2efde'},
+                      5: {'main': '#137d5e', 'accent': '#f2efde'} }
 
 
   const [data, setData] = useState(null);
   const [colors, setColors] = useState(colorCodes[0]);
-
+  const [selectedWidget, setSelectedWidget] = useState(
+    window.localStorage.getItem("campusWidget") || "prince"
+  );
 
   useEffect(() => {
-    const numBackgrounds = 5;
+    window.localStorage.setItem("campusWidget", selectedWidget);
+  }, [selectedWidget]);
+
+  const campusWidgets = {
+    "prince": <PrinceNewsTable colors = {colors} data={data ? data["prince"] : { articles: [] }} switchTo={setSelectedWidget}/>,
+    "street": <StreetWeek colors = {colors} data={data ? data["dhall"] : null} switchTo={setSelectedWidget} />
+  }
+
+  useEffect(() => {
+    const numBackgrounds = 6;
     const currentTime = moment();
     const i = currentTime.day() % numBackgrounds;
 
@@ -79,14 +92,15 @@ function App() {
   return (
     <Container fluid className="m-0">
       <div className="App" style={{ marginLeft: "2.5%", marginRight: "2.5%" }}>
-        <Row style={{ marginTop: "5%", marginBottom: "7%" }}>
+        <Row style={{ marginTop: "5%", marginBottom: "6%"}}>
           <Col>
             <h1
               className="centered"
               style={{ color: "white", fontSize: "90px" }}
             >
               <b>
-                Good {timeOfDay} <Name />
+                {/* Good {timeOfDay} <Name /> */}
+                Good {timeOfDay} <EditableLabel />
               </b>
             </h1>
             <h1
@@ -102,44 +116,32 @@ function App() {
             <DHallTable colors = {colors} data={data ? data["dhall"] : null} />
           </Col>
           <Col>
-            <StreetWeek colors = {colors} data={data ? data["dhall"] : null} />
-            {/* <Row className="my-4">
+            {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
+            <Row className="my-4">
               <WeatherTable data={data ? data["weather"] : []} />
-            </Row> */}
+            </Row>
 
               {/* <Row className="my-4">
               <Dance />
             </Row> */}
 
-            {/* <Row className="my-4">
+            <Row className="my-4">
               <SneakyLinksTable />
-            </Row> */}
+            </Row>
           </Col>
           <Col>
-            <PrinceNewsTable colors = {colors} data={data ? data["prince"] : { articles: [] }} />
+            {campusWidgets[selectedWidget]}
           </Col>
         </Row>
+        {/* <Row>
+          <Col>
+            <div class="banner">
+              <h4>🎉 Thank you for downloading the extension! 🎉</h4>
+            </div>
+          </Col>
+        </Row> */}
       </div>
     </Container>
-    //     <div className="App">
-
-    //       <header className="App-header">
-    //         <DHallTable data={data ? data["dhall"] : null}></DHallTable>
-
-    //         <Container
-    //           className="App-body"
-    //           style={{ alignItems: "center", maxWidth: "600px" }}
-    //         >
-    //           <WeatherTable data={data ? data["weather"] : []}></WeatherTable>
-    //           <SneakyLinksTable></SneakyLinksTable>
-    //         </Container>
-    //         <PrinceNewsTable
-    //           data={data ? data["prince"] : { articles: [] }}
-    //         ></PrinceNewsTable>
-
-    //       </header>
-    //  </div>
-    //     </div>
   );
 }
 

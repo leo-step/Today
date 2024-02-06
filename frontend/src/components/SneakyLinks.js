@@ -11,7 +11,7 @@ function SneakyLinksTable() {
   };
 
   return (
-    <div class="sneaky-links">
+    <div className="sneaky-links">
       <Table variant="dark" borderless>
         <tbody>
           <tr>
