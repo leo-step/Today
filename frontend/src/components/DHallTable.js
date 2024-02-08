@@ -116,7 +116,7 @@ function DHallTable(props) {
               </tr>
             )}
             {secondSectionKey && secondSection && (
-              <tr className={"divider"} style = {{ borderBottomColor: props.colors.main }}>
+              <tr className={"divider"} style = {{ borderBottomColor: props.colors.accent }}>
                 <td>
                   <div className="row-content">
                     <h4 style={{ fontWeight: "bold" }}>

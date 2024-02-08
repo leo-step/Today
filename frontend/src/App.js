@@ -16,12 +16,10 @@ import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
-  const colorCodes = {0: {'main': '#d86c0d', 'accent': '#4c8300'},
-                      1: {'main': '#978cff', 'accent': '#ffa84b'},
+  const colorCodes = {0: {'main': '#4c8300', 'accent': '#d86c0d'},
+                      1: {'main': '#ffa84b', 'accent': '#978cff'},
                       2: {'main': '#1aa5ae', 'accent': '#ffa84b'},
-                      3: {'main': '#2ba7f9', 'accent': '#f67205'},
-                      4: {'main': '#137d5e', 'accent': '#f2efde'},
-                      5: {'main': '#137d5e', 'accent': '#f2efde'} }
+                      3: {'main': '#f67205', 'accent': '#77c7fb'} }
 
 
   const [data, setData] = useState(null);
@@ -40,7 +38,7 @@ function App() {
   }
 
   useEffect(() => {
-    const numBackgrounds = 6;
+    const numBackgrounds = 4;
     const currentTime = moment();
     const i = currentTime.day() % numBackgrounds;
 
@@ -92,7 +90,7 @@ function App() {
   return (
     <Container fluid className="m-0">
       <div className="App" style={{ marginLeft: "2.5%", marginRight: "2.5%" }}>
-        <Row style={{ marginTop: "5%", marginBottom: "6%"}}>
+        <Row style={{ marginTop: "5%", marginBottom: "7%"}}>
           <Col>
             <h1
               className="centered"
