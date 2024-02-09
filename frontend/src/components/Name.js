@@ -6,18 +6,9 @@ function Name() {
   const [showPopup, setShowPopup] = useState(false);
   
   window.onload = () => {
-    if (window.localStorage.getItem("cancelCount") == null) {
-        window.localStorage.setItem("cancelCount", 0)
-    }
-    let cancelCount = parseInt(window.localStorage.getItem("cancelCount"));
     let currentName = window.localStorage.getItem("name");
-    if ((currentName == null || currentName === "") && cancelCount < 2) {
+    if ((currentName == null || currentName === "")) {
         setShowPopup(true);
-        
-    }
-    if (cancelCount >= 2) {
-        window.localStorage.setItem("name", "");
-        setText("");
     }
   };
 
@@ -28,13 +19,8 @@ function Name() {
   const handleSubmit = (e) => {
       e.preventDefault();
       const name = inputValue;
-      let cancelCount = window.localStorage.getItem("cancelCount") || 0
-      if (name == null || name === "") {
-          cancelCount += 1
-          window.localStorage.setItem("cancelCount", cancelCount);
-      } else {
+      if (!(name == null || name === "")) {
           window.localStorage.setItem("name", name);
-          window.localStorage.setItem("cancelCount", 0);
           setText(name);
           setShowPopup(false);
       }
