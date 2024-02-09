@@ -27,13 +27,6 @@ function DHallTable(props) {
     meal = "Dinner";
   }
 
-  let firstSectionKey = null;
-  let firstSection = null;
-  let secondSectionKey = null;
-  let secondSection = null;
-  let thirdSectionKey = null;
-  let thirdSection = null;
-
   const dhallData = props.data ? props.data[college][meal] : null;
 
   const priority = [
@@ -57,20 +50,26 @@ function DHallTable(props) {
     "Salads"
   ]
 
+  const data = [];
   if (dhallData) {
-    const data = Array(6).fill(null);
-    let i = 0;
-    for (let j = 0; j < priority.length; j += 1) {
-      if (data[data.length-1] != null) break; // all data full
-      if (!(priority[j] in dhallData)) continue; // key not in menu
-      data[i] = priority[j]
-      data[i+1] = dhallData[priority[j]]
-      i += 2
+    for (let i = 0; i < priority.length; i += 1) {
+      if (data.length === 3) break;
+      if (!(priority[i] in dhallData)) continue; // key not in menu
+      data.push({cat: priority[i], items: dhallData[priority[i]].slice(0, 3).join(", ")})
     }
-    [firstSectionKey, firstSection, 
-     secondSectionKey, secondSection,
-     thirdSectionKey, thirdSection] = data;
   }
+
+  const rows = data.map((item, i) => {
+    return <tr className={i === data.length-1 ? 'divider no-divider' : 'divider'} 
+          style = {{ borderBottomColor: props.colors.accent }} key={i}>
+          <td>
+            <div className="row-content">
+              <h4 style={{ fontWeight: "bold" }}>{item.cat}</h4>{" "}
+              {item.items}
+            </div>
+          </td>
+      </tr>
+  });
 
   return (
     <div className={"dining-hall"}>
@@ -104,39 +103,7 @@ function DHallTable(props) {
               </Dropdown>
             </td>
           </tr>
-            {firstSectionKey && firstSection && (
-              <tr className={"divider"} style = {{ borderBottomColor: props.colors.accent }}>
-                <td>
-                  {" "}
-                  <div className="row-content">
-                    <h4 style={{ fontWeight: "bold" }}>{firstSectionKey}</h4>{" "}
-                    {firstSection.slice(0, 3).join(", ")}
-                  </div>
-                </td>
-              </tr>
-            )}
-            {secondSectionKey && secondSection && (
-              <tr className={"divider"} style = {{ borderBottomColor: props.colors.accent }}>
-                <td>
-                  <div className="row-content">
-                    <h4 style={{ fontWeight: "bold" }}>
-                      {secondSectionKey}
-                    </h4>
-                    {secondSection.slice(0, 3).join(", ")}
-                  </div>
-                </td>
-              </tr>
-            )}
-            {thirdSectionKey && thirdSection &&  (
-              <tr className={"divider no-divider"}>
-                <td>
-                  <div className="row-content">
-                    <h4 style={{ fontWeight: "bold" }}>{thirdSectionKey}</h4>
-                    {thirdSection.slice(0, 3).join(", ")}
-                  </div>   
-                </td>
-              </tr>
-            )}
+          {rows}
         </tbody>
       </Table>
     </div>

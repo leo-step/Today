@@ -100,7 +100,7 @@ body {
 
 .street-week::-webkit-scrollbar {
   -webkit-appearance: none;
-  width: 10px;
+  width: 8px;
 }
 
 .street-week::-webkit-scrollbar-thumb {
@@ -116,8 +116,21 @@ body {
   padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
+  height: 400px;
+  overflow-y: scroll;
   /* width: 500px;
   margin-left: 100px; */
+}
+
+.dining-hall::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 8px;
+}
+
+.dining-hall::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background-color: rgba(255,255,255,.4);
+  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
 }
 
 .banner {
