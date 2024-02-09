@@ -48,8 +48,6 @@ function App() {
     );
 
      setColors(colorCodes[i])
-
-
   }, []);
 
   useEffect(() => {
@@ -97,8 +95,8 @@ function App() {
               style={{ color: "white", fontSize: "90px" }}
             >
               <b>
-                {/* Good {timeOfDay} <Name /> */}
-                Good {timeOfDay} <EditableLabel />
+                Good {timeOfDay} <Name />
+                {/* Good {timeOfDay} <EditableLabel /> */}
               </b>
             </h1>
             <h1
