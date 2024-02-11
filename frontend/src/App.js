@@ -44,7 +44,7 @@ function App() {
 
     document.body.setAttribute(
       "style",
-      `background:url(backgrounds/${i}.jpeg) !important; background-size: cover !important; background-repeat: no-repeat !important;`
+      `background-image:url(backgrounds/${i}.jpeg) !important;`
     );
 
      setColors(colorCodes[i])

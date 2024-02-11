@@ -77,15 +77,12 @@ button {
 }
 
 body {
-  background-color: #212529 !important;
+  /* background-color: #212529 !important; */
+  background-size: cover !important; 
+  background-repeat: no-repeat !important; 
+  background-position: center center !important;
+  background-attachment: fixed;
 }
-/* body {
-  background-image: url("images/background.jpeg") !important;
-}
-
-body {
-  background-size: cover;
-} */
 
 .street-week {
   padding-left: 10px;
@@ -94,7 +91,7 @@ body {
   padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
-  height: 400px;
+  max-height: 400px;
   overflow-y: scroll;
 }
 
@@ -137,7 +134,7 @@ body {
   padding-bottom: 5px;
   border-radius: 25px;
   background-color: #212529;
-  height: 400px;
+  max-height: 400px;
   overflow-y: scroll;
   /* width: 500px;
   margin-left: 100px; */
