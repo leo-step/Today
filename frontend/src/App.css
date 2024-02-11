@@ -136,6 +136,7 @@ body {
   background-color: #212529;
   max-height: 400px;
   overflow-y: scroll;
+  min-width: 360px;
   /* width: 500px;
   margin-left: 100px; */
 }
