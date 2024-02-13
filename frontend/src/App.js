@@ -14,6 +14,7 @@ import moment from "moment";
 import { Container, Row, Col } from "react-bootstrap";
 import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Valentines from "./components/Valentines";
 
 function App() {
   const colorCodes = {0: {'main': '#4c8300', 'accent': '#d86c0d'},
@@ -101,8 +102,8 @@ function App() {
               style={{ color: "white", fontSize: "90px" }}
             >
               <b>
-                Good {timeOfDay} <Name />
-                {/* Good {timeOfDay} <EditableLabel /> */}
+                {/* Good {timeOfDay} <Name /> */}
+                Good {timeOfDay} <EditableLabel />
               </b>
             </h1>
             <h1
@@ -119,7 +120,7 @@ function App() {
           </Col>
           <Col>
             {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
-            <Row className="my-4">
+            <Row>
               <WeatherTable data={data ? data["weather"] : []} />
             </Row>
 
@@ -128,7 +129,8 @@ function App() {
             </Row> */}
 
             <Row className="my-4">
-              <SneakyLinksTable />
+              {/* <SneakyLinksTable /> */}
+              <Valentines />
             </Row>
           </Col>
           <Col>

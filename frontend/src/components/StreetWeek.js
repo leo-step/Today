@@ -274,7 +274,7 @@ function StreetWeek(props) {
             style = {{ borderBottomColor: props.colors.accent }} key={i}>
             <td colSpan={3}>
                 <div className="row-content">
-                  <h5>{event["event"]} {event["rsvp"] && "-"} {event["rsvp"] && <a href={event["rsvp"]}>RSVP</a>}</h5>
+                  <h5>{event["event"]} {event["rsvp"] && "-"} {event["rsvp"] && <a href={event["rsvp"]} className="prince-a">RSVP</a>}</h5>
                 </div>
             </td>
         </tr>

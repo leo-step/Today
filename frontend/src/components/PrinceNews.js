@@ -11,7 +11,7 @@ function PrinceNewsTable(props) {
         {articles.length !== 0 && (
           <td colSpan={3}>
             <div className="row-content">
-              <a href={article.link} style={{textDecoration: "none"}}>
+              <a href={article.link} className="prince-a" style={{textDecoration: "none"}}>
                 <b>{article.title}</b>{" "}
               </a>
             </div>
