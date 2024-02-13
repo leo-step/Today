@@ -16,7 +16,7 @@ function Valentines() {
           <tr>
             <td>
               <h5>To our first users, thanks for being the backbone of our extension. 
-                We’re giving out Valentine’s goody bags to say we love you: <br/>
+                We’re giving out Valentine’s goodie bags to say we love you: <br/>
                 <a href="https://forms.gle/oqbKUT4PGEMrfEhP7" className="valentine-a"
                   >Fill out this quick form to get yours.</a>
                 </h5>
