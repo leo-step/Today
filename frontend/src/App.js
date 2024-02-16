@@ -120,7 +120,7 @@ function App() {
           </Col>
           <Col>
             {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
-            <Row>
+            <Row className="my-4">
               <WeatherTable data={data ? data["weather"] : []} />
             </Row>
 
@@ -129,8 +129,8 @@ function App() {
             </Row> */}
 
             <Row className="my-4">
-              {/* <SneakyLinksTable /> */}
-              <Valentines />
+              <SneakyLinksTable />
+              {/* <Valentines /> */}
             </Row>
           </Col>
           <Col>
