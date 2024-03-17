@@ -19,15 +19,15 @@ function Chatbot() {
           </tr> */}
           
           <tr>
-            <td colSpan={1} style={{ width: 140}}>
-              <img alt="Tay" style={{ width: 140}} src={Tay} />
+            <td colSpan={1} style={{ width: 160}}>
+              <img alt="Tay" style={{ width: 160}} src={Tay} />
             </td>
             <td colSpan={2}>
               <Form>
-                <Form.Group className="m-2" style={{ width: 360}}>
-                  <Form.Label style={{fontSize: 24, marginBottom: 12}}>Chat with Tay</Form.Label>
+                <Form.Group className="m-2" style={{ width: 320}}>
+                  <Form.Label style={{fontSize: 36, marginBottom: 12}}>Chat with Tay</Form.Label>
                   <div>
-                    <Form.Control type="text" placeholder="What's on your mind today?" style={{width: 320, float: "left", 
+                    <Form.Control type="text" placeholder="What's on your mind today?" style={{width: 280, float: "left", 
                       borderTopRightRadius: 0, borderBottomRightRadius: 0}}/>
                     <Button style={{float: "right", borderTopLeftRadius: 0, borderBottomLeftRadius: 0}}>↑</Button>
                   </div>
