@@ -18,5 +18,10 @@ def index():
 
     return jsonify(data)
 
+# @app.route("/track")
+# def track():
+#     client = pymongo.MongoClient(os.getenv("DB_CONN"))
+#     db = client[os.getenv("DATABASE")]
+
 if __name__ == "__main__":
     app.run(debug=True)

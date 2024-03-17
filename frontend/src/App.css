@@ -17,6 +17,7 @@ td {
 #weather {
   display: inline-block;
 }
+
 .App-header {
   /* min-height: 100vh; */
   display: flex;
@@ -265,6 +266,18 @@ body {
   padding-right: 10px;
   padding-top: 10px;
   padding-bottom: 10px;
+  border-radius: 25px;
+  background-color: #212529;
+  /* width: 500px;
+  margin: 50px; */
+  font-weight: bold !important;
+}
+
+.tay {
+  font-size: 18px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 10px;
   border-radius: 25px;
   background-color: #212529;
   /* width: 500px;

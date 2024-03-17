@@ -15,6 +15,7 @@ import { Container, Row, Col } from "react-bootstrap";
 import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Valentines from "./components/Valentines";
+import Chatbot from "./components/Chatbot";
 
 function App() {
   const colorCodes = {0: {'main': '#4c8300', 'accent': '#d86c0d'},
@@ -95,15 +96,15 @@ function App() {
   return (
     <Container fluid className="m-0">
       <div className="App" style={{ marginLeft: "2.5%", marginRight: "2.5%" }}>
-        <Row style={{ marginTop: "5%", marginBottom: "7%"}}>
+        <Row style={{ marginTop: "5%", marginBottom: "6%"}}>
           <Col>
             <h1
               className="centered"
               style={{ color: "white", fontSize: "90px" }}
             >
               <b>
-                {/* Good {timeOfDay} <Name /> */}
-                Good {timeOfDay} <EditableLabel />
+                Good {timeOfDay} <Name />
+                {/* Good {timeOfDay} <EditableLabel /> */}
               </b>
             </h1>
             <h1
@@ -121,7 +122,8 @@ function App() {
           <Col>
             {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
             <Row className="my-4">
-              <WeatherTable data={data ? data["weather"] : []} />
+              {/* <WeatherTable data={data ? data["weather"] : []} /> */}
+              <Chatbot/>
             </Row>
 
               {/* <Row className="my-4">
@@ -137,15 +139,14 @@ function App() {
             {campusWidgets[selectedWidget]}
           </Col>
         </Row>
-        {/* <Row>
-          <Col>
-            <div class="banner">
-              <h4>🎉 Thank you for downloading the extension! 🎉</h4>
-            </div>
-          </Col>
-        </Row> */}
       </div>
+      {/* {data && data["banner"] && 
+        <div className="banner">
+        <h4>{data["banner"]}</h4>
+      </div> */}
+      }
     </Container>
+    
   );
 }
 
