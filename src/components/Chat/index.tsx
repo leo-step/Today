@@ -137,7 +137,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                 maxWidth="768px"
                 width="full"
                 marginX="auto"
-                height="85%"
+                height="88%"
                 overflow="auto"
                 ref={overflowRef}
             >
@@ -203,7 +203,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                 </Stack>
             </Stack>
             <Stack
-                height="20%"
+                height="12%"
                 padding={4}
                 backgroundColor="blackAlpha.400"
                 justifyContent="center"
@@ -212,6 +212,7 @@ export const Chat = ({ ...props }: ChatProps) => {
             >
                 <Stack
                     maxWidth="768px"
+                    width="100%"
                 >
                     <Input
                         autoFocus={true}
@@ -232,11 +233,11 @@ export const Chat = ({ ...props }: ChatProps) => {
                             };
                         }}
                     />
-                    <Text
+                    {/* <Text
                         textAlign="center"
                         fontSize="sm"
                         opacity={.5}
-                    >Free Research Preview. Our goal is to make AI systems more natural and safe to interact with. Your feedback will help us improve.</Text>
+                    >Free Research Preview. Our goal is to make AI systems more natural and safe to interact with. Your feedback will help us improve.</Text> */}
                 </Stack>
             </Stack>
         </Stack>
