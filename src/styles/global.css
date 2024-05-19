@@ -22,3 +22,9 @@ body,
 a {
   color: #6868ff !important;
 }
+
+th,
+td {
+  padding: 6px 12px;
+  border: 1px solid white;
+}

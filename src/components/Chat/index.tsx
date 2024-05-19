@@ -20,6 +20,7 @@ import {
     Text
 } from "@chakra-ui/react";
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from "remark-gfm";
 import { Instructions } from "../Layout/Instructions";
 import { useAPI } from "@/store/api";
 
@@ -187,7 +188,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                                         marginTop=".75em !important"
                                         overflow="hidden"
                                     >
-                                        <ReactMarkdown >
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {getMessage()}
                                         </ReactMarkdown>
                                     </Text>
