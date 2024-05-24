@@ -13,9 +13,9 @@ export default function Home() {
             height="full"
             spacing={0}
         >
-            <Sidebar
+            {/* <Sidebar
                 isResponsive={isResponsive}
-            />
+            /> */}
             <Chat />
         </Stack>
     );

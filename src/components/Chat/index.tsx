@@ -238,6 +238,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                         fontSize="sm"
                         opacity={.5}
                     >Free Research Preview. Our goal is to make AI systems more natural and safe to interact with. Your feedback will help us improve.</Text> */}
+                    {/* {"TODO: We might want to say here something about how its not mean for education and to abide by course policy and honor code"} */}
                 </Stack>
             </Stack>
         </Stack>
