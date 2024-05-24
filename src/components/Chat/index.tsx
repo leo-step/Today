@@ -181,6 +181,8 @@ export const Chat = ({ ...props }: ChatProps) => {
                                 >
                                     <Avatar
                                         name={emitter}
+                                        mt={2}
+                                        size="sm"
                                         src={getAvatar()}
                                     />
                                     <Text
