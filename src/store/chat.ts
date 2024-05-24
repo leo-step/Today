@@ -37,34 +37,34 @@ const getSafeSavedChats = () => {
 };
 
 const initialChatState: Chat[] = getSafeSavedChats() || [
-    {
-        id: '1',
-        role: 'About this website',
-        content: [
-            {
-                emitter: "user",
-                message: "What website is this?"
-            },
-            {
-                emitter: "gpt",
-                message: "This website is a clone of the ChatGPT website interface created by @WesleyMaik.\n\nYou can also send commands to the original site, with the help of the official ChatGPT API."
-            }
-        ],
-    },
-    {
-        id: '2',
-        role: 'Follow me 😉',
-        content: [
-            {
-                emitter: "user",
-                message: "Follow me on \nTwitter [@euwesleymaik](https://twitter.com/euwesleymaik)\nInstagram [eumaik_](https://instagram.com/eumaik_)\nGitHub [WesleyMaik](https://github.com/wesleymaik)"
-            },
-            {
-                emitter: "gpt",
-                message: "Thanks!"
-            }
-        ],
-    }
+    // {
+    //     id: '1',
+    //     role: 'About this website',
+    //     content: [
+    //         {
+    //             emitter: "user",
+    //             message: "What website is this?"
+    //         },
+    //         {
+    //             emitter: "gpt",
+    //             message: "This website is a clone of the ChatGPT website interface created by @WesleyMaik.\n\nYou can also send commands to the original site, with the help of the official ChatGPT API."
+    //         }
+    //     ],
+    // },
+    // {
+    //     id: '2',
+    //     role: 'Follow me 😉',
+    //     content: [
+    //         {
+    //             emitter: "user",
+    //             message: "Follow me on \nTwitter [@euwesleymaik](https://twitter.com/euwesleymaik)\nInstagram [eumaik_](https://instagram.com/eumaik_)\nGitHub [WesleyMaik](https://github.com/wesleymaik)"
+    //         },
+    //         {
+    //             emitter: "gpt",
+    //             message: "Thanks!"
+    //         }
+    //     ],
+    // }
 ];
 
 export const useChat = create<UseChatProps>((set, get) => ({
