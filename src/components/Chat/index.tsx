@@ -2,7 +2,7 @@
 import gptAvatar from "@/assets/gpt-avatar.svg";
 import warning from "@/assets/warning.svg";
 import user from "@/assets/user.png";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useChat } from "@/store/chat";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react"
@@ -49,11 +49,6 @@ export const Chat = ({ ...props }: ChatProps) => {
         handleSubmit
     } = useForm<ChatSchema>();
 
-    const overflowRef = useRef<HTMLDivElement>(null);
-    const updateScroll = () => {
-        overflowRef.current?.scrollTo(0, overflowRef.current.scrollHeight);
-    };
-
     const [parentRef] = useAutoAnimate();
 
     const configuration = new Configuration({
@@ -72,7 +67,6 @@ export const Chat = ({ ...props }: ChatProps) => {
     });
 
     const handleAsk = async ({ input: prompt }: ChatSchema) => {
-        updateScroll();
         const sendRequest = (selectedId: string) => {
             setValue("input", "");
 
@@ -94,7 +88,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                             editChat(selectedId, { role: variable });
                         };
                     }
-                    updateScroll();
                 },
                 onError(error) {
                     type Error = {
@@ -114,7 +107,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                         emitter: "error",
                         message
                     });
-                    updateScroll();
                 }
             });
         };
@@ -128,6 +120,16 @@ export const Chat = ({ ...props }: ChatProps) => {
         };
     };
 
+    const AlwaysScrollToBottom = () => {
+        const elementRef = useRef<HTMLDivElement>(null);
+        useEffect(() => {
+            if (elementRef.current) {
+                elementRef.current.scrollIntoView();
+            }
+        });
+        return <div ref={elementRef} />;
+    };
+
     return (
         <Stack
             width="full"
@@ -139,7 +141,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                 marginX="auto"
                 height="88%"
                 overflow="auto"
-                ref={overflowRef}
             >
                 <Stack
                     spacing={2}
@@ -202,6 +203,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                             onClick={(text) => setValue('input', text)}
                         />
                     )}
+                    <AlwaysScrollToBottom />
                 </Stack>
             </Stack>
             <Stack
