@@ -2,15 +2,17 @@ import Table from "react-bootstrap/Table";
 import { Button } from "react-bootstrap";
 import PrinceLogo from "../images/prince.png";
 import React from "react";
+import { useTheme } from "../context/ThemeContext";
 
 function PrinceNewsTable(props: any) {
   const articles = props.data["articles"];
+  const theme = useTheme();
 
   const rows = articles.map((article: any, i: any) => {
     return (
       <tr
         className={i === articles.length - 1 ? "divider no-divider" : "divider"}
-        style={{ borderBottomColor: props.colors.accent }}
+        style={{ borderBottomColor: theme.accent }}
         key={i}
       >
         {articles.length !== 0 && (

@@ -3,11 +3,13 @@ import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import { Button } from "react-bootstrap";
 import React from "react";
+import { useTheme } from "../context/ThemeContext";
 
 function StreetWeek(props: any) {
   const [club, setClub] = useState(
     window.localStorage.getItem("club") || "Cap"
   );
+  const theme = useTheme();
 
   useEffect(() => {
     window.localStorage.setItem("club", club);
@@ -273,7 +275,7 @@ function StreetWeek(props: any) {
         className={
           i === clubData[club].length - 1 ? "divider no-divider" : "divider"
         }
-        style={{ borderBottomColor: props.colors.accent }}
+        style={{ borderBottomColor: theme.accent }}
         key={i}
       >
         <td colSpan={3}>

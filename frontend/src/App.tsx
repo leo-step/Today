@@ -11,27 +11,19 @@ import React, { useState, useEffect } from "react";
 import moment from "moment";
 import { Container, Row, Col } from "react-bootstrap";
 import config from "./config";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
+import { TimeProvider, useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-type ColorScheme = {
-  main: string;
-  accent: string;
-};
-
 function App() {
-  const colorSchemes: ColorScheme[] = [
-    { main: "#4c8300", accent: "#d86c0d" },
-    { main: "#ffa84b", accent: "#978cff" },
-    { main: "#1aa5ae", accent: "#ffa84b" },
-    { main: "#f67205", accent: "#77c7fb" },
-  ];
-
   const [data, setData] = useState(null);
-  const [colors, setColors] = useState(colorSchemes[0]);
   const [selectedWidget, setSelectedWidget] = useState(
     window.localStorage.getItem("campusWidget") || "prince"
   );
+  const theme = useTheme();
+  const timeOfDay = useTime();
 
+  /* TODO: need to refactor this into a its own component that isn't manual */
   useEffect(() => {
     window.localStorage.setItem("campusWidget", selectedWidget);
   }, [selectedWidget]);
@@ -39,33 +31,27 @@ function App() {
   const campusWidgets: { [key: string]: React.ReactElement } = {
     prince: (
       <PrinceNewsTable
-        colors={colors}
         data={data ? data["prince"] : { articles: [] }}
         switchTo={setSelectedWidget}
       />
     ),
     street: (
       <StreetWeek
-        colors={colors}
         data={data ? data["dhall"] : null}
         switchTo={setSelectedWidget}
       />
     ),
   };
 
+  /* TODO: confirm this is working */
   useEffect(() => {
-    const numBackgrounds = 4;
-    const currentTime = moment();
-    const i = currentTime.day() % numBackgrounds;
-
     document.body.setAttribute(
       "style",
-      `background-image:url(backgrounds/${i}.jpeg) !important;`
+      `background-image:url(backgrounds/${theme.background}) !important;`
     );
+  });
 
-    setColors(colorSchemes[i]);
-  }, [data]);
-
+  /* TODO: this whole thing should be put into data storage useContext thing */
   useEffect(() => {
     const fetchData = async () => {
       const data = window.localStorage.getItem("data");
@@ -104,63 +90,53 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const currentDate = new Date();
-  const currentHour = currentDate.getHours();
-
-  let timeOfDay = "night";
-  if (currentHour >= 12 && currentHour < 17) {
-    timeOfDay = "afternoon";
-  } else if (currentHour >= 17 && currentHour < 21) {
-    timeOfDay = "evening";
-  } else if (currentHour >= 5 && currentHour < 12) {
-    timeOfDay = "morning";
-  } // style={{ margin: "100px" }}
-
   return (
-    <Container fluid className="m-0">
-      <div className="App" style={{ marginLeft: "2.5%", marginRight: "2.5%" }}>
-        <Row style={{ marginTop: "5%", marginBottom: "6%" }}>
-          <Col>
-            <h1
-              className="centered"
-              style={{ color: "white", fontSize: "90px" }}
-            >
-              <b>
-                Good {timeOfDay} <Name />
-                {/* Good {timeOfDay} <EditableLabel /> */}
-              </b>
-            </h1>
-            <h1
-              className="centered"
-              style={{ color: "white", fontSize: "50px" }}
-            >
-              <b>{moment().format("dddd") + ", " + moment().format("LL")}</b>
-            </h1>
-          </Col>
-        </Row>
-        <Row className="gx-5">
-          <Col>
-            <DHallTable colors={colors} data={data ? data["dhall"] : null} />
-          </Col>
-          <Col>
-            {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
-            <Row className="my-4">
-              <WeatherTable data={data ? data["weather"] : []} />
+    /* TODO: all these styles need to go into css file */
+    <ThemeProvider>
+      <TimeProvider>
+        <Container fluid className="m-0">
+          <div
+            className="App"
+            style={{ marginLeft: "2.5%", marginRight: "2.5%" }}
+          >
+            <Row style={{ marginTop: "5%", marginBottom: "6%" }}>
+              <Col>
+                <h1
+                  className="centered"
+                  style={{ color: "white", fontSize: "90px" }}
+                >
+                  <b>
+                    Good {timeOfDay} <Name />
+                  </b>
+                </h1>
+                <h1
+                  className="centered"
+                  style={{ color: "white", fontSize: "50px" }}
+                >
+                  <b>
+                    {moment().format("dddd") + ", " + moment().format("LL")}
+                  </b>
+                </h1>
+              </Col>
             </Row>
-
-            {/* <Row className="my-4">
-              <Dance />
-            </Row> */}
-
-            <Row className="my-4">
-              <SneakyLinksTable />
-              {/* <Valentines /> */}
+            <Row className="gx-5">
+              <Col>
+                <DHallTable data={data ? data["dhall"] : null} />
+              </Col>
+              <Col>
+                <Row className="my-4">
+                  <WeatherTable data={data ? data["weather"] : []} />
+                </Row>
+                <Row className="my-4">
+                  <SneakyLinksTable />
+                </Row>
+              </Col>
+              <Col>{campusWidgets[selectedWidget]}</Col>
             </Row>
-          </Col>
-          <Col>{campusWidgets[selectedWidget]}</Col>
-        </Row>
-      </div>
-    </Container>
+          </div>
+        </Container>
+      </TimeProvider>
+    </ThemeProvider>
   );
 }
 

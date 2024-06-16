@@ -1,17 +1,20 @@
 import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
+import { useTheme } from "../context/ThemeContext";
 import React from "react";
 
 function DHallTable(props: any) {
   const [college, setCollege] = useState(
     window.localStorage.getItem("dhall") || "Yeh/NCW"
   );
+  const theme = useTheme();
 
   useEffect(() => {
     window.localStorage.setItem("dhall", college);
   }, [college]);
 
+  /* TODO: refactor into TimeContext */
   const currentDate = new Date();
   const currentDay = currentDate.getDay();
   const currentHour = currentDate.getHours();
@@ -26,6 +29,7 @@ function DHallTable(props: any) {
   } else if (14 <= currentHour && currentHour < 24) {
     meal = "Dinner";
   }
+  /*  */
 
   const dhallData = props.data ? props.data[college][meal] : null;
 
@@ -66,7 +70,7 @@ function DHallTable(props: any) {
     return (
       <tr
         className={i === data.length - 1 ? "divider no-divider" : "divider"}
-        style={{ borderBottomColor: props.colors.accent }}
+        style={{ borderBottomColor: theme.accent }}
         key={i}
       >
         <td>
