@@ -5,16 +5,19 @@ import App from "./App";
 import { DataProvider } from "./context/DataContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { TimeProvider } from "./context/TimeContext";
+import { StorageProvider } from "./context/StorageContext";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
-  <DataProvider>
-    <ThemeProvider>
-      <TimeProvider>
-        <App />
-      </TimeProvider>
-    </ThemeProvider>
-  </DataProvider>
+  <StorageProvider>
+    <DataProvider>
+      <ThemeProvider>
+        <TimeProvider>
+          <App />
+        </TimeProvider>
+      </ThemeProvider>
+    </DataProvider>
+  </StorageProvider>
 );
