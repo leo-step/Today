@@ -1,52 +1,63 @@
 import { useState } from "react";
+import React from "react";
 
 function Name() {
-  const [text, setText] = useState(window.localStorage.getItem("name") || "[name]");
-  const [inputValue, setInputValue] = useState(window.localStorage.getItem("name"));
+  const [text, setText] = useState(
+    window.localStorage.getItem("name") || "[name]"
+  );
+  const [inputValue, setInputValue] = useState(
+    window.localStorage.getItem("name")
+  );
   const [showPopup, setShowPopup] = useState(false);
-  
+
   window.onload = () => {
     let currentName = window.localStorage.getItem("name");
-    if ((currentName == null || currentName === "")) {
-        setShowPopup(true);
+    if (currentName == null || currentName === "") {
+      setShowPopup(true);
     }
   };
 
   const handleInputChange = (e) => {
-      setInputValue(e.target.value);
+    setInputValue(e.target.value);
   };
 
   const handleSubmit = (e) => {
-      e.preventDefault();
-      const name = inputValue;
-      if (!(name == null || name === "")) {
-          window.localStorage.setItem("name", name);
-          setText(name);
-          setShowPopup(false);
-      }
+    e.preventDefault();
+    const name = inputValue;
+    if (!(name == null || name === "")) {
+      window.localStorage.setItem("name", name);
+      setText(name);
+      setShowPopup(false);
+    }
   };
 
   return (
     <span>
-      <span style={{textDecoration: "underline white", 
-                  textDecorationThickness: 3, textUnderlineOffset: 8}}
+      <span
+        style={{
+          textDecoration: "underline white",
+          textDecorationThickness: 3,
+          textUnderlineOffset: 8,
+        }}
         onClick={() => setShowPopup(true)}
       >
-          {text}
+        {text}
       </span>
       {/* <img alt="" style={{ width: 24, marginLeft: 4, marginTop: 54}} src={Pencil} /> */}
       {/* <span style={{fontSize: 24, marginLeft: 8}}>✏️</span> */}
-      {showPopup && <div className="popup">
-        <form onSubmit={handleSubmit}>
-          <label>Please enter your name:&nbsp;&nbsp;</label>
-          <input
+      {showPopup && (
+        <div className="popup">
+          <form onSubmit={handleSubmit}>
+            <label>Please enter your name:&nbsp;&nbsp;</label>
+            <input
               type="text"
               value={inputValue}
               onChange={handleInputChange}
-          />
-          <button type="submit">Submit</button>
-        </form>
-      </div>}
+            />
+            <button type="submit">Submit</button>
+          </form>
+        </div>
+      )}
     </span>
   );
 }

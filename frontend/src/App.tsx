@@ -13,15 +13,22 @@ import { Container, Row, Col } from "react-bootstrap";
 import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
 
+type ColorScheme = {
+  main: string,
+  accent: string
+}
+
 function App() {
-  const colorCodes = {0: {'main': '#4c8300', 'accent': '#d86c0d'},
-                      1: {'main': '#ffa84b', 'accent': '#978cff'},
-                      2: {'main': '#1aa5ae', 'accent': '#ffa84b'},
-                      3: {'main': '#f67205', 'accent': '#77c7fb'} }
+  const colorSchemes: ColorScheme[] = [
+    { main: '#4c8300', accent: '#d86c0d' },
+    { main: '#ffa84b', accent: '#978cff'},
+    { main: '#1aa5ae', accent: '#ffa84b'},
+    { main: '#f67205', accent: '#77c7fb'}
+  ]
 
 
   const [data, setData] = useState(null);
-  const [colors, setColors] = useState(colorCodes[0]);
+  const [colors, setColors] = useState(colorSchemes[0]);
   const [selectedWidget, setSelectedWidget] = useState(
     window.localStorage.getItem("campusWidget") || "prince"
   );
@@ -30,7 +37,7 @@ function App() {
     window.localStorage.setItem("campusWidget", selectedWidget);
   }, [selectedWidget]);
 
-  const campusWidgets = {
+  const campusWidgets: {[key: string]: React.ReactElement} = {
     "prince": <PrinceNewsTable colors = {colors} data={data ? data["prince"] : { articles: [] }} switchTo={setSelectedWidget}/>,
     "street": <StreetWeek colors = {colors} data={data ? data["dhall"] : null} switchTo={setSelectedWidget} />
   }
@@ -45,7 +52,7 @@ function App() {
       `background-image:url(backgrounds/${i}.jpeg) !important;`
     );
 
-     setColors(colorCodes[i])
+     setColors(colorSchemes[i])
   }, [data]);
 
   useEffect(() => {

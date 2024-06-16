@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
+import React from "react";
 
 function EditableLabel() {
-  const [text, setText] = useState(window.localStorage.getItem("name") || "[enter name]");
+  const [text, setText] = useState(
+    window.localStorage.getItem("name") || "[enter name]"
+  );
   const [editing, setEditing] = useState(false);
   const [editor, setEditor] = useState(null);
 
   useEffect(() => {
-    const result = {name: window.localStorage.getItem("name")};
+    const result = { name: window.localStorage.getItem("name") };
     if (result.name) {
       setText(result.name);
     }

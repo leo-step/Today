@@ -1,7 +1,7 @@
 import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
-
+import React from "react";
 
 function DHallTable(props) {
   const [college, setCollege] = useState(
@@ -47,28 +47,35 @@ function DHallTable(props) {
     "Composed Salads",
     "Soup of the Day",
     "Soups",
-    "Salads"
-  ]
+    "Salads",
+  ];
 
   const data = [];
   if (dhallData) {
     for (let i = 0; i < priority.length; i += 1) {
       if (data.length === 3) break;
       if (!(priority[i] in dhallData)) continue; // key not in menu
-      data.push({cat: priority[i], items: dhallData[priority[i]].slice(0, 3).join(", ")})
+      data.push({
+        cat: priority[i],
+        items: dhallData[priority[i]].slice(0, 3).join(", "),
+      });
     }
   }
 
   const rows = data.map((item, i) => {
-    return <tr className={i === data.length-1 ? 'divider no-divider' : 'divider'} 
-          style = {{ borderBottomColor: props.colors.accent }} key={i}>
-          <td>
-            <div className="row-content">
-              <h4 style={{ fontWeight: "bold" }}>{item.cat}</h4>{" "}
-              {item.items}
-            </div>
-          </td>
+    return (
+      <tr
+        className={i === data.length - 1 ? "divider no-divider" : "divider"}
+        style={{ borderBottomColor: props.colors.accent }}
+        key={i}
+      >
+        <td>
+          <div className="row-content">
+            <h4 style={{ fontWeight: "bold" }}>{item.cat}</h4> {item.items}
+          </div>
+        </td>
       </tr>
+    );
   });
 
   return (
@@ -89,7 +96,9 @@ function DHallTable(props) {
                   setCollege(e);
                 }}
               >
-                <Dropdown.Toggle className="dropdown">{college}</Dropdown.Toggle>
+                <Dropdown.Toggle className="dropdown">
+                  {college}
+                </Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item eventKey="Center for Jewish Life">
                     CJL

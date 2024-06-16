@@ -1,4 +1,5 @@
 import Table from "react-bootstrap/Table";
+import React from "react";
 
 function WeatherTable(props) {
   // const weather = [[ 68,  "6 pm",  "☀️" ],  [ 65, "9 pm", "☀️"], [62, "12 am", "⛅️"], [54, "3 am", "🌧"], [50, "6 am", "🌧"]]
@@ -12,7 +13,7 @@ function WeatherTable(props) {
           <tr>
             <td colSpan={3}>
               {" "}
-              <h3 style={{fontWeight: "bold"}}>Weather</h3>{" "}
+              <h3 style={{ fontWeight: "bold" }}>Weather</h3>{" "}
             </td>
             <td colSpan={2} className="centered">
               {" "}
@@ -22,7 +23,7 @@ function WeatherTable(props) {
             </td>
           </tr>
           {weather.length !== 0 && (
-            <tr className="centered weather" >
+            <tr className="centered weather">
               <td> {weather[0][1]}</td>
               <td>{weather[1][1]}</td>
               <td>{weather[2][1]}</td>
