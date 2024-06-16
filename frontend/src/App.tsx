@@ -3,18 +3,15 @@ import WeatherTable from "./components/WeatherTable";
 import StreetWeek from "./components/StreetWeek";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
-import Dance from "./components/Dance";
 import PrinceNewsTable from "./components/PrinceNews";
 import DHallTable from "./components/DHallTable";
 import Name from "./components/Name";
-import EditableLabel from "./components/EditableLabel";
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import { Container, Row, Col } from "react-bootstrap";
 import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Valentines from "./components/Valentines";
 import Chatbot from "./components/Chatbot";
 
 function App() {
@@ -122,8 +119,7 @@ function App() {
           <Col>
             {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
             <Row className="my-4">
-              {/* <WeatherTable data={data ? data["weather"] : []} /> */}
-              <Chatbot/>
+              <WeatherTable data={data ? data["weather"] : []} />
             </Row>
 
               {/* <Row className="my-4">
@@ -140,11 +136,6 @@ function App() {
           </Col>
         </Row>
       </div>
-      {/* {data && data["banner"] && 
-        <div className="banner">
-        <h4>{data["banner"]}</h4>
-      </div> */}
-      }
     </Container>
     
   );
