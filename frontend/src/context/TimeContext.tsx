@@ -6,6 +6,7 @@ type Time = {
   getTimeOfDay: () => string;
   getUTC: () => moment.Moment;
   parseUTC: (timestamp: string) => moment.Moment;
+  getDateString: () => string;
 };
 
 /* TODO: not sure if this is good, because time won't update unless 
@@ -31,6 +32,9 @@ const timeContext: Time = {
   },
   parseUTC: (timestamp: string) => {
     return moment.utc(timestamp);
+  },
+  getDateString: () => {
+    return moment().format("dddd") + ", " + moment().format("LL");
   },
 };
 

@@ -49,7 +49,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
     fetchData();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
-  }, []); // eslint-disable-line
+  }, []);
 
   return <DataContext.Provider value={data}>{children}</DataContext.Provider>;
 };

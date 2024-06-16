@@ -4,15 +4,18 @@ import Dropdown from "react-bootstrap/Dropdown";
 import { Button } from "react-bootstrap";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useStorage } from "../context/StorageContext";
 
 function StreetWeek(props: any) {
-  const [club, setClub] = useState(
-    window.localStorage.getItem("club") || "Cap"
-  );
   const theme = useTheme();
+  const storage = useStorage();
+
+  const [club, setClub] = useState(
+    storage.getLocalStorageDefault("club", "Cap")
+  );
 
   useEffect(() => {
-    window.localStorage.setItem("club", club);
+    storage.setLocalStorage("club", club);
   }, [club]);
 
   const clubData: any = {

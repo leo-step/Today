@@ -3,10 +3,13 @@ import { Button } from "react-bootstrap";
 import PrinceLogo from "../images/prince.png";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
+import { useData } from "../context/DataContext";
 
 function PrinceNewsTable(props: any) {
-  const articles = props.data["articles"];
+  const data = useData();
   const theme = useTheme();
+
+  const articles = data?.prince?.articles || [];
 
   const rows = articles.map((article: any, i: any) => {
     return (
@@ -76,28 +79,6 @@ function PrinceNewsTable(props: any) {
             </td>
           </tr>
           {rows}
-          {/* <tr className="divider" style = {{ borderBottomColor: props.colors.main }}>
-            {articles.length !== 0 && (
-              <td>
-                <div className="row-content">
-                  <a href={articles[1].link} style={{textDecoration: "none"}}>
-                    <b>{articles[1].title}</b>{" "}
-                  </a>
-                </div> 
-              </td>
-            )}
-          </tr>
-          <tr className="divider no-divider">
-            {articles.length !== 0 && (
-              <td>
-                <div className="row-content">
-                  <a href={articles[2].link} style={{textDecoration: "none"}}>
-                    <b>{articles[2].title}</b>{" "}
-                  </a>
-                </div>
-              </td>
-            )}
-          </tr> */}
         </tbody>
       </Table>
     </div>

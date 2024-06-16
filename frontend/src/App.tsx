@@ -7,39 +7,31 @@ import PrinceNewsTable from "./components/PrinceNews";
 import DHallTable from "./components/DHallTable";
 import Name from "./components/Name";
 import React, { useState, useEffect } from "react";
-import moment from "moment";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTheme } from "./context/ThemeContext";
 import { useTime } from "./context/TimeContext";
 import { useData } from "./context/DataContext";
+import { useStorage } from "./context/StorageContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
-  const [selectedWidget, setSelectedWidget] = useState(
-    window.localStorage.getItem("campusWidget") || "prince"
-  );
   const data = useData();
   const theme = useTheme();
   const time = useTime();
+  const storage = useStorage();
+
+  const [selectedWidget, setSelectedWidget] = useState(
+    storage.getLocalStorageDefault("campusWidget", "prince")
+  );
 
   /* TODO: need to refactor this into a its own component that isn't manual */
   useEffect(() => {
-    window.localStorage.setItem("campusWidget", selectedWidget);
+    storage.setLocalStorage("campusWidget", selectedWidget);
   }, [selectedWidget]);
 
   const campusWidgets: { [key: string]: React.ReactElement } = {
-    prince: (
-      <PrinceNewsTable
-        data={data ? data["prince"] : { articles: [] }}
-        switchTo={setSelectedWidget}
-      />
-    ),
-    street: (
-      <StreetWeek
-        data={data ? data["dhall"] : null}
-        switchTo={setSelectedWidget}
-      />
-    ),
+    prince: <PrinceNewsTable switchTo={setSelectedWidget} />,
+    street: <StreetWeek switchTo={setSelectedWidget} />,
   };
 
   /* TODO: confirm this is working */
@@ -68,7 +60,7 @@ function App() {
               className="centered"
               style={{ color: "white", fontSize: "50px" }}
             >
-              <b>{moment().format("dddd") + ", " + moment().format("LL")}</b>
+              <b>{time.getDateString()}</b>
             </h1>
           </Col>
         </Row>
