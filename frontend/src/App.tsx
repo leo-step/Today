@@ -12,7 +12,6 @@ import moment from "moment";
 import { Container, Row, Col } from "react-bootstrap";
 import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Chatbot from "./components/Chatbot";
 
 function App() {
   const colorCodes = {0: {'main': '#4c8300', 'accent': '#d86c0d'},
