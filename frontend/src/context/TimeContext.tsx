@@ -1,28 +1,34 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import moment from "moment";
 
-// const currentDate = new Date();
-// const currentHour = currentDate.getHours();
-/* either use moment or .Date() */
-// TODO: will this update properly throughout the day?
-// TODO: make this into object with multiple properties
+type Time = {
+  getCurrentHour: () => number;
+  getTimeOfDay: () => string;
+};
 
-const currentHour = moment().hour();
+const timeContext: Time = {
+  getCurrentHour: () => {
+    return moment().hour();
+  },
+  getTimeOfDay: () => {
+    const currentHour = timeContext.getCurrentHour();
+    let timeOfDay = "night";
+    if (currentHour >= 12 && currentHour < 17) {
+      timeOfDay = "afternoon";
+    } else if (currentHour >= 17 && currentHour < 21) {
+      timeOfDay = "evening";
+    } else if (currentHour >= 5 && currentHour < 12) {
+      timeOfDay = "morning";
+    }
+    return timeOfDay;
+  },
+};
 
-let timeOfDay = "night";
-if (currentHour >= 12 && currentHour < 17) {
-  timeOfDay = "afternoon";
-} else if (currentHour >= 17 && currentHour < 21) {
-  timeOfDay = "evening";
-} else if (currentHour >= 5 && currentHour < 12) {
-  timeOfDay = "morning";
-}
-
-const TimeContext = createContext<string>(timeOfDay);
+const TimeContext = createContext<Time>(timeContext);
 
 const TimeProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <TimeContext.Provider value={timeOfDay}>{children}</TimeContext.Provider>
+    <TimeContext.Provider value={timeContext}>{children}</TimeContext.Provider>
   );
 };
 

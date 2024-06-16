@@ -10,6 +10,7 @@ import { StorageProvider } from "./context/StorageContext";
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
+// TODO: time provider above storage and data?
 root.render(
   <StorageProvider>
     <DataProvider>

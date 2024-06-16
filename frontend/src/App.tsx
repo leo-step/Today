@@ -20,7 +20,7 @@ function App() {
   );
   const data = useData();
   const theme = useTheme();
-  const timeOfDay = useTime();
+  const time = useTime();
 
   /* TODO: need to refactor this into a its own component that isn't manual */
   useEffect(() => {
@@ -61,7 +61,7 @@ function App() {
               style={{ color: "white", fontSize: "90px" }}
             >
               <b>
-                Good {timeOfDay} <Name />
+                Good {time.getTimeOfDay()} <Name />
               </b>
             </h1>
             <h1

@@ -1,11 +1,11 @@
 import React, { createContext, useContext, ReactNode } from "react";
 
-type StorageContextFunctions = {
+type Storage = {
   getLocalStorage: (key: string) => string | null;
   setLocalStorage: (key: string, data: string) => void;
 };
 
-const storageContext: StorageContextFunctions = {
+const storageContext: Storage = {
   getLocalStorage: (key: string) => {
     return window.localStorage.getItem(key);
   },
@@ -14,7 +14,7 @@ const storageContext: StorageContextFunctions = {
   },
 };
 
-const StorageContext = createContext<StorageContextFunctions>(storageContext);
+const StorageContext = createContext<Storage>(storageContext);
 
 const StorageProvider = ({ children }: { children: ReactNode }) => {
   return (
