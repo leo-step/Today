@@ -6,15 +6,16 @@ import React, {
   ReactNode,
 } from "react";
 import axios from "axios";
-import moment from "moment";
 import config from "../config";
 import { useStorage } from "./StorageContext";
+import { useTime } from "./TimeContext";
 
 const DataContext = createContext<any>(null);
 
 const DataProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState();
   const storage = useStorage();
+  const time = useTime();
 
   // TODO: handle error?
   const requestAndSetData = async () => {
@@ -32,8 +33,8 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
       const parsedData = JSON.parse(data);
       setData(parsedData);
 
-      const currentTime = moment.utc();
-      const requestTime = moment.utc(JSON.parse(data).timestamp);
+      const currentTime = time.getUTC();
+      const requestTime = time.parseUTC(parsedData.timestamp);
       if (
         config.URL === config.PROD || // TODO: change to DEV
         currentTime.hour() !== requestTime.hour() ||

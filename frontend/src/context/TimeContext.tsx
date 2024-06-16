@@ -4,8 +4,12 @@ import moment from "moment";
 type Time = {
   getCurrentHour: () => number;
   getTimeOfDay: () => string;
+  getUTC: () => moment.Moment;
+  parseUTC: (timestamp: string) => moment.Moment;
 };
 
+/* TODO: not sure if this is good, because time won't update unless 
+ component refreshes and calls method */
 const timeContext: Time = {
   getCurrentHour: () => {
     return moment().hour();
@@ -21,6 +25,12 @@ const timeContext: Time = {
       timeOfDay = "morning";
     }
     return timeOfDay;
+  },
+  getUTC: () => {
+    return moment.utc();
+  },
+  parseUTC: (timestamp: string) => {
+    return moment.utc(timestamp);
   },
 };
 

@@ -12,13 +12,13 @@ const root = ReactDOM.createRoot(
 );
 // TODO: time provider above storage and data?
 root.render(
-  <StorageProvider>
-    <DataProvider>
-      <ThemeProvider>
-        <TimeProvider>
+  <TimeProvider>
+    <StorageProvider>
+      <DataProvider>
+        <ThemeProvider>
           <App />
-        </TimeProvider>
-      </ThemeProvider>
-    </DataProvider>
-  </StorageProvider>
+        </ThemeProvider>
+      </DataProvider>
+    </StorageProvider>
+  </TimeProvider>
 );
