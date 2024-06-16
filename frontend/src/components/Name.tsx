@@ -17,11 +17,11 @@ function Name() {
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     setInputValue(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: any) => {
     e.preventDefault();
     const name = inputValue;
     if (!(name == null || name === "")) {
@@ -51,7 +51,7 @@ function Name() {
             <label>Please enter your name:&nbsp;&nbsp;</label>
             <input
               type="text"
-              value={inputValue}
+              value={inputValue as any}
               onChange={handleInputChange}
             />
             <button type="submit">Submit</button>

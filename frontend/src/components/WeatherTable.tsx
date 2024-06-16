@@ -1,7 +1,7 @@
 import Table from "react-bootstrap/Table";
 import React from "react";
 
-function WeatherTable(props) {
+function WeatherTable(props: any) {
   // const weather = [[ 68,  "6 pm",  "☀️" ],  [ 65, "9 pm", "☀️"], [62, "12 am", "⛅️"], [54, "3 am", "🌧"], [50, "6 am", "🌧"]]
 
   const weather = props.data;

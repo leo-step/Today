@@ -14,18 +14,17 @@ import config from "./config";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 type ColorScheme = {
-  main: string,
-  accent: string
-}
+  main: string;
+  accent: string;
+};
 
 function App() {
   const colorSchemes: ColorScheme[] = [
-    { main: '#4c8300', accent: '#d86c0d' },
-    { main: '#ffa84b', accent: '#978cff'},
-    { main: '#1aa5ae', accent: '#ffa84b'},
-    { main: '#f67205', accent: '#77c7fb'}
-  ]
-
+    { main: "#4c8300", accent: "#d86c0d" },
+    { main: "#ffa84b", accent: "#978cff" },
+    { main: "#1aa5ae", accent: "#ffa84b" },
+    { main: "#f67205", accent: "#77c7fb" },
+  ];
 
   const [data, setData] = useState(null);
   const [colors, setColors] = useState(colorSchemes[0]);
@@ -37,10 +36,22 @@ function App() {
     window.localStorage.setItem("campusWidget", selectedWidget);
   }, [selectedWidget]);
 
-  const campusWidgets: {[key: string]: React.ReactElement} = {
-    "prince": <PrinceNewsTable colors = {colors} data={data ? data["prince"] : { articles: [] }} switchTo={setSelectedWidget}/>,
-    "street": <StreetWeek colors = {colors} data={data ? data["dhall"] : null} switchTo={setSelectedWidget} />
-  }
+  const campusWidgets: { [key: string]: React.ReactElement } = {
+    prince: (
+      <PrinceNewsTable
+        colors={colors}
+        data={data ? data["prince"] : { articles: [] }}
+        switchTo={setSelectedWidget}
+      />
+    ),
+    street: (
+      <StreetWeek
+        colors={colors}
+        data={data ? data["dhall"] : null}
+        switchTo={setSelectedWidget}
+      />
+    ),
+  };
 
   useEffect(() => {
     const numBackgrounds = 4;
@@ -52,7 +63,7 @@ function App() {
       `background-image:url(backgrounds/${i}.jpeg) !important;`
     );
 
-     setColors(colorSchemes[i])
+    setColors(colorSchemes[i]);
   }, [data]);
 
   useEffect(() => {
@@ -63,19 +74,28 @@ function App() {
         const currentTime = moment.utc();
         const requestTime = moment.utc(JSON.parse(data).timestamp);
         if (
-          config.URL === config.DEV || currentTime.hour() !== requestTime.hour() ||
+          config.URL === config.DEV ||
+          currentTime.hour() !== requestTime.hour() ||
           !currentTime.isSame(requestTime, "date")
         ) {
-          axios.get(config.URL).then((res) => {
+          try {
+            await axios.get(config.URL).then((res) => {
+              window.localStorage.setItem("data", JSON.stringify(res.data));
+              setData(res.data);
+            });
+          } catch {
+            // any
+          }
+        }
+      } else {
+        try {
+          await axios.get(config.URL).then((res) => {
             window.localStorage.setItem("data", JSON.stringify(res.data));
             setData(res.data);
           });
+        } catch {
+          // any
         }
-      } else {
-        axios.get(config.URL).then((res) => {
-          window.localStorage.setItem("data", JSON.stringify(res.data));
-          setData(res.data);
-        });
       }
     };
     fetchData();
@@ -99,7 +119,7 @@ function App() {
   return (
     <Container fluid className="m-0">
       <div className="App" style={{ marginLeft: "2.5%", marginRight: "2.5%" }}>
-        <Row style={{ marginTop: "5%", marginBottom: "6%"}}>
+        <Row style={{ marginTop: "5%", marginBottom: "6%" }}>
           <Col>
             <h1
               className="centered"
@@ -120,7 +140,7 @@ function App() {
         </Row>
         <Row className="gx-5">
           <Col>
-            <DHallTable colors = {colors} data={data ? data["dhall"] : null} />
+            <DHallTable colors={colors} data={data ? data["dhall"] : null} />
           </Col>
           <Col>
             {/* <StreetWeek colors = {colors} data={data ? data["dhall"] : null} /> */}
@@ -128,7 +148,7 @@ function App() {
               <WeatherTable data={data ? data["weather"] : []} />
             </Row>
 
-              {/* <Row className="my-4">
+            {/* <Row className="my-4">
               <Dance />
             </Row> */}
 
@@ -137,13 +157,10 @@ function App() {
               {/* <Valentines /> */}
             </Row>
           </Col>
-          <Col>
-            {campusWidgets[selectedWidget]}
-          </Col>
+          <Col>{campusWidgets[selectedWidget]}</Col>
         </Row>
       </div>
     </Container>
-    
   );
 }
 

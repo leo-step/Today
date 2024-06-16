@@ -3,10 +3,10 @@ import { Button } from "react-bootstrap";
 import PrinceLogo from "../images/prince.png";
 import React from "react";
 
-function PrinceNewsTable(props) {
+function PrinceNewsTable(props: any) {
   const articles = props.data["articles"];
 
-  const rows = articles.map((article, i) => {
+  const rows = articles.map((article: any, i: any) => {
     return (
       <tr
         className={i === articles.length - 1 ? "divider no-divider" : "divider"}

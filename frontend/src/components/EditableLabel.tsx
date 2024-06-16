@@ -6,7 +6,7 @@ function EditableLabel() {
     window.localStorage.getItem("name") || "[enter name]"
   );
   const [editing, setEditing] = useState(false);
-  const [editor, setEditor] = useState(null);
+  const [editor, setEditor] = useState<React.ReactNode>(null);
 
   useEffect(() => {
     const result = { name: window.localStorage.getItem("name") };
@@ -16,11 +16,11 @@ function EditableLabel() {
     setEditor(
       <input
         type="text"
-        size="8"
-        defaultValue={result.name}
+        size={8}
+        defaultValue={result.name as any}
         onKeyPress={(event) => {
           if (event.key === "Enter") {
-            let enteredValue = event.target.value;
+            let enteredValue = (event.target as any).value;
             setText(enteredValue ? enteredValue : "[enter name]");
             setEditing(false);
             window.localStorage.setItem("name", enteredValue);

@@ -4,7 +4,7 @@ import Dropdown from "react-bootstrap/Dropdown";
 import { Button } from "react-bootstrap";
 import React from "react";
 
-function StreetWeek(props) {
+function StreetWeek(props: any) {
   const [club, setClub] = useState(
     window.localStorage.getItem("club") || "Cap"
   );
@@ -13,7 +13,7 @@ function StreetWeek(props) {
     window.localStorage.setItem("club", club);
   }, [club]);
 
-  const clubData = {
+  const clubData: any = {
     Cap: [
       {
         event: "Monday, 1/29 @ 8pm: Friendship Bracelets with Queer and Gown",
@@ -267,7 +267,7 @@ function StreetWeek(props) {
       },
     ],
   };
-  const rows = clubData[club].map((event, i) => {
+  const rows = clubData[club].map((event: any, i: any) => {
     return (
       <tr
         className={
@@ -337,7 +337,7 @@ function StreetWeek(props) {
           <tr className="centered">
             <td colSpan={3}>
               <Dropdown
-                onSelect={(e) => {
+                onSelect={(e: any) => {
                   setClub(e);
                 }}
               >

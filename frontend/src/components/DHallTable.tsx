@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
 
-function DHallTable(props) {
+function DHallTable(props: any) {
   const [college, setCollege] = useState(
     window.localStorage.getItem("dhall") || "Yeh/NCW"
   );
@@ -92,7 +92,7 @@ function DHallTable(props) {
                 What's for <mark>{meal}</mark>?
               </h3>
               <Dropdown
-                onSelect={(e) => {
+                onSelect={(e: any) => {
                   setCollege(e);
                 }}
               >

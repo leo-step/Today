@@ -1,20 +1,15 @@
-/* global _gaq */
 import Table from "react-bootstrap/Table";
 import React from "react";
 import Disiac from "../images/disiac.jpg";
 
 function Dance() {
-  function trackClick(e) {
-    _gaq.push(["_trackEvent", e.target.id, "clicked"]);
-  }
-
   return (
-    <div class="dance">
+    <div className="dance">
       <Table variant="dark" borderless>
         <tbody>
           <tr>
             <td style={{ textAlign: "center" }}>
-              <a href="https://tickets.princeton.edu/" onClick={trackClick}>
+              <a href="https://tickets.princeton.edu/">
                 <img id="disiac" className="promo" alt="disiac" src={Disiac} />
               </a>
             </td>
