@@ -3,35 +3,41 @@ import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import { useTheme } from "../context/ThemeContext";
 import React from "react";
+import { useStorage } from "../context/StorageContext";
+import { useTime } from "../context/TimeContext";
+import { useData } from "../context/DataContext";
 
-function DHallTable(props: any) {
-  const [college, setCollege] = useState(
-    window.localStorage.getItem("dhall") || "Yeh/NCW"
-  );
+type MealSession = "Breakfast" | "Lunch" | "Dinner";
+type MealItem = {
+  cat: string;
+  items: string;
+};
+
+function DHallTable() {
+  const storage = useStorage();
   const theme = useTheme();
+  const time = useTime();
+  const data = useData();
+
+  const [college, setCollege] = useState(
+    storage.getLocalStorageDefault("dhall", "Yeh/NCW")
+  );
 
   useEffect(() => {
-    window.localStorage.setItem("dhall", college);
+    storage.setLocalStorage("dhall", college);
   }, [college]);
 
-  /* TODO: refactor into TimeContext */
-  const currentDate = new Date();
-  const currentDay = currentDate.getDay();
-  const currentHour = currentDate.getHours();
+  const currentDay = time.getDay();
+  const currentHour = time.getCurrentHour();
 
-  let meal = "Breakfast";
+  let meal: MealSession = "Breakfast";
   if (currentDay === 0 || currentDay === 6) {
     meal = "Lunch";
-  }
-
-  if (11 <= currentHour && currentHour < 14) {
+  } else if (11 <= currentHour && currentHour < 14) {
     meal = "Lunch";
   } else if (14 <= currentHour && currentHour < 24) {
     meal = "Dinner";
   }
-  /*  */
-
-  const dhallData = props.data ? props.data[college][meal] : null;
 
   const priority = [
     "Main Entree",
@@ -54,22 +60,26 @@ function DHallTable(props: any) {
     "Salads",
   ];
 
-  const data = [];
+  const dhallData = data?.dhall?.[college]?.[meal] || null;
+  const orderedData: MealItem[] = [];
+
   if (dhallData) {
     for (let i = 0; i < priority.length; i += 1) {
-      if (data.length === 3) break;
-      if (!(priority[i] in dhallData)) continue; // key not in menu
-      data.push({
+      if (orderedData.length === 3) break;
+      if (!(priority[i] in dhallData)) continue;
+      orderedData.push({
         cat: priority[i],
         items: dhallData[priority[i]].slice(0, 3).join(", "),
       });
     }
   }
 
-  const rows = data.map((item, i) => {
+  const rows = orderedData.map((item, i) => {
     return (
       <tr
-        className={i === data.length - 1 ? "divider no-divider" : "divider"}
+        className={
+          i === orderedData.length - 1 ? "divider no-divider" : "divider"
+        }
         style={{ borderBottomColor: theme.accent }}
         key={i}
       >
@@ -110,7 +120,6 @@ function DHallTable(props: any) {
                   <Dropdown.Item eventKey="Forbes">Forbes</Dropdown.Item>
                   <Dropdown.Item eventKey="Roma">Roma</Dropdown.Item>
                   <Dropdown.Item eventKey="Whitman">Whitman</Dropdown.Item>
-                  {/* <Dropdown.Item eventKey="Wucox">Wucox</Dropdown.Item> */}
                   <Dropdown.Item eventKey="Yeh/NCW">Yeh/NCW</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>

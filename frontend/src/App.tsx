@@ -66,8 +66,7 @@ function App() {
         </Row>
         <Row className="gx-5">
           <Col>
-            {/* TODO: shouldn't need to pass data in as props at all */}
-            <DHallTable data={data ? data["dhall"] : null} />
+            <DHallTable />
           </Col>
           <Col>
             <Row className="my-4">

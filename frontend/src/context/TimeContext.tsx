@@ -1,13 +1,21 @@
 import React, { createContext, useContext, ReactNode } from "react";
 import moment from "moment";
 
+/* TODO: doesn't seem like this is working or updating properly. Also, timezone handling?
+should lock into Princeton's timezone probably, how does moment behave? 
+
+Probably need a arguments for the functions for whether you want Princeton timezone or local */
+
 type Time = {
   getCurrentHour: () => number;
-  getTimeOfDay: () => string;
+  getTimeOfDay: () => TimeOfDay;
   getUTC: () => moment.Moment;
   parseUTC: (timestamp: string) => moment.Moment;
   getDateString: () => string;
+  getDay: () => number;
 };
+
+type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
 /* TODO: not sure if this is good, because time won't update unless 
  component refreshes and calls method */
@@ -17,7 +25,7 @@ const timeContext: Time = {
   },
   getTimeOfDay: () => {
     const currentHour = timeContext.getCurrentHour();
-    let timeOfDay = "night";
+    let timeOfDay: TimeOfDay = "night";
     if (currentHour >= 12 && currentHour < 17) {
       timeOfDay = "afternoon";
     } else if (currentHour >= 17 && currentHour < 21) {
@@ -35,6 +43,9 @@ const timeContext: Time = {
   },
   getDateString: () => {
     return moment().format("dddd") + ", " + moment().format("LL");
+  },
+  getDay: () => {
+    return moment().day();
   },
 };
 
