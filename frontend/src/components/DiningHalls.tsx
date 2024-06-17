@@ -13,6 +13,8 @@ type MealItem = {
   items: string;
 };
 
+const DEFAULT_COLLEGE = "Yeh/NCW";
+
 function DHallTable() {
   const storage = useStorage();
   const theme = useTheme();
@@ -20,7 +22,7 @@ function DHallTable() {
   const data = useData();
 
   const [college, setCollege] = useState(
-    storage.getLocalStorageDefault("dhall", "Yeh/NCW")
+    storage.getLocalStorageDefault("dhall", DEFAULT_COLLEGE)
   );
 
   useEffect(() => {
@@ -106,8 +108,8 @@ function DHallTable() {
                 What's for <mark>{meal}</mark>?
               </h3>
               <Dropdown
-                onSelect={(e: any) => {
-                  setCollege(e);
+                onSelect={(e) => {
+                  setCollege(e || DEFAULT_COLLEGE);
                 }}
               >
                 <Dropdown.Toggle className="dropdown">

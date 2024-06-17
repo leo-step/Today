@@ -8,7 +8,9 @@ function Name() {
   const [text, setText] = useState(
     storage.getLocalStorageDefault("name", "[name]")
   );
-  const [inputValue, setInputValue] = useState(storage.getLocalStorage("name"));
+  const [inputValue, setInputValue] = useState(
+    storage.getLocalStorageDefault("name", "")
+  );
   const [showPopup, setShowPopup] = useState(false);
 
   window.onload = () => {
@@ -18,11 +20,11 @@ function Name() {
     }
   };
 
-  const handleInputChange = (e: any) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = inputValue;
     if (!(name == null || name === "")) {
@@ -50,7 +52,7 @@ function Name() {
             <label>Please enter your name:&nbsp;&nbsp;</label>
             <input
               type="text"
-              value={inputValue as any}
+              value={inputValue}
               onChange={handleInputChange}
             />
             <button type="submit">Submit</button>
