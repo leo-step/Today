@@ -1,10 +1,10 @@
 import "./App.css";
-import WeatherTable from "./components/WeatherTable";
+import WeatherTable from "./components/Weather";
 import StreetWeek from "./components/StreetWeek";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import PrinceNewsTable from "./components/PrinceNews";
-import DHallTable from "./components/DHallTable";
+import DHallTable from "./components/DiningHalls";
 import Name from "./components/Name";
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
