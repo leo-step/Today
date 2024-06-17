@@ -91,9 +91,9 @@ function DHallTable() {
       </tr>
     );
   });
-
+  // TODO: make better behavior when dining hall has no food
   return (
-    <div className={"dining-hall"}>
+    <div className={"dining-hall"} style={{ minHeight: 300 }}>
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered">
