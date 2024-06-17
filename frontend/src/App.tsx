@@ -1,36 +1,19 @@
 import "./App.css";
 import WeatherTable from "./components/Weather";
-import StreetWeek from "./components/StreetWeek";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
-import PrinceNewsTable from "./components/PrinceNews";
 import DHallTable from "./components/DiningHalls";
 import Name from "./components/Name";
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTheme } from "./context/ThemeContext";
 import { useTime } from "./context/TimeContext";
-import { useStorage } from "./context/StorageContext";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Carousel from "./components/Carousel";
 
 function App() {
   const theme = useTheme();
   const time = useTime();
-  const storage = useStorage();
-
-  const [selectedWidget, setSelectedWidget] = useState(
-    storage.getLocalStorageDefault("campusWidget", "prince")
-  );
-
-  /* TODO: need to refactor this into a its own component that isn't manual */
-  useEffect(() => {
-    storage.setLocalStorage("campusWidget", selectedWidget);
-  }, [selectedWidget]);
-
-  const campusWidgets: { [key: string]: React.ReactElement } = {
-    prince: <PrinceNewsTable switchTo={setSelectedWidget} />,
-    street: <StreetWeek switchTo={setSelectedWidget} />,
-  };
 
   /* TODO: confirm this is working */
   useEffect(() => {
@@ -74,7 +57,9 @@ function App() {
               <SneakyLinksTable />
             </Row>
           </Col>
-          <Col>{campusWidgets[selectedWidget]}</Col>
+          <Col>
+            <Carousel />
+          </Col>
         </Row>
       </div>
     </Container>

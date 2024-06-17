@@ -1,16 +1,17 @@
 import Table from "react-bootstrap/Table";
-import { Button } from "react-bootstrap";
 import PrinceLogo from "../images/prince.png";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useData } from "../context/DataContext";
+import { CarouselWidgetProps } from "./Carousel";
+import { ButtonLeft, ButtonRight } from "./CarouselButtons";
 
 type Article = {
   title: string;
   link: string;
 };
 
-function PrinceNewsTable(props: any) {
+function PrinceNewsTable(props: CarouselWidgetProps) {
   const data = useData();
   const theme = useTheme();
 
@@ -38,23 +39,14 @@ function PrinceNewsTable(props: any) {
     );
   });
 
+  // TODO: header title not centered with new carousel buttons
   return (
     <div className="prince">
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered mediumfont">
             <td>
-              <Button
-                style={{
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
-                }}
-                onClick={() => {
-                  props.switchTo("street");
-                }}
-              >
-                &lsaquo;&nbsp;Street
-              </Button>
+              <ButtonLeft {...props} />
             </td>
             <td style={{ width: "100%" }}>
               <h3 style={{ fontWeight: "bold" }}>
@@ -67,18 +59,7 @@ function PrinceNewsTable(props: any) {
               </h3>
             </td>
             <td>
-              <Button
-                style={{
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
-                  visibility: "hidden",
-                }}
-                onClick={() => {
-                  props.switchTo("street");
-                }}
-              >
-                Street&nbsp;&rsaquo;
-              </Button>
+              <ButtonRight {...props} />
             </td>
           </tr>
           {rows}

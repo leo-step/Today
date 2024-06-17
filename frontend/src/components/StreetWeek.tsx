@@ -1,12 +1,13 @@
 import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
-import { Button } from "react-bootstrap";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useStorage } from "../context/StorageContext";
+import { CarouselWidgetProps } from "./Carousel";
+import { ButtonLeft, ButtonRight } from "./CarouselButtons";
 
-function StreetWeek(props: any) {
+function StreetWeek(props: CarouselWidgetProps) {
   const theme = useTheme();
   const storage = useStorage();
 
@@ -303,18 +304,7 @@ function StreetWeek(props: any) {
         <tbody>
           <tr className="centered">
             <td>
-              <Button
-                style={{
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
-                  visibility: "hidden",
-                }}
-                onClick={() => {
-                  props.switchTo("prince");
-                }}
-              >
-                &lsaquo;&nbsp;Prince
-              </Button>
+              <ButtonLeft {...props} />
             </td>
             <td style={{ width: "100%" }}>
               <h3
@@ -326,17 +316,7 @@ function StreetWeek(props: any) {
               </h3>
             </td>
             <td>
-              <Button
-                style={{
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
-                }}
-                onClick={() => {
-                  props.switchTo("prince");
-                }}
-              >
-                Prince&nbsp;&rsaquo;
-              </Button>
+              <ButtonRight {...props} />
             </td>
           </tr>
           <tr className="centered">
