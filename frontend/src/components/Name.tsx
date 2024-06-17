@@ -1,17 +1,18 @@
 import { useState } from "react";
 import React from "react";
+import { useStorage } from "../context/StorageContext";
 
 function Name() {
+  const storage = useStorage();
+
   const [text, setText] = useState(
-    window.localStorage.getItem("name") || "[name]"
+    storage.getLocalStorageDefault("name", "[name]")
   );
-  const [inputValue, setInputValue] = useState(
-    window.localStorage.getItem("name")
-  );
+  const [inputValue, setInputValue] = useState(storage.getLocalStorage("name"));
   const [showPopup, setShowPopup] = useState(false);
 
   window.onload = () => {
-    let currentName = window.localStorage.getItem("name");
+    let currentName = storage.getLocalStorage("name");
     if (currentName == null || currentName === "") {
       setShowPopup(true);
     }
@@ -25,7 +26,7 @@ function Name() {
     e.preventDefault();
     const name = inputValue;
     if (!(name == null || name === "")) {
-      window.localStorage.setItem("name", name);
+      storage.setLocalStorage("name", name);
       setText(name);
       setShowPopup(false);
     }
@@ -43,8 +44,6 @@ function Name() {
       >
         {text}
       </span>
-      {/* <img alt="" style={{ width: 24, marginLeft: 4, marginTop: 54}} src={Pencil} /> */}
-      {/* <span style={{fontSize: 24, marginLeft: 8}}>✏️</span> */}
       {showPopup && (
         <div className="popup">
           <form onSubmit={handleSubmit}>
