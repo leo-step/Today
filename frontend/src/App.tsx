@@ -10,12 +10,10 @@ import React, { useState, useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTheme } from "./context/ThemeContext";
 import { useTime } from "./context/TimeContext";
-import { useData } from "./context/DataContext";
 import { useStorage } from "./context/StorageContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
-  const data = useData();
   const theme = useTheme();
   const time = useTime();
   const storage = useStorage();
@@ -70,7 +68,7 @@ function App() {
           </Col>
           <Col>
             <Row className="my-4">
-              <WeatherTable data={data ? data["weather"] : []} />
+              <WeatherTable />
             </Row>
             <Row className="my-4">
               <SneakyLinksTable />

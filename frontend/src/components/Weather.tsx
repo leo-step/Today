@@ -1,10 +1,39 @@
 import Table from "react-bootstrap/Table";
 import React from "react";
+import { useData } from "../context/DataContext";
 
-function WeatherTable(props: any) {
+type WeatherPoint = {
+  temp: number;
+  time: string;
+  symbol: string;
+};
+
+function WeatherTable() {
   // const weather = [[ 68,  "6 pm",  "☀️" ],  [ 65, "9 pm", "☀️"], [62, "12 am", "⛅️"], [54, "3 am", "🌧"], [50, "6 am", "🌧"]]
+  const data = useData();
 
-  const weather = props.data;
+  // TODO: refactor backend to give this data already formatted
+  const weather: WeatherPoint[] =
+    data?.weather.slice(0, 5).map((point: any) => ({
+      temp: point[0],
+      time: point[1],
+      symbol: point[2],
+    })) || [];
+
+  const temps: number[] = [];
+  const times: string[] = [];
+  const symbols: string[] = [];
+
+  console.log(weather);
+
+  for (let i = 0; i < weather.length; i++) {
+    const { temp, time, symbol } = weather[i];
+    temps.push(temp);
+    times.push(time);
+    symbols.push(symbol);
+  }
+
+  console.log(temps);
 
   return (
     <div className={"weather"}>
@@ -17,40 +46,23 @@ function WeatherTable(props: any) {
             </td>
             <td colSpan={2} className="centered">
               {" "}
-              {/* {weather.length !== 0 && (
-                <p style={{ fontSize: 18 }}>Now: {weather[5]["current"]}˚</p>
-              )} */}
             </td>
           </tr>
-          {weather.length !== 0 && (
-            <tr className="centered weather">
-              <td> {weather[0][1]}</td>
-              <td>{weather[1][1]}</td>
-              <td>{weather[2][1]}</td>
-              <td>{weather[3][1]}</td>
-              <td>{weather[4][1]}</td>
-            </tr>
-          )}
-
-          {weather.length !== 0 && (
-            <tr className="centered emoji">
-              <td> {weather[0][2]}</td>
-              <td>{weather[1][2]}</td>
-              <td>{weather[2][2]}</td>
-              <td>{weather[3][2]}</td>
-              <td>{weather[4][2]}</td>
-            </tr>
-          )}
-
-          {weather.length !== 0 && (
-            <tr className="centered" style={{ fontSize: 15 }}>
-              <td> {weather[0][0]}˚</td>
-              <td>{weather[1][0]}˚</td>
-              <td>{weather[2][0]}˚</td>
-              <td>{weather[3][0]}˚</td>
-              <td>{weather[4][0]}˚</td>
-            </tr>
-          )}
+          <tr className="centered weather">
+            {times.map((time, i) => (
+              <td key={i}>{time}</td>
+            ))}
+          </tr>
+          <tr className="centered emoji">
+            {symbols.map((symbol, i) => (
+              <td key={i}>{symbol}</td>
+            ))}
+          </tr>
+          <tr className="centered" style={{ fontSize: 15 }}>
+            {temps.map((temp, i) => (
+              <td key={i}>{temp}˚</td>
+            ))}
+          </tr>
         </tbody>
       </Table>
     </div>
