@@ -18,6 +18,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const time = useTime();
 
   // TODO: handle error?
+  // TODO: data has any type. is that a problem?
   const requestAndSetData = async () => {
     await axios.get(config.URL).then((res) => {
       storage.setLocalStorage("data", JSON.stringify(res.data));
