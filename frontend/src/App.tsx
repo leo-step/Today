@@ -15,7 +15,7 @@ function App() {
   const theme = useTheme();
   const time = useTime();
 
-  /* TODO: confirm this is working */
+  /* TODO: confirm this is working, move to ThemeProvider? */
   useEffect(() => {
     document.body.setAttribute(
       "style",
@@ -24,7 +24,6 @@ function App() {
   });
 
   return (
-    /* TODO: all these styles need to go into css file */
     <Container fluid className="m-0">
       <div className="App">
         <Row className="name-row">
