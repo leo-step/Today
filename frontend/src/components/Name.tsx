@@ -36,14 +36,7 @@ function Name() {
 
   return (
     <span>
-      <span
-        style={{
-          textDecoration: "underline white",
-          textDecorationThickness: 3,
-          textUnderlineOffset: 8,
-        }}
-        onClick={() => setShowPopup(true)}
-      >
+      <span className="name" onClick={() => setShowPopup(true)}>
         {text}
       </span>
       {showPopup && (

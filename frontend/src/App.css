@@ -55,6 +55,16 @@ td {
   font-weight: bold;
 }
 
+.bold {
+  font-weight: bold !important;
+}
+
+.name {
+  text-decoration: underline white !important;
+  text-decoration-thickness: 3px !important;
+  text-underline-offset: 8px !important;
+}
+
 .date {
   color: white !important;
   font-size: 50px !important;
@@ -167,6 +177,7 @@ body {
   max-height: 420px;
   overflow-y: scroll;
   min-width: 360px;
+  min-height: 300px !important; /* TODO: dont use this */
   /* width: 500px;
   margin-left: 100px; */
 }

@@ -87,7 +87,7 @@ function DHallTable() {
       >
         <td>
           <div className="row-content">
-            <h4 style={{ fontWeight: "bold" }}>{item.cat}</h4> {item.items}
+            <h4 className="bold">{item.cat}</h4> {item.items}
           </div>
         </td>
       </tr>
@@ -95,16 +95,12 @@ function DHallTable() {
   });
   // TODO: make better behavior when dining hall has no food
   return (
-    <div className={"dining-hall"} style={{ minHeight: 300 }}>
+    <div className="dining-hall">
       <Table variant="dark" borderless>
         <tbody>
           <tr className="centered">
             <td>
-              <h3
-                style={{
-                  fontWeight: "bold",
-                }}
-              >
+              <h3 className="bold">
                 What's for <mark>{meal}</mark>?
               </h3>
               <Dropdown
