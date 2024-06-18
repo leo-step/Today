@@ -3,8 +3,7 @@ import PrinceLogo from "../images/prince.png";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useData } from "../context/DataContext";
-import { CarouselWidgetProps } from "./Carousel";
-import { ButtonLeft, ButtonRight } from "./CarouselButtons";
+import { CarouselWidgetProps, CarouselHeader } from "./Carousel";
 
 type Article = {
   title: string;
@@ -44,24 +43,14 @@ function PrinceNewsTable(props: CarouselWidgetProps) {
     <div className="prince">
       <Table variant="dark" borderless>
         <tbody>
-          <tr className="centered mediumfont">
-            <td>
-              <ButtonLeft {...props} />
-            </td>
-            <td style={{ width: "100%" }}>
-              <h3 style={{ fontWeight: "bold" }}>
-                The Prince{" "}
-                <img
-                  alt="Prince"
-                  style={{ width: 40, marginLeft: 5, marginBottom: 5 }}
-                  src={PrinceLogo}
-                />{" "}
-              </h3>
-            </td>
-            <td>
-              <ButtonRight {...props} />
-            </td>
-          </tr>
+          <CarouselHeader props={props}>
+            The Prince{" "}
+            <img
+              alt="Prince"
+              style={{ width: 40, marginLeft: 5, marginBottom: 5 }}
+              src={PrinceLogo}
+            />{" "}
+          </CarouselHeader>
           {rows}
         </tbody>
       </Table>

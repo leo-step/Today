@@ -4,8 +4,7 @@ import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
 import { useTheme } from "../context/ThemeContext";
 import { useStorage } from "../context/StorageContext";
-import { CarouselWidgetProps } from "./Carousel";
-import { ButtonLeft, ButtonRight } from "./CarouselButtons";
+import { CarouselWidgetProps, CarouselHeader } from "./Carousel";
 
 function StreetWeek(props: CarouselWidgetProps) {
   const theme = useTheme();
@@ -302,23 +301,7 @@ function StreetWeek(props: CarouselWidgetProps) {
     <div className="street-week">
       <Table variant="dark" borderless style={{ width: "100%" }}>
         <tbody>
-          <tr className="centered">
-            <td>
-              <ButtonLeft {...props} />
-            </td>
-            <td style={{ width: "100%" }}>
-              <h3
-                style={{
-                  fontWeight: "bold",
-                }}
-              >
-                Street Week!
-              </h3>
-            </td>
-            <td>
-              <ButtonRight {...props} />
-            </td>
-          </tr>
+          <CarouselHeader props={props}>Street Week!</CarouselHeader>
           <tr className="centered">
             <td colSpan={3}>
               <Dropdown

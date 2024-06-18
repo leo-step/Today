@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PrinceNewsTable from "./PrinceNews";
 import StreetWeek from "./StreetWeek";
 import { useStorage } from "../context/StorageContext";
+import { Button } from "react-bootstrap";
 
 type Key = {
   label: string;
@@ -43,3 +44,54 @@ function Carousel() {
 }
 
 export default Carousel;
+
+type HeaderProps = {
+  children: React.ReactNode;
+  props: CarouselWidgetProps;
+};
+
+export const CarouselHeader: React.FC<HeaderProps> = ({ children, props }) => {
+  return (
+    <tr className="centered mediumfont">
+      <td>
+        <ButtonLeft {...props} />
+      </td>
+      <td style={{ width: "100%" }}>
+        <h3 style={{ fontWeight: "bold" }}>{children}</h3>
+      </td>
+      <td>
+        <ButtonRight {...props} />
+      </td>
+    </tr>
+  );
+};
+
+function ButtonLeft(props: CarouselWidgetProps) {
+  return (
+    <Button
+      style={{
+        paddingLeft: "8px",
+        paddingRight: "8px",
+        visibility: props.left ? "visible" : "hidden",
+      }}
+      onClick={props.left?.go}
+    >
+      &lsaquo;&nbsp;{props.left?.label}
+    </Button>
+  );
+}
+
+function ButtonRight(props: CarouselWidgetProps) {
+  return (
+    <Button
+      style={{
+        paddingLeft: "8px",
+        paddingRight: "8px",
+        visibility: props.right ? "visible" : "hidden",
+      }}
+      onClick={props.right?.go}
+    >
+      {props.right?.label}&nbsp;&rsaquo;
+    </Button>
+  );
+}
