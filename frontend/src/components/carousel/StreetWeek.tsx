@@ -2,9 +2,9 @@ import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
-import { useTheme } from "../context/ThemeContext";
-import { useStorage } from "../context/StorageContext";
-import { CarouselWidgetProps, CarouselHeader } from "./Carousel";
+import { useTheme } from "../../context/ThemeContext";
+import { useStorage } from "../../context/StorageContext";
+import { CarouselWidgetProps, CarouselHeader } from "../Carousel";
 
 function StreetWeek(props: CarouselWidgetProps) {
   const theme = useTheme();

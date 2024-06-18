@@ -1,9 +1,9 @@
 import Table from "react-bootstrap/Table";
-import PrinceLogo from "../images/prince.png";
+import PrinceLogo from "../../images/prince.png";
 import React from "react";
-import { useTheme } from "../context/ThemeContext";
-import { useData } from "../context/DataContext";
-import { CarouselWidgetProps, CarouselHeader } from "./Carousel";
+import { useTheme } from "../../context/ThemeContext";
+import { useData } from "../../context/DataContext";
+import { CarouselWidgetProps, CarouselHeader } from "../Carousel";
 
 type Article = {
   title: string;

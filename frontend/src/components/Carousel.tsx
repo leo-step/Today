@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import PrinceNewsTable from "./PrinceNews";
-import StreetWeek from "./StreetWeek";
+import PrinceNewsTable from "./carousel/PrinceNews";
+import StreetWeek from "./carousel/StreetWeek";
 import { useStorage } from "../context/StorageContext";
 import { Button } from "react-bootstrap";
 
