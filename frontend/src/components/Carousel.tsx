@@ -53,13 +53,13 @@ type HeaderProps = {
 export const CarouselHeader: React.FC<HeaderProps> = ({ children, props }) => {
   return (
     <tr className="centered mediumfont">
-      <td>
+      <td style={{ width: "20%" }}>
         <ButtonLeft {...props} />
       </td>
-      <td style={{ width: "100%" }}>
+      <td style={{ width: "60%" }}>
         <h3 style={{ fontWeight: "bold" }}>{children}</h3>
       </td>
-      <td>
+      <td style={{ width: "20%" }}>
         <ButtonRight {...props} />
       </td>
     </tr>
