@@ -1,6 +1,7 @@
 import Table from "react-bootstrap/Table";
 import React from "react";
 import { useData } from "../context/DataContext";
+import WidgetHeader from "./widget/WidgetHeader";
 
 type WeatherPoint = {
   temp: number;
@@ -24,8 +25,6 @@ function WeatherTable() {
   const times: string[] = [];
   const symbols: string[] = [];
 
-  console.log(weather);
-
   for (let i = 0; i < weather.length; i++) {
     const { temp, time, symbol } = weather[i];
     temps.push(temp);
@@ -33,21 +32,11 @@ function WeatherTable() {
     symbols.push(symbol);
   }
 
-  console.log(temps);
-
   return (
     <div className={"weather"}>
       <Table variant="dark" borderless>
         <tbody>
-          <tr>
-            <td colSpan={3}>
-              {" "}
-              <h3 style={{ fontWeight: "bold" }}>Weather</h3>{" "}
-            </td>
-            <td colSpan={2} className="centered">
-              {" "}
-            </td>
-          </tr>
+          <WidgetHeader title={"Weather"} />
           <tr className="centered weather">
             {times.map((time, i) => (
               <td key={i}>{time}</td>
