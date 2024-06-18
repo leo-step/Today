@@ -18,6 +18,11 @@ td {
   display: inline-block;
 }
 
+.App {
+  margin-left: 2.5%;
+  margin-right: 2.5%;
+}
+
 .App-header {
   /* min-height: 100vh; */
   display: flex;
@@ -33,6 +38,23 @@ td {
   flex-direction: column !important;
   font-size: calc(10px + 2vmin);
   color: black;
+}
+
+.name-row {
+  margin-top: 5% !important;
+  margin-bottom: 6% !important;
+}
+
+.greeting {
+  color: white !important;
+  font-size: 90px !important;
+  font-weight: bold;
+}
+
+.date {
+  color: white !important;
+  font-size: 50px !important;
+  font-weight: bold;
 }
 
 .prince-a {
@@ -55,7 +77,6 @@ mark {
 }
 
 .dropdown {
-
   --bs-btn-bg: #ef853b !important;
   --bs-btn-border-color: #ef853b !important;
 
@@ -64,7 +85,6 @@ mark {
 
   --bs-btn-active-bg: #ef853b !important;
   --bs-btn-active-border-color: #ef853b !important;
-
 }
 
 button {
@@ -84,8 +104,8 @@ button {
 
 body {
   /* background-color: #212529 !important; */
-  background-size: cover !important; 
-  background-repeat: no-repeat !important; 
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
   background-position: center center !important;
   background-attachment: fixed;
 }
@@ -108,8 +128,8 @@ body {
 
 .street-week::-webkit-scrollbar-thumb {
   border-radius: 5px;
-  background-color: rgba(255,255,255,.4);
-  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+  background-color: rgba(255, 255, 255, 0.4);
+  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .popup {
@@ -154,8 +174,8 @@ body {
 
 .dining-hall::-webkit-scrollbar-thumb {
   border-radius: 5px;
-  background-color: rgba(255,255,255,.4);
-  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+  background-color: rgba(255, 255, 255, 0.4);
+  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, 0.5);
 }
 
 .banner {
@@ -206,7 +226,6 @@ body {
 }
 
 @media (max-width: 1650px) {
-
   .weather {
     font-size: 15px !important;
   }
@@ -215,8 +234,6 @@ body {
     width: 300px;
   }
 }
-
-
 
 .no-divider {
   border-style: none;
@@ -227,19 +244,19 @@ body {
 }
 
 .divider-green {
-  border-bottom-color: #00FF00;
+  border-bottom-color: #00ff00;
 }
 
 .divider-pink {
-  border-bottom-color: #FF00DD;
+  border-bottom-color: #ff00dd;
 }
 
 .divider-red {
-  border-bottom-color: #FF2A0D;
+  border-bottom-color: #ff2a0d;
 }
 
 .divider-blue {
-  border-bottom-color: #41EAEA;
+  border-bottom-color: #41eaea;
 }
 
 .dance {

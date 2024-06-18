@@ -38,7 +38,6 @@ function PrinceNewsTable(props: CarouselWidgetProps) {
     );
   });
 
-  // TODO: header title not centered with new carousel buttons
   return (
     <div className="prince">
       <Table variant="dark" borderless>
