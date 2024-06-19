@@ -177,7 +177,7 @@ body {
   max-height: 420px;
   overflow-y: scroll;
   min-width: 360px;
-  min-height: 300px !important; /* TODO: dont use this */
+  min-height: 280px !important;
   /* width: 500px;
   margin-left: 100px; */
 }

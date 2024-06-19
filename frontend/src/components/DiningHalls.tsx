@@ -22,6 +22,7 @@ function DHallTable() {
 
   const [college, setCollege] = useState(
     storage.getLocalStorageDefault("dhall", DEFAULT_COLLEGE)
+    // TODO: ensure valid college, have list of valid keys, dynamically generate options for dropdown
   );
 
   useEffect(() => {
@@ -82,7 +83,17 @@ function DHallTable() {
       </WidgetRow>
     );
   });
-  // TODO: make better behavior when dining hall has no food
+
+  if (rows.length === 0) {
+    rows.push(
+      <WidgetRow props={{ index: 0, data: [] }}>
+        <h4 style={{ textAlign: "center", marginTop: 36 }}>
+          Dining Hall Closed
+        </h4>
+      </WidgetRow>
+    );
+  }
+
   return (
     <div className="dining-hall">
       <Table variant="dark" borderless>

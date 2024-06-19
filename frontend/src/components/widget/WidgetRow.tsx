@@ -17,7 +17,7 @@ export const WidgetRow: React.FC<RowProps> = ({ children, props }) => {
 
   return (
     <tr
-      className={index === data.length - 1 ? "divider no-divider" : "divider"}
+      className={index >= data.length - 1 ? "divider no-divider" : "divider"}
       style={{ borderBottomColor: theme.accent }}
       key={index}
     >
