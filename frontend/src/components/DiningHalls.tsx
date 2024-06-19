@@ -33,6 +33,7 @@ function DHallTable() {
 
   let meal: MealSession = "Breakfast";
   if (currentDay === 0 || currentDay === 6) {
+    // TODO: use enums to replace the numbers with legible stuff
     meal = "Lunch";
   } else if (11 <= currentHour && currentHour < 14) {
     meal = "Lunch";
