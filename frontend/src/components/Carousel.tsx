@@ -19,18 +19,6 @@ type CarouselWidgetsDict = { [key: string]: React.ReactElement };
 function Carousel() {
   const storage = useStorage();
 
-  const [selectedWidget, setSelectedWidget] = useState(
-    // TODO: how do we assert that the options we retrieve are valid?
-    // e.g. if we delete a widget from the carousel, but then someone was set on it,
-    // the app will break because the key will not be found. need some defensive
-    // behavior implemented.
-    storage.getLocalStorageDefault("campusWidget", "prince")
-  );
-
-  useEffect(() => {
-    storage.setLocalStorage("campusWidget", selectedWidget);
-  }, [selectedWidget]);
-
   const key = (key: string, label: string): Key => {
     return { label, go: () => setSelectedWidget(key) };
   };
@@ -39,6 +27,15 @@ function Carousel() {
     prince: <PrinceNewsTable left={key("street", "Street")} />,
     street: <StreetWeek right={key("prince", "Prince")} />,
   };
+  const validResults = Object.keys(carouselWidgets);
+
+  const [selectedWidget, setSelectedWidget] = useState(
+    storage.getLocalStorageDefault("campusWidget", "prince", validResults)
+  );
+
+  useEffect(() => {
+    storage.setLocalStorage("campusWidget", selectedWidget);
+  }, [selectedWidget]);
 
   return carouselWidgets[selectedWidget];
 }

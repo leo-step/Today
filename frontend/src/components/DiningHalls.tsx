@@ -8,21 +8,34 @@ import { useData } from "../context/DataContext";
 import { WidgetRow } from "./widget/WidgetRow";
 
 type MealSession = "Breakfast" | "Lunch" | "Dinner";
+
 type MealItem = {
   cat: string;
   items: string;
 };
 
-const DEFAULT_COLLEGE = "Yeh/NCW";
+type DiningHall = {
+  key: string;
+  label: string;
+};
+
+const DINING_HALLS: DiningHall[] = [
+  { key: "Yeh/NCW", label: "Yeh/NCW" },
+  { key: "Forbes", label: "Forbes" },
+  { key: "Roma", label: "Roma" },
+  { key: "Whitman", label: "Whitman" },
+  { key: "Center for Jewish Life", label: "CJL" },
+];
+const DEFAULT_DHALL = DINING_HALLS[0].key;
 
 function DHallTable() {
   const storage = useStorage();
   const time = useTime();
   const data = useData();
+  const validResults = DINING_HALLS.map((diningHall) => diningHall.key);
 
   const [college, setCollege] = useState(
-    storage.getLocalStorageDefault("dhall", DEFAULT_COLLEGE)
-    // TODO: ensure valid college, have list of valid keys, dynamically generate options for dropdown
+    storage.getLocalStorageDefault("dhall", DEFAULT_DHALL, validResults)
   );
 
   useEffect(() => {
@@ -86,7 +99,7 @@ function DHallTable() {
 
   if (rows.length === 0) {
     rows.push(
-      <WidgetRow props={{ index: 0, data: [] }}>
+      <WidgetRow key={0} props={{ index: 0, data: [] }}>
         <h4 style={{ textAlign: "center", marginTop: 36 }}>
           Dining Hall Closed
         </h4>
@@ -105,20 +118,21 @@ function DHallTable() {
               </h3>
               <Dropdown
                 onSelect={(e) => {
-                  setCollege(e || DEFAULT_COLLEGE);
+                  setCollege(e || DEFAULT_DHALL);
                 }}
               >
                 <Dropdown.Toggle className="dropdown">
                   {college}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
-                  <Dropdown.Item eventKey="Center for Jewish Life">
-                    CJL
-                  </Dropdown.Item>
-                  <Dropdown.Item eventKey="Forbes">Forbes</Dropdown.Item>
-                  <Dropdown.Item eventKey="Roma">Roma</Dropdown.Item>
-                  <Dropdown.Item eventKey="Whitman">Whitman</Dropdown.Item>
-                  <Dropdown.Item eventKey="Yeh/NCW">Yeh/NCW</Dropdown.Item>
+                  {DINING_HALLS.map((diningHall) => (
+                    <Dropdown.Item
+                      key={diningHall.key}
+                      eventKey={diningHall.key}
+                    >
+                      {diningHall.label}
+                    </Dropdown.Item>
+                  ))}
                 </Dropdown.Menu>
               </Dropdown>
             </td>

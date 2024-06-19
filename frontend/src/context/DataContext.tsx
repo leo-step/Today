@@ -18,7 +18,7 @@ type Backoff = {
 };
 
 const MAX_BACKOFF_TICKS = 32;
-const TICK_INTERVAL = 1000;
+const TICK_INTERVAL = 5000;
 
 const DataProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState(); // TODO: is data updating while tab is open for a while?
@@ -26,8 +26,6 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const time = useTime();
   let backoff: Backoff = { ticks: 0, retries: 0 };
 
-  // TODO: data has any type. is that a problem? Also test everything in this file
-  // and decide on proper values for constants like tick interval (1000 too short for dev?) and backoff
   const requestAndSetData = async () => {
     await axios.get(config.URL).then((res) => {
       storage.setLocalStorage("data", JSON.stringify(res.data));

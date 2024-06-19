@@ -9,14 +9,6 @@ import { WidgetRow } from "../widget/WidgetRow";
 function StreetWeek(props: CarouselWidgetProps) {
   const storage = useStorage();
 
-  const [club, setClub] = useState(
-    storage.getLocalStorageDefault("club", "Cap")
-  );
-
-  useEffect(() => {
-    storage.setLocalStorage("club", club);
-  }, [club]);
-
   const clubData: any = {
     Cap: [
       {
@@ -271,6 +263,16 @@ function StreetWeek(props: CarouselWidgetProps) {
       },
     ],
   };
+  const validResults = Object.keys(clubData);
+
+  const [club, setClub] = useState(
+    storage.getLocalStorageDefault("club", "Cap", validResults)
+  );
+
+  useEffect(() => {
+    storage.setLocalStorage("club", club);
+  }, [club]);
+
   const rows = clubData[club].map((event: any, i: any) => {
     return (
       <WidgetRow key={i} props={{ index: i, data: clubData[club] }}>
