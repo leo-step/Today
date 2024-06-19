@@ -29,9 +29,9 @@ function App() {
         <Row className="name-row">
           <Col>
             <h1 className="centered greeting">
-              Good {time.getTimeOfDay()} <Name />
+              Good {time.timeOfDay} <Name />
             </h1>
-            <h1 className="centered date">{time.getDateString()}</h1>
+            <h1 className="centered date">{time.dateString}</h1>
           </Col>
         </Row>
         <Row className="gx-5">

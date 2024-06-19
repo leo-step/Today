@@ -17,7 +17,7 @@ function PrinceNewsTable(props: CarouselWidgetProps) {
 
   const rows = articles.map((article, i) => {
     return (
-      <WidgetRow props={{ index: i, data: articles }}>
+      <WidgetRow key={i} props={{ index: i, data: articles }}>
         <a
           href={article.link}
           className="prince-a"

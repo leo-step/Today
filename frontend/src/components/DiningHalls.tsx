@@ -28,8 +28,8 @@ function DHallTable() {
     storage.setLocalStorage("dhall", college);
   }, [college]);
 
-  const currentDay = time.getDay();
-  const currentHour = time.getCurrentHour();
+  const currentDay = time.day;
+  const currentHour = time.currentHour;
 
   let meal: MealSession = "Breakfast";
   if (currentDay === 0 || currentDay === 6) {
@@ -78,7 +78,7 @@ function DHallTable() {
 
   const rows = orderedData.map((item, i) => {
     return (
-      <WidgetRow props={{ index: i, data: orderedData }}>
+      <WidgetRow key={i} props={{ index: i, data: orderedData }}>
         <h4 className="bold">{item.cat}</h4> {item.items}
       </WidgetRow>
     );

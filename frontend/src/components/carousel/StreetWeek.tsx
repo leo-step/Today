@@ -273,7 +273,7 @@ function StreetWeek(props: CarouselWidgetProps) {
   };
   const rows = clubData[club].map((event: any, i: any) => {
     return (
-      <WidgetRow props={{ index: i, data: clubData[club] }}>
+      <WidgetRow key={i} props={{ index: i, data: clubData[club] }}>
         <h5>
           {event["event"]} {event["rsvp"] && "-"}{" "}
           {event["rsvp"] && (
