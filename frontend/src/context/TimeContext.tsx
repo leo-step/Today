@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, ReactNode } from "react";
 import moment from "moment";
 
 /* TODO: doesn't seem like this is working or updating properly. Also, timezone handling?
@@ -30,6 +24,7 @@ type Time = {
   parseUTC: (timestamp: string) => moment.Moment;
   dateString: string;
   day: number;
+  refresh?: () => void;
 };
 
 /* TODO: not sure if this is good, because time won't update unless 
@@ -75,14 +70,8 @@ const TimeContext = createContext<Time>(createTimeContext());
 
 const TimeProvider = ({ children }: { children: ReactNode }) => {
   const [time, setTime] = useState<Time>(createTimeContext());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(createTimeContext());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const refreshTime = () => setTime(createTimeContext());
+  time.refresh = refreshTime;
 
   return <TimeContext.Provider value={time}>{children}</TimeContext.Provider>;
 };

@@ -27,6 +27,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchData = async () => {
+    time.refresh?.();
     const data = storage.getLocalStorage("data");
     if (!data) {
       await requestAndSetData();
@@ -48,7 +49,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 1000);
     return () => clearInterval(interval);
   }, []);
 
