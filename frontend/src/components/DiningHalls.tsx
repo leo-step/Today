@@ -28,8 +28,8 @@ function DHallTable() {
     storage.setLocalStorage("dhall", college);
   }, [college]);
 
-  const currentDay = time.day;
-  const currentHour = time.currentHour;
+  const currentDay = time.dayPrinceton;
+  const currentHour = time.currentHourPrinceton;
 
   let meal: MealSession = "Breakfast";
   if (currentDay === 0 || currentDay === 6) {

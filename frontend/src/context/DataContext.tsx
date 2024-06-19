@@ -50,6 +50,8 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 1000);
+    // TODO: is this bad? if endpoint goes down then infinite spam
+    // need exponential backoff
     return () => clearInterval(interval);
   }, []);
 

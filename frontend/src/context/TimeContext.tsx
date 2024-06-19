@@ -1,35 +1,31 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import moment from "moment";
+import moment from "moment-timezone";
 
 /* TODO: doesn't seem like this is working or updating properly. Also, timezone handling?
 should lock into Princeton's timezone probably, how does moment behave? 
 
 Probably need a arguments for the functions for whether you want Princeton timezone or local */
 
-// type Time = {
-//   getCurrentHour: () => number;
-//   getTimeOfDay: () => TimeOfDay;
-//   getUTC: () => moment.Moment;
-//   parseUTC: (timestamp: string) => moment.Moment;
-//   getDateString: () => string;
-//   getDay: () => number;
-// };
-
 type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
 type Time = {
   currentHour: number;
+  currentHourPrinceton: number;
   timeOfDay: TimeOfDay;
   getUTC: () => moment.Moment;
   parseUTC: (timestamp: string) => moment.Moment;
   dateString: string;
   day: number;
+  dayPrinceton: number;
   refresh?: () => void;
 };
 
-/* TODO: not sure if this is good, because time won't update unless 
- component refreshes and calls method */
-const getCurrentHour = () => {
+const PRINCETON_TZ = "America/New_York";
+
+const getCurrentHour = (timezone?: string) => {
+  if (timezone) {
+    return moment().tz(timezone).hour();
+  }
   return moment().hour();
 };
 const getTimeOfDay = () => {
@@ -53,17 +49,22 @@ const parseUTC = (timestamp: string) => {
 const getDateString = () => {
   return moment().format("dddd") + ", " + moment().format("LL");
 };
-const getDay = () => {
+const getDay = (timezone?: string) => {
+  if (timezone) {
+    return moment().tz(timezone).day();
+  }
   return moment().day();
 };
 
 const createTimeContext = (): Time => ({
   currentHour: getCurrentHour(),
+  currentHourPrinceton: getCurrentHour(PRINCETON_TZ),
   timeOfDay: getTimeOfDay(),
   getUTC: getUTC,
   parseUTC: parseUTC,
   dateString: getDateString(),
   day: getDay(),
+  dayPrinceton: getDay(PRINCETON_TZ),
 });
 
 const TimeContext = createContext<Time>(createTimeContext());
