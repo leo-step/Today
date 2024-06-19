@@ -1,6 +1,43 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import moment from "moment-timezone";
 
+enum Hours {
+  _1AM = 1,
+  _2AM,
+  _3AM,
+  _4AM,
+  _5AM,
+  _6AM,
+  _7AM,
+  _8AM,
+  _9AM,
+  _10AM,
+  _11AM,
+  _12PM,
+  _1PM,
+  _2PM,
+  _3PM,
+  _4PM,
+  _5PM,
+  _6PM,
+  _7PM,
+  _8PM,
+  _9PM,
+  _10PM,
+  _11PM,
+  _12AM,
+}
+
+enum Days {
+  Sunday = 0,
+  Monday,
+  Tuesday,
+  Wednesday,
+  Thursday,
+  Friday,
+  Saturday,
+}
+
 type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
 type Time = {
@@ -76,4 +113,4 @@ const useTime = () => {
   return useContext(TimeContext);
 };
 
-export { TimeProvider, useTime };
+export { TimeProvider, useTime, Hours, Days };

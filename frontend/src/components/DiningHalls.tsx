@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
 import { useStorage } from "../context/StorageContext";
-import { useTime } from "../context/TimeContext";
+import { useTime, Hours, Days } from "../context/TimeContext";
 import { useData } from "../context/DataContext";
 import { WidgetRow } from "./widget/WidgetRow";
 
@@ -28,16 +28,15 @@ function DHallTable() {
     storage.setLocalStorage("dhall", college);
   }, [college]);
 
-  const currentDay = time.dayPrinceton;
-  const currentHour = time.currentHourPrinceton;
+  const currentDay = time.day;
+  const currentHour = time.currentHour;
 
   let meal: MealSession = "Breakfast";
-  if (currentDay === 0 || currentDay === 6) {
-    // TODO: use enums to replace the numbers with legible stuff
+  if (currentDay === Days.Saturday || currentDay === Days.Sunday) {
     meal = "Lunch";
-  } else if (11 <= currentHour && currentHour < 14) {
+  } else if (Hours._11AM <= currentHour && currentHour < Hours._2PM) {
     meal = "Lunch";
-  } else if (14 <= currentHour && currentHour < 24) {
+  } else if (Hours._2PM <= currentHour && currentHour < Hours._12AM) {
     meal = "Dinner";
   }
 
