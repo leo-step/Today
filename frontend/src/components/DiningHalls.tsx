@@ -1,11 +1,11 @@
 import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
-import { useTheme } from "../context/ThemeContext";
 import React from "react";
 import { useStorage } from "../context/StorageContext";
 import { useTime } from "../context/TimeContext";
 import { useData } from "../context/DataContext";
+import { WidgetRow } from "./widget/WidgetRow";
 
 type MealSession = "Breakfast" | "Lunch" | "Dinner";
 type MealItem = {
@@ -17,7 +17,6 @@ const DEFAULT_COLLEGE = "Yeh/NCW";
 
 function DHallTable() {
   const storage = useStorage();
-  const theme = useTheme();
   const time = useTime();
   const data = useData();
 
@@ -78,19 +77,9 @@ function DHallTable() {
 
   const rows = orderedData.map((item, i) => {
     return (
-      <tr
-        className={
-          i === orderedData.length - 1 ? "divider no-divider" : "divider"
-        }
-        style={{ borderBottomColor: theme.accent }}
-        key={i}
-      >
-        <td>
-          <div className="row-content">
-            <h4 className="bold">{item.cat}</h4> {item.items}
-          </div>
-        </td>
-      </tr>
+      <WidgetRow props={{ index: i, data: orderedData }}>
+        <h4 className="bold">{item.cat}</h4> {item.items}
+      </WidgetRow>
     );
   });
   // TODO: make better behavior when dining hall has no food

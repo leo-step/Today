@@ -2,12 +2,11 @@ import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
-import { useTheme } from "../../context/ThemeContext";
 import { useStorage } from "../../context/StorageContext";
 import { CarouselWidgetProps, CarouselHeader } from "../Carousel";
+import { WidgetRow } from "../widget/WidgetRow";
 
 function StreetWeek(props: CarouselWidgetProps) {
-  const theme = useTheme();
   const storage = useStorage();
 
   const [club, setClub] = useState(
@@ -274,26 +273,16 @@ function StreetWeek(props: CarouselWidgetProps) {
   };
   const rows = clubData[club].map((event: any, i: any) => {
     return (
-      <tr
-        className={
-          i === clubData[club].length - 1 ? "divider no-divider" : "divider"
-        }
-        style={{ borderBottomColor: theme.accent }}
-        key={i}
-      >
-        <td colSpan={3}>
-          <div className="row-content">
-            <h5>
-              {event["event"]} {event["rsvp"] && "-"}{" "}
-              {event["rsvp"] && (
-                <a href={event["rsvp"]} className="prince-a">
-                  RSVP
-                </a>
-              )}
-            </h5>
-          </div>
-        </td>
-      </tr>
+      <WidgetRow props={{ index: i, data: clubData[club] }}>
+        <h5>
+          {event["event"]} {event["rsvp"] && "-"}{" "}
+          {event["rsvp"] && (
+            <a href={event["rsvp"]} className="prince-a">
+              RSVP
+            </a>
+          )}
+        </h5>
+      </WidgetRow>
     );
   });
 
