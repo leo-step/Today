@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import moment from "moment-timezone";
 
-/* TODO: doesn't seem like this is working or updating properly. Also, timezone handling?
-should lock into Princeton's timezone probably, how does moment behave? 
-
-Probably need a arguments for the functions for whether you want Princeton timezone or local */
-
 type TimeOfDay = "morning" | "afternoon" | "evening" | "night";
 
 type Time = {

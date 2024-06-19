@@ -4,24 +4,14 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import DHallTable from "./components/DiningHalls";
 import Name from "./components/Name";
-import React, { useEffect } from "react";
+import React from "react";
 import { Container, Row, Col } from "react-bootstrap";
-import { useTheme } from "./context/ThemeContext";
 import { useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Carousel from "./components/Carousel";
 
 function App() {
-  const theme = useTheme();
   const time = useTime();
-
-  /* TODO: confirm this is working, move to ThemeProvider? */
-  useEffect(() => {
-    document.body.setAttribute(
-      "style",
-      `background-image:url(backgrounds/${theme.background}) !important;`
-    );
-  });
 
   return (
     <Container fluid className="m-0">

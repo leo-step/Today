@@ -1,5 +1,5 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import moment from "moment";
+import { useTime } from "./TimeContext";
 
 type Theme = {
   main: string;
@@ -14,11 +14,20 @@ const themes: Theme[] = [
   { main: "#f67205", accent: "#77c7fb", background: "3.jpeg" },
 ];
 
-const theme = themes[moment().day() % themes.length];
+let theme = themes[0];
 
 const ThemeContext = createContext<Theme>(theme);
 
 const ThemeProvider = ({ children }: { children: ReactNode }) => {
+  const time = useTime();
+
+  theme = themes[time.day % themes.length];
+
+  document.body.setAttribute(
+    "style",
+    `background-image:url(backgrounds/${theme.background}) !important;`
+  );
+
   return (
     <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
   );
