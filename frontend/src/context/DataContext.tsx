@@ -12,46 +12,65 @@ import { useTime } from "./TimeContext";
 
 const DataContext = createContext<any>(null);
 
+type Backoff = {
+  ticks: number;
+  retries: number;
+};
+
+const MAX_BACKOFF_TICKS = 32;
+const TICK_INTERVAL = 1000;
+
 const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [data, setData] = useState();
+  const [data, setData] = useState(); // TODO: is data updating while tab is open for a while?
   const storage = useStorage();
   const time = useTime();
+  let backoff: Backoff = { ticks: 0, retries: 0 };
 
-  // TODO: handle error?
-  // TODO: data has any type. is that a problem?
+  // TODO: data has any type. is that a problem? Also test everything in this file
+  // and decide on proper values for constants like tick interval (1000 too short for dev?) and backoff
   const requestAndSetData = async () => {
     await axios.get(config.URL).then((res) => {
       storage.setLocalStorage("data", JSON.stringify(res.data));
       setData(res.data);
+      backoff = { ticks: 0, retries: 0 };
     });
   };
 
   const fetchData = async () => {
     time.refresh?.();
-    const data = storage.getLocalStorage("data");
-    if (!data) {
-      await requestAndSetData();
-    } else {
-      const parsedData = JSON.parse(data);
-      setData(parsedData);
-
-      const currentTime = time.getUTC();
-      const requestTime = time.parseUTC(parsedData.timestamp);
-      if (
-        config.URL === config.PROD || // TODO: change to DEV
-        currentTime.hour() !== requestTime.hour() ||
-        !currentTime.isSame(requestTime, "date")
-      ) {
+    if (backoff.ticks > 0) {
+      backoff.ticks -= 1;
+      return;
+    }
+    try {
+      const data = storage.getLocalStorage("data");
+      if (!data) {
         await requestAndSetData();
+      } else {
+        const parsedData = JSON.parse(data);
+        setData(parsedData);
+
+        const currentTime = time.getUTC();
+        const requestTime = time.parseUTC(parsedData.timestamp);
+        if (
+          config.URL === config.DEV ||
+          currentTime.hour() !== requestTime.hour() ||
+          !currentTime.isSame(requestTime, "date")
+        ) {
+          await requestAndSetData();
+        }
       }
+    } catch {
+      backoff = {
+        ticks: Math.min(2 ** backoff.retries, MAX_BACKOFF_TICKS),
+        retries: backoff.retries + 1,
+      };
     }
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 1000);
-    // TODO: is this bad? if endpoint goes down then infinite spam
-    // need exponential backoff
+    const interval = setInterval(fetchData, TICK_INTERVAL);
     return () => clearInterval(interval);
   }, []);
 
