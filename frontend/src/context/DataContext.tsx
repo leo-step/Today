@@ -21,7 +21,7 @@ const MAX_BACKOFF_TICKS = 32;
 const TICK_INTERVAL = 5000;
 
 const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [data, setData] = useState(); // TODO: is data updating while tab is open for a while?
+  const [data, setData] = useState();
   const storage = useStorage();
   const time = useTime();
   let backoff: Backoff = { ticks: 0, retries: 0 };

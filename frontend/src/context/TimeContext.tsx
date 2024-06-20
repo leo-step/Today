@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import moment from "moment-timezone";
 
 enum Hours {
-  _1AM = 1,
+  MIDNIGHT = 0,
+  _1AM,
   _2AM,
   _3AM,
   _4AM,
