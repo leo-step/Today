@@ -3,24 +3,70 @@ from dotenv import load_dotenv
 import os
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 load_dotenv()
 client = pymongo.MongoClient(os.getenv("DB_CONN"))
 db = client[os.getenv("DATABASE")]
 
-def get_weather_daily():
-    result = {}
-    weatherDaily = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
-    result['current'] = round(weatherDaily['main']['temp'])
-    result['min'] = round(weatherDaily['main']['temp_min'])
-    result['max'] = round(weatherDaily['main']['temp_max'])
-    return result
+nightTimes = ['7 pm', '10 pm','1 am','4 am']
+dateTime = {
+    '00:00:00': '7 pm',
+    '03:00:00': '10 pm',
+    '06:00:00': '1 am',
+    '09:00:00': '4 am',
+    '12:00:00': '7 am',
+    '15:00:00': '10 am',
+    '18:00:00': '1 pm',
+    '21:00:00': '4 pm'
+}
+
+def weatherEmoji(code, time):
+    if code == 804:
+        return '☁️'
+    if code >= 800:
+        if time in nightTimes:
+            return '🌙'
+        if code < 802:
+            return '☀️'
+        if code == 802:
+            return '🌤'
+        if code == 803:
+            return '⛅️'
+    if code < 300:
+        return '🌩'
+    elif code < 600:
+        return '🌧'
+    elif code < 700:
+        return '❄️'
+    elif code < 800:
+        return '🌫'
+    else:
+        return '☀️'
+
 
 def get_weather():
     weatherPton = requests.get(f'https://api.openweathermap.org/data/2.5/forecast?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
-    weatherPton['_id'] = 'weather'
-    weatherPton['current_data'] = get_weather_daily()
-    return weatherPton
+    weatherDaily = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
+    result = {
+        'current': round(weatherDaily['main']['temp']),
+        'min': round(weatherDaily['main']['temp_min']),
+        'max': round(weatherDaily['main']['temp_max'])
+    }
+    weatherPton['current_data'] = result
+
+    weatherData = []
+    for i in range(5):
+        temp = []
+        temp.append(int(weatherPton['list'][i]['main']['temp']))
+        timeOfDay = dateTime[weatherPton['list'][i]['dt_txt'][-8:]]
+        temp.append(timeOfDay)
+        stringCode = weatherPton['list'][i]['weather'][0]['id']
+        temp.append(weatherEmoji(int(stringCode), timeOfDay))
+        weatherData.append(temp)
+    weatherData.append(weatherPton['current_data'])
+
+    return weatherData
 
 
 def get_menus():
@@ -54,8 +100,8 @@ def get_menus():
                     subitems[category].append(items[i])
             dhall_result[items[0]] = subitems
         result[dhall] = dhall_result
-    result["_id"] = "dhall"
     return result
+
 
 def get_prince():
     articles = []
@@ -79,16 +125,26 @@ def get_prince():
     articles.append({'title': text2, 'link': link2})
     articles.append({'title': text3, 'link': link3})
 
-
     return {
-
-        "_id": "prince",
         "articles": articles
-
     }
 
 
-db.widgets.replace_one({"_id": "weather"}, get_weather(), True)
-db.widgets.replace_one({"_id": "dhall"}, get_menus(), True)
-db.widgets.replace_one({"_id": "prince"}, get_prince(), True)
+def get_banner():
+    data = db.widgets.find_one({'_id': 'data'})
+    return data.get("banner", "")
+
+
+def get_data():
+    data = {
+        "weather": get_weather(),
+        "dhall": get_menus(),
+        "prince": get_prince(),
+        "timestamp": str(datetime.now()),
+        "banner": get_banner()
+    }
+    return data
+
+
+db.widgets.replace_one({"_id": "data"}, get_data(), True)
 
