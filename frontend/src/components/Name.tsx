@@ -5,20 +5,11 @@ import { useStorage } from "../context/StorageContext";
 function Name() {
   const storage = useStorage();
 
-  const [text, setText] = useState(
-    storage.getLocalStorageDefault("name", "[name]")
-  );
+  const [text, setText] = useState(storage.getLocalStorageDefault("name", ""));
   const [inputValue, setInputValue] = useState(
     storage.getLocalStorageDefault("name", "")
   );
-  const [showPopup, setShowPopup] = useState(false);
-
-  window.onload = () => {
-    let currentName = storage.getLocalStorage("name");
-    if (currentName == null || currentName === "") {
-      setShowPopup(true);
-    }
-  };
+  const [showPopup, setShowPopup] = useState(text === "");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -27,7 +18,7 @@ function Name() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const name = inputValue;
-    if (!(name == null || name === "")) {
+    if (name !== "") {
       storage.setLocalStorage("name", name);
       setText(name);
       setShowPopup(false);
