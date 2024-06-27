@@ -70,7 +70,6 @@ def get_weather():
 def get_menus():
     dining_halls = {
         "Whitman": 8,
-        "Wucox": 2,
         "Roma": 1,
         "Forbes": 3,
         "Center for Jewish Life": 5,
