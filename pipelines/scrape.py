@@ -46,27 +46,25 @@ def weatherEmoji(code, time):
 
 
 def get_weather():
-    weatherPton = requests.get(f'https://api.openweathermap.org/data/2.5/forecast?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
-    weatherDaily = requests.get(f'https://api.openweathermap.org/data/2.5/weather?lat=40.343899&lon=-74.660049&appid={os.getenv("WEATHER")}&units=imperial').json()
-    result = {
-        'current': round(weatherDaily['main']['temp']),
-        'min': round(weatherDaily['main']['temp_min']),
-        'max': round(weatherDaily['main']['temp_max'])
+    weather_api_key = os.getenv("WEATHER")
+    location = {
+        "lat": 40.343899,
+        "long": -74.660049
     }
-    weatherPton['current_data'] = result
+    weather_pton = requests.get('https://api.openweathermap.org/data/2.5/forecast?' + 
+        f'lat={location["lat"]}&lon={location["long"]}&appid={weather_api_key}&units=imperial').json()
 
-    weatherData = []
+    print(weather_pton)
+    weather_data = []
     for i in range(5):
-        temp = []
-        temp.append(int(weatherPton['list'][i]['main']['temp']))
-        timeOfDay = dateTime[weatherPton['list'][i]['dt_txt'][-8:]]
-        temp.append(timeOfDay)
-        stringCode = weatherPton['list'][i]['weather'][0]['id']
-        temp.append(weatherEmoji(int(stringCode), timeOfDay))
-        weatherData.append(temp)
-    weatherData.append(weatherPton['current_data'])
+        data_point = {}
+        data_point["temp"] = int(weather_pton['list'][i]['main']['temp'])
+        data_point["time"] = dateTime[weather_pton['list'][i]['dt_txt'][-8:]]
+        stringCode = weather_pton['list'][i]['weather'][0]['id']
+        data_point["symbol"] = weatherEmoji(int(stringCode), data_point["time"])
+        weather_data.append(data_point)
 
-    return weatherData
+    return weather_data
 
 
 def get_menus():
