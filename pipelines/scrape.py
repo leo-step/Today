@@ -54,7 +54,6 @@ def get_weather():
     weather_pton = requests.get('https://api.openweathermap.org/data/2.5/forecast?' + 
         f'lat={location["lat"]}&lon={location["long"]}&appid={weather_api_key}&units=imperial').json()
 
-    print(weather_pton)
     weather_data = []
     for i in range(5):
         data_point = {}
