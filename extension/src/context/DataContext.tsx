@@ -24,7 +24,23 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState();
   const storage = useStorage();
   const time = useTime();
-  let backoff: Backoff = { ticks: 0, retries: 0 };
+
+  const resetBackoff = (): Backoff => {
+    console.log("reset backoff"); // TODO: backoff and interval system is funky, need fix
+    return { ticks: 0, retries: 0 };
+  };
+
+  let backoff: Backoff = resetBackoff();
+
+  const updateBackoff = (): Backoff => {
+    console.log("update backoff");
+    return {
+      ticks: Math.min(2 ** backoff.retries, MAX_BACKOFF_TICKS),
+      retries: backoff.retries + 1,
+    };
+  };
+
+  resetBackoff();
 
   const requestAndSetData = async () => {
     await axios.get(config.URL).then((res) => {
@@ -51,18 +67,17 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
         const currentTime = time.getUTC();
         const requestTime = time.parseUTC(parsedData.timestamp);
         if (
-          config.URL === config.DEV ||
           currentTime.hour() !== requestTime.hour() ||
           !currentTime.isSame(requestTime, "date")
         ) {
           await requestAndSetData();
+          backoff = resetBackoff();
+        } else {
+          updateBackoff();
         }
       }
     } catch {
-      backoff = {
-        ticks: Math.min(2 ** backoff.retries, MAX_BACKOFF_TICKS),
-        retries: backoff.retries + 1,
-      };
+      updateBackoff();
     }
   };
 

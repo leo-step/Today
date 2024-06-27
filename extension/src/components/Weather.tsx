@@ -10,16 +10,8 @@ type WeatherPoint = {
 };
 
 function WeatherTable() {
-  // const weather = [[ 68,  "6 pm",  "☀️" ],  [ 65, "9 pm", "☀️"], [62, "12 am", "⛅️"], [54, "3 am", "🌧"], [50, "6 am", "🌧"]]
   const data = useData();
-
-  // TODO: refactor backend to give this data already formatted
-  const weather: WeatherPoint[] =
-    data?.weather.slice(0, 5).map((point: any) => ({
-      temp: point[0],
-      time: point[1],
-      symbol: point[2],
-    })) || [];
+  const weather: WeatherPoint[] = data?.weather || [];
 
   const temps: number[] = [];
   const times: string[] = [];
