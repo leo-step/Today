@@ -17,7 +17,7 @@ jobs:
           architecture: "x64"
       - run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r pipelines/requirements.txt
       - run: |
           python pipelines/scrape.py
         env:
