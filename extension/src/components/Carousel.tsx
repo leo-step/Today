@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import PrinceNewsTable from "./carousel/PrinceNews";
 import StreetWeek from "./carousel/StreetWeek";
-import { useStorage } from "../context/StorageContext";
+import { StorageKeys, useStorage } from "../context/StorageContext";
 import { Button } from "react-bootstrap";
 
 type Key = {
@@ -24,17 +24,17 @@ function Carousel() {
   };
 
   const carouselWidgets: CarouselWidgetsDict = {
-    prince: <PrinceNewsTable left={key("street", "Street")} />,
+    prince: <PrinceNewsTable left={key("street", "Street")} />, // TODO: another enum here
     street: <StreetWeek right={key("prince", "Prince")} />,
   };
   const validResults = Object.keys(carouselWidgets);
 
   const [selectedWidget, setSelectedWidget] = useState(
-    storage.getLocalStorageDefault("campusWidget", "prince", validResults)
+    storage.getLocalStorageDefault(StorageKeys.WIDGET, "prince", validResults)
   );
 
   useEffect(() => {
-    storage.setLocalStorage("campusWidget", selectedWidget);
+    storage.setLocalStorage(StorageKeys.WIDGET, selectedWidget);
   }, [selectedWidget]);
 
   return carouselWidgets[selectedWidget];

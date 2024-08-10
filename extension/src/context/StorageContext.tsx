@@ -13,7 +13,7 @@ type Storage = {
   getLocalStorage: (key: StorageKeys) => string | null;
   getLocalStorageDefault: (
     key: StorageKeys,
-    fallback: StorageKeys,
+    fallback: string,
     validSettings?: string[]
   ) => string;
   setLocalStorage: (key: StorageKeys, data: string) => void;
@@ -26,7 +26,7 @@ const storageContext: Storage = {
   },
   getLocalStorageDefault: (
     key: StorageKeys,
-    fallback: StorageKeys,
+    fallback: string,
     // MUST include array for all widgets, otherwise breaking on extension update
     validResults?: string[]
   ) => {

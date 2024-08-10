@@ -1,13 +1,13 @@
 import { useState } from "react";
 import React from "react";
-import { useStorage } from "../context/StorageContext";
+import { StorageKeys, useStorage } from "../context/StorageContext";
 
 function Name() {
   const storage = useStorage();
 
-  const [text, setText] = useState(storage.getLocalStorageDefault("name", ""));
+  const [text, setText] = useState(storage.getLocalStorageDefault(StorageKeys.NAME, ""));
   const [inputValue, setInputValue] = useState(
-    storage.getLocalStorageDefault("name", "")
+    storage.getLocalStorageDefault(StorageKeys.NAME, "")
   );
   const [showPopup, setShowPopup] = useState(text === "");
 
@@ -19,7 +19,7 @@ function Name() {
     e.preventDefault();
     const name = inputValue;
     if (name !== "") {
-      storage.setLocalStorage("name", name);
+      storage.setLocalStorage(StorageKeys.NAME, name);
       setText(name);
       setShowPopup(false);
     }

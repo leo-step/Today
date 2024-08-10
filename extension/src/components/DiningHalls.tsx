@@ -2,7 +2,7 @@ import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
-import { useStorage } from "../context/StorageContext";
+import { StorageKeys, useStorage } from "../context/StorageContext";
 import { useTime, Hours, Days } from "../context/TimeContext";
 import { useData } from "../context/DataContext";
 import { WidgetRow } from "./widget/WidgetRow";
@@ -35,11 +35,11 @@ function DHallTable() {
   const validResults = DINING_HALLS.map((diningHall) => diningHall.key);
 
   const [college, setCollege] = useState(
-    storage.getLocalStorageDefault("dhall", DEFAULT_DHALL, validResults)
+    storage.getLocalStorageDefault(StorageKeys.DHALL, DEFAULT_DHALL, validResults)
   );
 
   useEffect(() => {
-    storage.setLocalStorage("dhall", college);
+    storage.setLocalStorage(StorageKeys.DHALL, college);
   }, [college]);
 
   const currentDay = time.day;
