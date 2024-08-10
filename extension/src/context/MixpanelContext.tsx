@@ -55,6 +55,9 @@ const MixpanelProvider = ({ children }: { children: ReactNode }) => {
   const mixpanelContext: Mixpanel = {
     trackEvent: async (eventType: EventTypes, properties: any) => {
       const uuid = getUuid();
+      if (typeof properties === 'string') {
+        properties = { property: properties };
+      }
       const event: EventData = {
         uuid,
         event: eventType,

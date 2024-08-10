@@ -26,14 +26,14 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const time = useTime();
 
   const resetBackoff = (): Backoff => {
-    console.log("reset backoff"); // TODO: backoff and interval system is funky, need fix
+    // console.log("reset backoff"); // TODO: backoff and interval system is funky, need fix
     return { ticks: 0, retries: 0 };
   };
 
   let backoff: Backoff = resetBackoff();
 
   const updateBackoff = (): Backoff => {
-    console.log("update backoff");
+    // console.log("update backoff");
     return {
       ticks: Math.min(2 ** backoff.retries, MAX_BACKOFF_TICKS),
       retries: backoff.retries + 1,
