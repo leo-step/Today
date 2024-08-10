@@ -53,8 +53,8 @@ const storageContext: Storage = {
         }
       })
     );
-    delete localStorageObject.data;
-    delete localStorageObject.uuid;
+    delete localStorageObject[StorageKeys.DATA];
+    delete localStorageObject[StorageKeys.UUID];
     return localStorageObject;
   },
 };
