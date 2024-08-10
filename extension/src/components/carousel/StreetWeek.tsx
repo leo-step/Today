@@ -2,7 +2,7 @@ import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
-import { useStorage } from "../../context/StorageContext";
+import { StorageKeys, useStorage } from "../../context/StorageContext";
 import { CarouselWidgetProps, CarouselHeader } from "../Carousel";
 import { WidgetRow } from "../widget/WidgetRow";
 
@@ -266,11 +266,11 @@ function StreetWeek(props: CarouselWidgetProps) {
   const validResults = Object.keys(clubData);
 
   const [club, setClub] = useState(
-    storage.getLocalStorageDefault("club", "Cap", validResults)
+    storage.getLocalStorageDefault(StorageKeys.CLUB, "Cap", validResults)
   );
 
   useEffect(() => {
-    storage.setLocalStorage("club", club);
+    storage.setLocalStorage(StorageKeys.CLUB, club);
   }, [club]);
 
   const rows = clubData[club].map((event: any, i: any) => {

@@ -2,10 +2,11 @@ import Table from "react-bootstrap/Table";
 import { useState, useEffect } from "react";
 import Dropdown from "react-bootstrap/Dropdown";
 import React from "react";
-import { useStorage } from "../context/StorageContext";
+import { StorageKeys, useStorage } from "../context/StorageContext";
 import { useTime, Hours, Days } from "../context/TimeContext";
 import { useData } from "../context/DataContext";
 import { WidgetRow } from "./widget/WidgetRow";
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 
 type MealSession = "Breakfast" | "Lunch" | "Dinner";
 
@@ -32,14 +33,19 @@ function DHallTable() {
   const storage = useStorage();
   const time = useTime();
   const data = useData();
+  const mixpanel = useMixpanel();
   const validResults = DINING_HALLS.map((diningHall) => diningHall.key);
 
   const [college, setCollege] = useState(
-    storage.getLocalStorageDefault("dhall", DEFAULT_DHALL, validResults)
+    storage.getLocalStorageDefault(
+      StorageKeys.DHALL,
+      DEFAULT_DHALL,
+      validResults
+    )
   );
 
   useEffect(() => {
-    storage.setLocalStorage("dhall", college);
+    storage.setLocalStorage(StorageKeys.DHALL, college);
   }, [college]);
 
   const currentDay = time.day;
@@ -118,7 +124,9 @@ function DHallTable() {
               </h3>
               <Dropdown
                 onSelect={(e) => {
-                  setCollege(e || DEFAULT_DHALL);
+                  const dhall = e || DEFAULT_DHALL
+                  setCollege(dhall);
+                  mixpanel.trackEvent(EventTypes.DHALL_CHANGE, dhall)
                 }}
               >
                 <Dropdown.Toggle className="dropdown">

@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PrinceNewsTable from "./carousel/PrinceNews";
 import StreetWeek from "./carousel/StreetWeek";
-import { useStorage } from "../context/StorageContext";
+import { StorageKeys, useStorage } from "../context/StorageContext";
 import { Button } from "react-bootstrap";
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
+
+export enum WidgetKeys {
+  STREET = "street",
+  PRINCE = "prince"
+}
 
 type Key = {
   label: string;
@@ -18,23 +24,27 @@ type CarouselWidgetsDict = { [key: string]: React.ReactElement };
 
 function Carousel() {
   const storage = useStorage();
+  const mixpanel = useMixpanel();
 
   const key = (key: string, label: string): Key => {
-    return { label, go: () => setSelectedWidget(key) };
+    return { label, go: () => {
+      setSelectedWidget(key)
+      mixpanel.trackEvent(EventTypes.CAROUSEL_CHANGE, key)
+    } };
   };
 
   const carouselWidgets: CarouselWidgetsDict = {
-    prince: <PrinceNewsTable left={key("street", "Street")} />,
-    street: <StreetWeek right={key("prince", "Prince")} />,
+    prince: <PrinceNewsTable left={key(WidgetKeys.STREET, "Street")} />, // TODO: another enum here
+    street: <StreetWeek right={key(WidgetKeys.PRINCE, "Prince")} />,
   };
   const validResults = Object.keys(carouselWidgets);
 
   const [selectedWidget, setSelectedWidget] = useState(
-    storage.getLocalStorageDefault("campusWidget", "prince", validResults)
+    storage.getLocalStorageDefault(StorageKeys.WIDGET, "prince", validResults)
   );
 
   useEffect(() => {
-    storage.setLocalStorage("campusWidget", selectedWidget);
+    storage.setLocalStorage(StorageKeys.WIDGET, selectedWidget);
   }, [selectedWidget]);
 
   return carouselWidgets[selectedWidget];

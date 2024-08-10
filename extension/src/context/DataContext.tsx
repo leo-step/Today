@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import config from "../config";
-import { useStorage } from "./StorageContext";
+import { StorageKeys, useStorage } from "./StorageContext";
 import { useTime } from "./TimeContext";
 
 const DataContext = createContext<any>(null);
@@ -26,14 +26,14 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const time = useTime();
 
   const resetBackoff = (): Backoff => {
-    console.log("reset backoff"); // TODO: backoff and interval system is funky, need fix
+    // console.log("reset backoff"); // TODO: backoff and interval system is funky, need fix
     return { ticks: 0, retries: 0 };
   };
 
   let backoff: Backoff = resetBackoff();
 
   const updateBackoff = (): Backoff => {
-    console.log("update backoff");
+    // console.log("update backoff");
     return {
       ticks: Math.min(2 ** backoff.retries, MAX_BACKOFF_TICKS),
       retries: backoff.retries + 1,
@@ -44,7 +44,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const requestAndSetData = async () => {
     await axios.get(config.URL).then((res) => {
-      storage.setLocalStorage("data", JSON.stringify(res.data));
+      storage.setLocalStorage(StorageKeys.DATA, JSON.stringify(res.data));
       setData(res.data);
       backoff = { ticks: 0, retries: 0 };
     });
@@ -57,7 +57,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     try {
-      const data = storage.getLocalStorage("data");
+      const data = storage.getLocalStorage(StorageKeys.DATA);
       if (!data) {
         await requestAndSetData();
       } else {

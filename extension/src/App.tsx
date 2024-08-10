@@ -4,14 +4,23 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import DHallTable from "./components/DiningHalls";
 import Name from "./components/Name";
-import React from "react";
+import React, { useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Carousel from "./components/Carousel";
+import { EventTypes, useMixpanel } from "./context/MixpanelContext";
+import { useStorage } from "./context/StorageContext";
 
 function App() {
   const time = useTime();
+  const storage = useStorage()
+  const mixpanel = useMixpanel()
+
+  useEffect(() => {
+    const state = storage.getLocalStorageObject()
+    mixpanel.trackEvent(EventTypes.PAGE_LOAD, state)
+  }, [])
 
   return (
     <Container fluid className="m-0">

@@ -6,6 +6,7 @@ import { DataProvider } from "./context/DataContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { TimeProvider } from "./context/TimeContext";
 import { StorageProvider } from "./context/StorageContext";
+import { MixpanelProvider } from "./context/MixpanelContext";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -14,11 +15,13 @@ const root = ReactDOM.createRoot(
 root.render(
   <TimeProvider>
     <StorageProvider>
-      <DataProvider>
-        <ThemeProvider>
-          <App />
-        </ThemeProvider>
-      </DataProvider>
+      <MixpanelProvider>
+        <DataProvider>
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
+        </DataProvider>
+      </MixpanelProvider>
     </StorageProvider>
   </TimeProvider>
 );
