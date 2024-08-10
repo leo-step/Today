@@ -1,9 +1,17 @@
 import React, { createContext, useContext, ReactNode } from "react";
-import { useStorage } from "./StorageContext";
+import { StorageKeys, useStorage } from "./StorageContext";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import config from "../config";
-import { Article } from "../components/carousel/PrinceNews";
+
+export enum EventTypes {
+  PAGE_LOAD = "pageLoad",
+  NEWS_CLICK = "newsClick",
+  LINKS_CLICK = "linksClick",
+  DHALL_CHANGE = "dhallChange",
+  CAROUSEL_CHANGE = "carouselChange",
+  NAME_CHANGE = "nameChange"
+}
 
 type EventData = {
   uuid: string;
@@ -11,13 +19,14 @@ type EventData = {
   properties?: any;
 };
 
-type Mixpanel = {
-  trackPageLoad: () => void;
-  trackNewsClick: (article: Article) => void;
-  trackLinksClick: (link: string) => void;
-  trackDhallChange: (dhall: string) => void;
-  trackCarouselChange: (widget: string) => void;
-  trackNameChange: (name: string) => void;
+type Mixpanel = { // TODO: enum for events
+  trackEvent: (eventName: string, properties: any) => void;
+  // trackPageLoad: () => void;
+  // trackNewsClick: (article: Article) => void;
+  // trackLinksClick: (link: string) => void;
+  // trackDhallChange: (dhall: string) => void;
+  // trackCarouselChange: (widget: string) => void;
+  // trackNameChange: (name: string) => void;
 };
 
 // Create context with a default value of null
@@ -35,77 +44,24 @@ const MixpanelProvider = ({ children }: { children: ReactNode }) => {
   const storage = useStorage();
 
   const getUuid = () => {
-    let uuid = storage.getLocalStorage("uuid");
+    let uuid = storage.getLocalStorage(StorageKeys.UUID);
     if (!uuid) {
       uuid = uuidv4();
-      storage.setLocalStorage("uuid", uuid);
+      storage.setLocalStorage(StorageKeys.UUID, uuid);
     }
     return uuid;
   };
 
   const mixpanelContext: Mixpanel = {
-    trackPageLoad: async () => {
+    trackEvent: async (eventName: string, properties: any) => {
       const uuid = getUuid();
       const event: EventData = {
         uuid,
-        event: "pageLoad",
-        properties: storage.getLocalStorageObject(),
+        event: eventName,
+        properties,
       };
       await sendEvent(event);
     },
-    trackNewsClick: async (article: Article) => {
-      const uuid = getUuid();
-      const event: EventData = {
-        uuid,
-        event: "newsClick",
-        properties: article,
-      };
-      await sendEvent(event);
-    },
-    trackLinksClick: async (link: string) => {
-      const uuid = getUuid();
-      const event: EventData = {
-        uuid,
-        event: "linksClick",
-        properties: {
-          link,
-        },
-      };
-      await sendEvent(event);
-    },
-    trackDhallChange: async (dhall: string) => {
-      const uuid = getUuid();
-      const event: EventData = {
-        uuid,
-        event: "dhallChange",
-        properties: {
-          dhall
-        },
-      };
-      await sendEvent(event);
-    },
-    trackCarouselChange: async (widget: string) => {
-      const uuid = getUuid();
-      const event: EventData = {
-        uuid,
-        event: "carouselChange",
-        properties: {
-          widget
-        },
-      };
-      await sendEvent(event);
-    },
-    trackNameChange: async (name: string) => {
-      const uuid = getUuid();
-      const event: EventData = {
-        uuid,
-        event: "nameChange",
-        properties: {
-          name
-        },
-      };
-      await sendEvent(event);
-    }
   };
 
   return (

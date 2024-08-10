@@ -5,7 +5,7 @@ import { useData } from "../../context/DataContext";
 import { CarouselWidgetProps, CarouselHeader } from "../Carousel";
 import { WidgetRow } from "../widget/WidgetRow";
 
-export type Article = {
+type Article = {
   title: string;
   link: string;
 };

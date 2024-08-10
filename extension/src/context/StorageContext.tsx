@@ -1,23 +1,32 @@
 import React, { createContext, useContext, ReactNode } from "react";
 
+export enum StorageKeys {
+  UUID = "uuid",
+  DATA = "data",
+  WIDGET = "campusWidget",
+  NAME = "name",
+  DHALL = "dhall",
+  CLUB = "club",
+}
+
 type Storage = {
-  getLocalStorage: (key: string) => string | null;
+  getLocalStorage: (key: StorageKeys) => string | null;
   getLocalStorageDefault: (
-    key: string,
-    fallback: string,
+    key: StorageKeys,
+    fallback: StorageKeys,
     validSettings?: string[]
   ) => string;
-  setLocalStorage: (key: string, data: string) => void;
+  setLocalStorage: (key: StorageKeys, data: string) => void;
   getLocalStorageObject: () => any;
 };
 
 const storageContext: Storage = {
-  getLocalStorage: (key: string) => {
+  getLocalStorage: (key: StorageKeys) => {
     return window.localStorage.getItem(key);
   },
   getLocalStorageDefault: (
-    key: string,
-    fallback: string,
+    key: StorageKeys,
+    fallback: StorageKeys,
     // MUST include array for all widgets, otherwise breaking on extension update
     validResults?: string[]
   ) => {
@@ -27,7 +36,7 @@ const storageContext: Storage = {
     }
     return result;
   },
-  setLocalStorage: (key: string, data: string) => {
+  setLocalStorage: (key: StorageKeys, data: string) => {
     window.localStorage.setItem(key, data);
   },
   getLocalStorageObject: () => {
