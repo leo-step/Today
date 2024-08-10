@@ -20,7 +20,7 @@ type EventData = {
 };
 
 type Mixpanel = { // TODO: enum for events
-  trackEvent: (eventName: string, properties: any) => void;
+  trackEvent: (eventType: EventTypes, properties: any) => void;
   // trackPageLoad: () => void;
   // trackNewsClick: (article: Article) => void;
   // trackLinksClick: (link: string) => void;
@@ -53,11 +53,11 @@ const MixpanelProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const mixpanelContext: Mixpanel = {
-    trackEvent: async (eventName: string, properties: any) => {
+    trackEvent: async (eventType: EventTypes, properties: any) => {
       const uuid = getUuid();
       const event: EventData = {
         uuid,
-        event: eventName,
+        event: eventType,
         properties,
       };
       await sendEvent(event);
