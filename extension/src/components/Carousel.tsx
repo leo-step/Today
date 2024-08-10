@@ -4,6 +4,11 @@ import StreetWeek from "./carousel/StreetWeek";
 import { StorageKeys, useStorage } from "../context/StorageContext";
 import { Button } from "react-bootstrap";
 
+export enum WidgetKeys {
+  STREET = "street",
+  PRINCE = "prince"
+}
+
 type Key = {
   label: string;
   go: () => void;
@@ -24,8 +29,8 @@ function Carousel() {
   };
 
   const carouselWidgets: CarouselWidgetsDict = {
-    prince: <PrinceNewsTable left={key("street", "Street")} />, // TODO: another enum here
-    street: <StreetWeek right={key("prince", "Prince")} />,
+    prince: <PrinceNewsTable left={key(WidgetKeys.STREET, "Street")} />, // TODO: another enum here
+    street: <StreetWeek right={key(WidgetKeys.PRINCE, "Prince")} />,
   };
   const validResults = Object.keys(carouselWidgets);
 
