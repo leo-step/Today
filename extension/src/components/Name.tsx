@@ -1,9 +1,11 @@
 import { useState } from "react";
 import React from "react";
 import { StorageKeys, useStorage } from "../context/StorageContext";
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 
 function Name() {
   const storage = useStorage();
+  const mixpanel = useMixpanel();
 
   const [text, setText] = useState(storage.getLocalStorageDefault(StorageKeys.NAME, ""));
   const [inputValue, setInputValue] = useState(
@@ -22,6 +24,7 @@ function Name() {
       storage.setLocalStorage(StorageKeys.NAME, name);
       setText(name);
       setShowPopup(false);
+      mixpanel.trackEvent(EventTypes.NAME_CHANGE, name)
     }
   };
 

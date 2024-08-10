@@ -3,6 +3,7 @@ import PrinceNewsTable from "./carousel/PrinceNews";
 import StreetWeek from "./carousel/StreetWeek";
 import { StorageKeys, useStorage } from "../context/StorageContext";
 import { Button } from "react-bootstrap";
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 
 export enum WidgetKeys {
   STREET = "street",
@@ -23,9 +24,13 @@ type CarouselWidgetsDict = { [key: string]: React.ReactElement };
 
 function Carousel() {
   const storage = useStorage();
+  const mixpanel = useMixpanel();
 
   const key = (key: string, label: string): Key => {
-    return { label, go: () => setSelectedWidget(key) };
+    return { label, go: () => {
+      setSelectedWidget(key)
+      mixpanel.trackEvent(EventTypes.CAROUSEL_CHANGE, key)
+    } };
   };
 
   const carouselWidgets: CarouselWidgetsDict = {
