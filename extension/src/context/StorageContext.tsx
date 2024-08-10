@@ -8,6 +8,7 @@ type Storage = {
     validSettings?: string[]
   ) => string;
   setLocalStorage: (key: string, data: string) => void;
+  getLocalStorageObject: () => any;
 };
 
 const storageContext: Storage = {
@@ -28,6 +29,24 @@ const storageContext: Storage = {
   },
   setLocalStorage: (key: string, data: string) => {
     window.localStorage.setItem(key, data);
+  },
+  getLocalStorageObject: () => {
+    const localStorageObject = Object.fromEntries(
+      Object.keys(localStorage).map((key) => {
+        const value = localStorage.getItem(key);
+        if (!value) {
+          return [key, null];
+        }
+        try {
+          return [key, JSON.parse(value)];
+        } catch (e) {
+          return [key, value];
+        }
+      })
+    );
+    delete localStorageObject.data;
+    delete localStorageObject.uuid;
+    return localStorageObject;
   },
 };
 

@@ -4,14 +4,20 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import DHallTable from "./components/DiningHalls";
 import Name from "./components/Name";
-import React from "react";
+import React, { useEffect } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Carousel from "./components/Carousel";
+import { useMixpanel } from "./context/MixpanelContext";
 
 function App() {
   const time = useTime();
+  const mixpanel = useMixpanel()
+
+  useEffect(() => {
+    mixpanel.trackPageLoad()
+  }, [])
 
   return (
     <Container fluid className="m-0">
