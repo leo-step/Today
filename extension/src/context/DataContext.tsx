@@ -24,7 +24,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const time = useTime();
 
   const requestAndSetData = async () => {
-    await axios.get(config.URL).then((res) => {
+    await axios.get(config.URL + "/extension/widget-data").then((res) => {
       storage.setLocalStorage(StorageKeys.DATA, JSON.stringify(res.data));
       setData(res.data);
     });
