@@ -2,6 +2,7 @@ import { useState } from "react";
 import React from "react";
 import { StorageKeys, useStorage } from "../context/StorageContext";
 import { EventTypes, useMixpanel } from "../context/MixpanelContext";
+import { Button, Form, Modal } from "react-bootstrap";
 
 function Name() {
   const storage = useStorage();
@@ -24,7 +25,7 @@ function Name() {
       storage.setLocalStorage(StorageKeys.NAME, name);
       setText(name);
       setShowPopup(false);
-      mixpanel.trackEvent(EventTypes.NAME_CHANGE, name)
+      mixpanel.trackEvent(EventTypes.NAME_CHANGE, name);
     }
   };
 
@@ -33,19 +34,27 @@ function Name() {
       <span className="name" onClick={() => setShowPopup(true)}>
         {text}
       </span>
-      {showPopup && (
-        <div className="popup">
-          <form onSubmit={handleSubmit}>
-            <label>Please enter your name:&nbsp;&nbsp;</label>
-            <input
-              type="text"
-              value={inputValue}
-              onChange={handleInputChange}
-            />
-            <button type="submit">Submit</button>
-          </form>
-        </div>
-      )}
+      <Modal show={showPopup} onHide={() => setShowPopup(false)} centered>
+        <Modal.Header>
+          <Modal.Title>🎉 Thank you for downloading Today!</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group controlId="formName">
+              <Form.Label>To get started, please enter your name:</Form.Label>
+              <Form.Control
+                type="text"
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder="Enter your name"
+              />
+            </Form.Group>
+            <Button variant="primary" type="submit" className="mt-3">
+              Submit
+            </Button>
+          </Form>
+        </Modal.Body>
+      </Modal>
     </span>
   );
 }
