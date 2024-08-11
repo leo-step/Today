@@ -129,18 +129,12 @@ def get_prince():
     }
 
 
-def get_banner():
-    data = db.widgets.find_one({'_id': 'data'})
-    return data.get("banner", "")
-
-
 def get_data():
     data = {
         "weather": get_weather(),
         "dhall": get_menus(),
         "prince": get_prince(),
         "timestamp": str(datetime.now(timezone.utc)),
-        "banner": get_banner()
     }
     return data
 
