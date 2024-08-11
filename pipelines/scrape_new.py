@@ -102,7 +102,10 @@ def get_menus():
 def get_prince():
     articles = []
     url = "https://www.dailyprincetonian.com/"
-    text = requests.get(url).text
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    }
+    text = requests.get(url, headers=headers).text
     soup = BeautifulSoup(text, features="lxml")
     mainArticle = soup.find("h1", {"class" : "headline"})
 
