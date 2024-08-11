@@ -20,6 +20,7 @@ jobs:
           pip install -r pipelines/requirements.txt
       - run: |
           python pipelines/scrape.py
+          python pipelines/scrape_new.py
         env:
           WEATHER: ${{ secrets.WEATHER }}
           DB_CONN: ${{ secrets.DB_CONN }}
