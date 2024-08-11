@@ -10,7 +10,7 @@ export enum EventTypes {
   LINKS_CLICK = "linksClick",
   DHALL_CHANGE = "dhallChange",
   CAROUSEL_CHANGE = "carouselChange",
-  NAME_CHANGE = "nameChange"
+  NAME_CHANGE = "nameChange",
 }
 
 type EventData = {
@@ -19,7 +19,8 @@ type EventData = {
   properties?: any;
 };
 
-type Mixpanel = { // TODO: enum for events
+type Mixpanel = {
+  // TODO: enum for events
   trackEvent: (eventType: EventTypes, properties: any) => void;
   // trackPageLoad: () => void;
   // trackNewsClick: (article: Article) => void;
@@ -35,9 +36,7 @@ const MixpanelContext = createContext<Mixpanel | null>(null);
 const sendEvent = async (event: EventData) => {
   try {
     await axios.post(config.URL + "/track", event);
-  } catch (error) {
-    console.error("Failed to send event", error);
-  }
+  } catch {}
 };
 
 const MixpanelProvider = ({ children }: { children: ReactNode }) => {
@@ -55,7 +54,7 @@ const MixpanelProvider = ({ children }: { children: ReactNode }) => {
   const mixpanelContext: Mixpanel = {
     trackEvent: async (eventType: EventTypes, properties: any) => {
       const uuid = getUuid();
-      if (typeof properties === 'string') {
+      if (typeof properties === "string") {
         properties = { property: properties };
       }
       const event: EventData = {
