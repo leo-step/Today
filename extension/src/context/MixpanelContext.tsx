@@ -6,6 +6,7 @@ import config from "../config";
 
 export enum EventTypes {
   PAGE_LOAD = "pageLoad",
+  FETCH_DATA = "fetchData",
   NEWS_CLICK = "newsClick",
   LINKS_CLICK = "linksClick",
   DHALL_CHANGE = "dhallChange",

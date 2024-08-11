@@ -9,6 +9,7 @@ import axios from "axios";
 import config from "../config";
 import { StorageKeys, useStorage } from "./StorageContext";
 import { useTime } from "./TimeContext";
+import { EventTypes, useMixpanel } from "./MixpanelContext";
 
 const TICK_INTERVAL = 5000
 
@@ -21,6 +22,7 @@ type IntervalRef = {
 const DataProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState();
   const storage = useStorage();
+  const mixpanel = useMixpanel();
   const time = useTime();
 
   const requestAndSetData = async () => {
@@ -28,6 +30,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
       storage.setLocalStorage(StorageKeys.DATA, JSON.stringify(res.data));
       setData(res.data);
     });
+    mixpanel.trackEvent(EventTypes.FETCH_DATA, time.getUTC().toString())
   };
 
   const fetchData = async (intervalRef: any) => {
