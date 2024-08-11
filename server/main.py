@@ -28,13 +28,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
+@app.get("/api/extension/widget-data")
 async def index():
     client = pymongo.MongoClient(os.getenv("DB_CONN"))
     db = client[os.getenv("DATABASE")]
     data = db.widgets.find_one({'_id': 'data'})
     return data
 
-@app.post("/track")
+@app.post("/api/track")
 async def track(data: Event):
     mp.track(data.uuid, data.event, data.properties)
