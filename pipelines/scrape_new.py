@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import os
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone
 
 load_dotenv()
 client = pymongo.MongoClient(os.getenv("DB_CONN"))
@@ -133,8 +132,7 @@ def get_data():
     data = {
         "weather": get_weather(),
         "dhall": get_menus(),
-        "prince": get_prince(),
-        "timestamp": str(datetime.now(timezone.utc)),
+        "prince": get_prince()
     }
     return data
 

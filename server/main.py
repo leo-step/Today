@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from pydantic import BaseModel
@@ -33,6 +34,7 @@ async def index():
     client = pymongo.MongoClient(os.getenv("DB_CONN"))
     db = client[os.getenv("DATABASE")]
     data = db.widgets.find_one({'_id': 'data'})
+    data["timestamp"] = str(datetime.now(timezone.utc))
     return data
 
 @app.post("/api/track")
