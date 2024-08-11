@@ -8,7 +8,9 @@ function Name() {
   const storage = useStorage();
   const mixpanel = useMixpanel();
 
-  const [text, setText] = useState(storage.getLocalStorageDefault(StorageKeys.NAME, ""));
+  const [text, setText] = useState(
+    storage.getLocalStorageDefault(StorageKeys.NAME, "")
+  );
   const [inputValue, setInputValue] = useState(
     storage.getLocalStorageDefault(StorageKeys.NAME, "")
   );
@@ -49,7 +51,12 @@ function Name() {
                 placeholder="Enter your name"
               />
             </Form.Group>
-            <Button variant="primary" type="submit" className="mt-3">
+            <Button
+              variant="primary"
+              type="submit"
+              className="mt-3"
+              disabled={!inputValue}
+            >
               Submit
             </Button>
           </Form>

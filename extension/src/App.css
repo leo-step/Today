@@ -112,6 +112,14 @@ button {
   --bs-btn-active-border-color: #ef853b !important;
 }
 
+button:disabled {
+  background-color: #a9a9a9 !important;
+  border-color: #a9a9a9 !important;
+  --bs-btn-bg: #a9a9a9 !important; /* Light gray background */
+  --bs-btn-border-color: #a9a9a9 !important; /* Light gray border */
+  cursor: not-allowed !important; /* Show a not-allowed cursor */
+}
+
 .dropdown-item {
   color: black !important;
 }
