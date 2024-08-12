@@ -61,6 +61,7 @@ function DHallTable() {
   }
 
   const priority = [
+    "Entree",
     "Main Entree",
     "Early Entree",
     "Vegetarian & Vegan Entree",

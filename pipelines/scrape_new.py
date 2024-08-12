@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 import os
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone
 
 load_dotenv()
 client = pymongo.MongoClient(os.getenv("DB_CONN"))
@@ -102,7 +101,10 @@ def get_menus():
 def get_prince():
     articles = []
     url = "https://www.dailyprincetonian.com/"
-    text = requests.get(url).text
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    }
+    text = requests.get(url, headers=headers).text
     soup = BeautifulSoup(text, features="lxml")
     mainArticle = soup.find("h1", {"class" : "headline"})
 
@@ -126,18 +128,11 @@ def get_prince():
     }
 
 
-def get_banner():
-    data = db.widgets.find_one({'_id': 'data'})
-    return data.get("banner", "")
-
-
 def get_data():
     data = {
         "weather": get_weather(),
         "dhall": get_menus(),
-        "prince": get_prince(),
-        "timestamp": str(datetime.now(timezone.utc)),
-        "banner": get_banner()
+        "prince": get_prince()
     }
     return data
 

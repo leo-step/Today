@@ -9,53 +9,32 @@ import axios from "axios";
 import config from "../config";
 import { StorageKeys, useStorage } from "./StorageContext";
 import { useTime } from "./TimeContext";
+import { EventTypes, useMixpanel } from "./MixpanelContext";
+
+const TICK_INTERVAL = 5000
 
 const DataContext = createContext<any>(null);
 
-type Backoff = {
-  ticks: number;
-  retries: number;
-};
-
-const MAX_BACKOFF_TICKS = 32;
-const TICK_INTERVAL = 5000;
+type IntervalRef = {
+  current: NodeJS.Timer | undefined
+}
 
 const DataProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState();
   const storage = useStorage();
+  const mixpanel = useMixpanel();
   const time = useTime();
 
-  const resetBackoff = (): Backoff => {
-    // console.log("reset backoff"); // TODO: backoff and interval system is funky, need fix
-    return { ticks: 0, retries: 0 };
-  };
-
-  let backoff: Backoff = resetBackoff();
-
-  const updateBackoff = (): Backoff => {
-    // console.log("update backoff");
-    return {
-      ticks: Math.min(2 ** backoff.retries, MAX_BACKOFF_TICKS),
-      retries: backoff.retries + 1,
-    };
-  };
-
-  resetBackoff();
-
   const requestAndSetData = async () => {
-    await axios.get(config.URL).then((res) => {
+    await axios.get(config.URL + "/extension/widget-data").then((res) => {
       storage.setLocalStorage(StorageKeys.DATA, JSON.stringify(res.data));
       setData(res.data);
-      backoff = { ticks: 0, retries: 0 };
     });
+    mixpanel.trackEvent(EventTypes.FETCH_DATA, time.getUTC().toString())
   };
 
-  const fetchData = async () => {
+  const fetchData = async (intervalRef: any) => {
     time.refresh?.();
-    if (backoff.ticks > 0) {
-      backoff.ticks -= 1;
-      return;
-    }
     try {
       const data = storage.getLocalStorage(StorageKeys.DATA);
       if (!data) {
@@ -71,20 +50,20 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
           !currentTime.isSame(requestTime, "date")
         ) {
           await requestAndSetData();
-          backoff = resetBackoff();
-        } else {
-          updateBackoff();
         }
       }
     } catch {
-      updateBackoff();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     }
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, TICK_INTERVAL);
-    return () => clearInterval(interval);
+    const intervalRef: IntervalRef = { current: undefined };
+    fetchData(intervalRef);
+    intervalRef.current = setInterval(() => fetchData(intervalRef), TICK_INTERVAL);
+    return () => clearInterval(intervalRef.current);
   }, []);
 
   return <DataContext.Provider value={data}>{children}</DataContext.Provider>;
