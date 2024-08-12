@@ -48,8 +48,8 @@ function DHallTable() {
     storage.setLocalStorage(StorageKeys.DHALL, college);
   }, [college]);
 
-  const currentDay = time.day;
-  const currentHour = time.currentHour;
+  const currentDay = time.dayPrinceton;
+  const currentHour = time.currentHourPrinceton;
 
   let meal: MealSession = "Breakfast";
   if (currentDay === Days.Saturday || currentDay === Days.Sunday) {
