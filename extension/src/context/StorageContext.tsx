@@ -6,7 +6,6 @@ export enum StorageKeys {
   WIDGET = "campusWidget",
   NAME = "name",
   DHALL = "dhall",
-  CLUB = "club",
 }
 
 type Storage = {
@@ -41,7 +40,7 @@ const storageContext: Storage = {
   },
   getLocalStorageObject: () => {
     const localStorageObject = Object.fromEntries(
-      Object.keys(localStorage).map((key) => {
+      Object.values(StorageKeys).map((key) => {
         const value = localStorage.getItem(key);
         if (!value) {
           return [key, null];
