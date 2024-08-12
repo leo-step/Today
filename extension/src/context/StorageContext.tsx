@@ -19,8 +19,20 @@ type Storage = {
   getLocalStorageObject: () => any;
 };
 
+const cleanLocalStorage = () => {
+  const allKeys = Object.keys(localStorage);
+  const storageKeysArray = Object.values(StorageKeys) as string[];
+
+  allKeys.forEach((key) => {
+    if (!storageKeysArray.includes(key)) {
+      localStorage.removeItem(key);
+    }
+  });
+};
+
 const storageContext: Storage = {
   getLocalStorage: (key: StorageKeys) => {
+    cleanLocalStorage()
     return window.localStorage.getItem(key);
   },
   getLocalStorageDefault: (
@@ -29,6 +41,7 @@ const storageContext: Storage = {
     // MUST include array for all widgets, otherwise breaking on extension update
     validResults?: string[]
   ) => {
+    cleanLocalStorage()
     let result = window.localStorage.getItem(key) || fallback;
     if (validResults && !validResults.includes(result)) {
       result = validResults[0];
@@ -36,9 +49,12 @@ const storageContext: Storage = {
     return result;
   },
   setLocalStorage: (key: StorageKeys, data: string) => {
+    cleanLocalStorage()
     window.localStorage.setItem(key, data);
   },
   getLocalStorageObject: () => {
+    cleanLocalStorage();
+  
     const localStorageObject = Object.fromEntries(
       Object.values(StorageKeys).map((key) => {
         const value = localStorage.getItem(key);
@@ -52,10 +68,12 @@ const storageContext: Storage = {
         }
       })
     );
+  
     delete localStorageObject[StorageKeys.DATA];
     delete localStorageObject[StorageKeys.UUID];
+  
     return localStorageObject;
-  },
+  }
 };
 
 const StorageContext = createContext<Storage>(storageContext);
