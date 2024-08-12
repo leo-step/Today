@@ -94,3 +94,4 @@ def get_prince():
 db.widgets.replace_one({"_id": "weather"}, get_weather(), True)
 db.widgets.replace_one({"_id": "dhall"}, get_menus(), True)
 db.widgets.replace_one({"_id": "prince"}, get_prince(), True)
+print("ran old scrape")

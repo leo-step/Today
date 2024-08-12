@@ -138,4 +138,4 @@ def get_data():
 
 
 db.widgets.replace_one({"_id": "data"}, get_data(), True)
-
+print("ran new scrape")
