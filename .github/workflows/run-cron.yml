@@ -19,8 +19,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r pipelines/requirements.txt
       - run: |
-          python pipelines/scrape.py
-          python pipelines/scrape_new.py
+          python pipelines/extension/scrape.py
+          python pipelines/extension/scrape_new.py
         env:
           WEATHER: ${{ secrets.WEATHER }}
           DB_CONN: ${{ secrets.DB_CONN }}
