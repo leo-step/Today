@@ -54,7 +54,7 @@ function DHallTable() {
   let meal: MealSession = "Breakfast";
   if (currentDay === Days.Saturday || currentDay === Days.Sunday) {
     meal = "Lunch";
-  } else if (Hours._11AM <= currentHour && currentHour < Hours._2PM) {
+  } else if (Hours._10AM <= currentHour && currentHour < Hours._2PM) {
     meal = "Lunch";
   } else if (Hours._2PM <= currentHour && currentHour < Hours._12AM) {
     meal = "Dinner";
