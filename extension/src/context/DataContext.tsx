@@ -11,13 +11,9 @@ import { StorageKeys, useStorage } from "./StorageContext";
 import { useTime } from "./TimeContext";
 import { EventTypes, useMixpanel } from "./MixpanelContext";
 
-const TICK_INTERVAL = 5000
+const TICK_INTERVAL = 60000;
 
 const DataContext = createContext<any>(null);
-
-type IntervalRef = {
-  current: NodeJS.Timer | undefined
-}
 
 const DataProvider = ({ children }: { children: ReactNode }) => {
   const [data, setData] = useState();
@@ -30,10 +26,10 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
       storage.setLocalStorage(StorageKeys.DATA, JSON.stringify(res.data));
       setData(res.data);
     });
-    mixpanel.trackEvent(EventTypes.FETCH_DATA, time.getUTC().toString())
+    mixpanel.trackEvent(EventTypes.FETCH_DATA, time.getUTC().toString());
   };
 
-  const fetchData = async (intervalRef: any) => {
+  const fetchData = async () => {
     time.refresh?.();
     try {
       const data = storage.getLocalStorage(StorageKeys.DATA);
@@ -52,18 +48,13 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
           await requestAndSetData();
         }
       }
-    } catch {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    }
+    } catch {}
   };
 
   useEffect(() => {
-    const intervalRef: IntervalRef = { current: undefined };
-    fetchData(intervalRef);
-    intervalRef.current = setInterval(() => fetchData(intervalRef), TICK_INTERVAL);
-    return () => clearInterval(intervalRef.current);
+    fetchData();
+    const intervalRef: NodeJS.Timer = setInterval(fetchData, TICK_INTERVAL);
+    return () => clearInterval(intervalRef);
   }, []);
 
   return <DataContext.Provider value={data}>{children}</DataContext.Provider>;
