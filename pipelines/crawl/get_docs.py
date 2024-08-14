@@ -6,6 +6,7 @@ import uuid
 
 INPUT_PATH = "urls.txt"
 OUTPUT_PATH = "./documents"
+MAPPING_PATH = "crawl_index_mapping.txt"
 
 class MakeData_Job(MapReduce):
     def get_items(self):
@@ -30,12 +31,17 @@ class MakeData_Job(MapReduce):
     def reduceF(self, results):
         if not os.path.exists(OUTPUT_PATH):
             os.makedirs(OUTPUT_PATH)
+        if os.path.exists(MAPPING_PATH):
+            os.remove(MAPPING_PATH)
         
         for result in results:
             try:
-                text = result['text']
+                url, text = result['url'], result['text']
                 if text:
-                    output_file = f'{OUTPUT_PATH}/{uuid.uuid4()}.txt'
+                    id = uuid.uuid4()
+                    with open(MAPPING_PATH, "a") as file:
+                        file.write(f"{id},{url}\n")
+                    output_file = f'{OUTPUT_PATH}/{id}.txt'
                     with open(output_file, "w") as file:
                         file.write(text)
             except:
