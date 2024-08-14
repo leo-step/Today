@@ -7,6 +7,7 @@ from sqlalchemy.exc import ProgrammingError
 import hashlib
 import os
 import re
+import time
 
 load_dotenv()
 
@@ -67,7 +68,8 @@ if __name__ == "__main__":
                 chunk.page_content = collapse_whitespace(chunk.page_content)
                 chunk.metadata = {
                     "id": sha256_hash_string(chunk.page_content), 
-                    "url": uuid_url_mapping[uuid]
+                    "url": uuid_url_mapping[uuid],
+                    "time": int(time.time())
                 }
                 documents.append(chunk)
             
