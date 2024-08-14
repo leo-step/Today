@@ -21,7 +21,7 @@ class MakeData_Job(MapReduce):
             response = requests.get(url)
             assert(response.status_code == 200)
             soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.get_text(separator="\n", strip=True)
+            text = str(soup)
             return {'url': url, 'text': text}
         except Exception as e:
             print(f"Error fetching {url}: {e}")
@@ -41,7 +41,7 @@ class MakeData_Job(MapReduce):
                     id = uuid.uuid4()
                     with open(MAPPING_PATH, "a") as file:
                         file.write(f"{id},{url}\n")
-                    output_file = f'{OUTPUT_PATH}/{id}.txt'
+                    output_file = f'{OUTPUT_PATH}/{id}.html'
                     with open(output_file, "w") as file:
                         file.write(text)
             except:

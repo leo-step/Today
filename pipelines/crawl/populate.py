@@ -1,10 +1,12 @@
 from langchain_openai import OpenAIEmbeddings
 from langchain_postgres import PGVector
 from langchain_postgres.vectorstores import PGVector
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import HTMLSectionSplitter
 from dotenv import load_dotenv
+from sqlalchemy.exc import ProgrammingError
 import hashlib
 import os
+import re
 
 load_dotenv()
 
@@ -20,12 +22,7 @@ vector_store = PGVector(
     use_jsonb=True,
 )
 
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=512,
-    chunk_overlap=128,
-    length_function=len,
-    is_separator_regex=False,
-)
+text_splitter = HTMLSectionSplitter(headers_to_split_on=[("h1", "Header 1"), ("h2", "Header 2")])
 
 def sha256_hash_string(input_string):
     encoded_string = input_string.encode()
@@ -44,8 +41,12 @@ def build_crawl_index_url_map():
     
     return uuid_url_mapping
 
+def collapse_whitespace(text):
+    return re.sub(r'\s+', ' ', text).strip()
+
 
 if __name__ == "__main__":
+    is_dry_run = False
     OUTPUT_PATH = "./documents"
     uuid_url_mapping = build_crawl_index_url_map()
 
@@ -57,14 +58,29 @@ if __name__ == "__main__":
             continue # ??
         with open(file_path) as f:
             doc_text = f.read()
-            chunks = text_splitter.create_documents([doc_text])
+            chunks = text_splitter.split_text(doc_text)
+            documents = []
+
             for chunk in chunks:
+                if "UltraDNS" in chunk.page_content:
+                    continue # lol
+                chunk.page_content = collapse_whitespace(chunk.page_content)
                 chunk.metadata = {
                     "id": sha256_hash_string(chunk.page_content), 
                     "url": uuid_url_mapping[uuid]
                 }
-            vector_store.add_documents(chunks, ids=[doc.metadata["id"] for doc in chunks])
-            count += len(chunks)
-            print(f"[INFO] added {len(chunks)} documents to vector store")
+                documents.append(chunk)
+            
+            if not is_dry_run:
+                try:
+                    vector_store.add_documents(documents, ids=[doc.metadata["id"] for doc in documents])
+                except ProgrammingError:
+                    print("[WARN] encountered cardinality violation, inserting chunks one by one")
+                    for doc in documents:
+                        vector_store.add_documents([doc], ids=[doc.metadata["id"]])
+                count += len(documents)
+                print(f"[INFO] added {len(documents)} documents to vector store")
+            else:
+                print(f"[INFO] processed {len(documents)} documents in dry run")
 
-    print(f"[INFO] Finished with count = {count}")
+    print(f"[INFO] finished with count = {count} (potential duplicates included)")
