@@ -4,10 +4,11 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
-from langchain_postgres import PGVector
 from email.utils import parsedate_tz, mktime_tz
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+from langchain_mongodb import MongoDBAtlasVectorSearch
+from pymongo import MongoClient
 import base64
 import os
 
@@ -78,13 +79,13 @@ def read_email(service, message_id):
 
     doc = Document(
         page_content="\n".join(text_parts), 
-        metadata={"id": message_id, "links": extracted_links, "time": email_timestamp}
+        metadata={"links": extracted_links, "time": email_timestamp}
     )
 
-    return doc
+    return message_id, doc
 
 def main():
-    is_dry_run = True
+    is_dry_run = False
     service = get_gmail_service()
     
     # Replace with the specific email address you're looking for
@@ -99,28 +100,31 @@ def main():
         print("[INFO] No unread emails found.")
         return
     
+    ids = []
     docs = []
     for message in messages:
-        doc = read_email(service, message['id'])
+        message_id, doc = read_email(service, message['id'])
         print(doc.page_content)
         print(doc.metadata)
         print("\n\n===================\n\n")
+        ids.append(message_id)
         docs.append(doc)
 
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
 
-    connection = "postgresql+psycopg://langchain:langchain@localhost:6024/langchain"
+    client = MongoClient(os.getenv("MONGO_CONN"))
+    # Define collection and index name
+    db_name = "today"
     collection_name = "emails"
+    atlas_collection = client[db_name][collection_name]
 
-    vector_store = PGVector(
-        embeddings=embeddings,
-        collection_name=collection_name,
-        connection=connection,
-        use_jsonb=True,
+    vector_store = MongoDBAtlasVectorSearch(
+        atlas_collection,
+        embeddings
     )
 
     if not is_dry_run:
-        vector_store.add_documents(docs, ids=[doc.metadata["id"] for doc in docs])
+        vector_store.add_documents(docs, ids=ids)
 
         print(f"[INFO] added {len(docs)} email documents")
         
