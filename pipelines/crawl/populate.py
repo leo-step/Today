@@ -1,9 +1,8 @@
 from langchain_openai import OpenAIEmbeddings
-from langchain_postgres import PGVector
-from langchain_postgres.vectorstores import PGVector
+from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_text_splitters import HTMLSectionSplitter
+from pymongo import MongoClient
 from dotenv import load_dotenv
-from sqlalchemy.exc import ProgrammingError
 import hashlib
 import os
 import re
@@ -11,16 +10,18 @@ import time
 
 load_dotenv()
 
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
 
-connection = "postgresql+psycopg://langchain:langchain@localhost:6024/langchain"
-collection_name = "crawl_chunks"
+client = MongoClient(os.getenv("MONGO_CONN"))
+# Define collection and index name
+db_name = "today"
+collection_name = "crawl"
+atlas_collection = client[db_name][collection_name]
+vector_search_index = "vector_index"
 
-vector_store = PGVector(
-    embeddings=embeddings,
-    collection_name=collection_name,
-    connection=connection,
-    use_jsonb=True,
+vector_store = MongoDBAtlasVectorSearch(
+    atlas_collection,
+    embeddings
 )
 
 text_splitter = HTMLSectionSplitter(headers_to_split_on=[("h1", "Header 1"), ("h2", "Header 2")])
@@ -52,6 +53,7 @@ if __name__ == "__main__":
     uuid_url_mapping = build_crawl_index_url_map()
 
     count = 0
+    id_set = set()
     for filename in os.listdir(OUTPUT_PATH):
         file_path = os.path.join(OUTPUT_PATH, filename)
         uuid = os.path.splitext(filename)[0]
@@ -61,28 +63,26 @@ if __name__ == "__main__":
             doc_text = f.read()
             chunks = text_splitter.split_text(doc_text)
             documents = []
-
+            ids = []
             for chunk in chunks:
                 if "UltraDNS" in chunk.page_content:
                     continue # lol
                 chunk.page_content = collapse_whitespace(chunk.page_content)
                 chunk.metadata = {
-                    "id": sha256_hash_string(chunk.page_content), 
                     "url": uuid_url_mapping[uuid],
                     "time": int(time.time())
                 }
-                documents.append(chunk)
+                doc_id = sha256_hash_string(chunk.page_content)
+                if doc_id not in id_set:
+                    ids.append(doc_id)
+                    documents.append(chunk)
+                    id_set.add(doc_id)
             
             if not is_dry_run:
-                try:
-                    vector_store.add_documents(documents, ids=[doc.metadata["id"] for doc in documents])
-                except ProgrammingError:
-                    print("[WARN] encountered cardinality violation, inserting chunks one by one")
-                    for doc in documents:
-                        vector_store.add_documents([doc], ids=[doc.metadata["id"]])
+                vector_store.add_documents(documents, ids=ids)
                 count += len(documents)
                 print(f"[INFO] added {len(documents)} documents to vector store")
             else:
                 print(f"[INFO] processed {len(documents)} documents in dry run")
 
-    print(f"[INFO] finished with count = {count} (potential duplicates included)")
+    print(f"[INFO] finished with count = {count}")
