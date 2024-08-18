@@ -2,27 +2,39 @@ import os
 
 from chains.crawl_hybrid_search_chain import crawl_hybrid_search_chain
 from langchain import hub
-from langchain.agents import AgentExecutor, Tool, create_openai_functions_agent
+from langchain.tools import StructuredTool
+from langchain.agents import AgentExecutor, create_openai_functions_agent
 from langchain_openai import ChatOpenAI
+from models.tool_inputs import SingleTextInput
 
 AGENT_MODEL = os.getenv("AGENT_MODEL")
 
 agent_prompt = hub.pull("hwchase17/openai-functions-agent")
 
 tools = [
-    Tool(
-        name="Experiences",
+    StructuredTool(
+        name="Crawl",
         func=crawl_hybrid_search_chain.invoke,
-        description="""Useful when you need to answer questions
-        about patient experiences, feelings, or any other qualitative
-        question that could be answered about a patient using semantic
-        search. Not useful for answering objective questions that involve
-        counting, percentages, aggregations, or listing facts. Use the
-        entire prompt as input to the tool. For instance, if the prompt is
-        "Are patients satisfied with their care?", the input should be
-        "Are patients satisfied with their care?".
+        description="""This tool accesses a crawl of all Princeton
+        and Princeton-related webpages. Useful when you need to answer
+        questions about the university, academic requirements, professors,
+        various academic programs, general information about campus life,
+        and other general things that would be listed on a university 
+        webpage. 
+        
+        Not useful for answering questions that involve real time
+        information about campus life, clubs, events, job opportunity 
+        postings, and other similar kinds of information.
+
+        Should be used as a default fallback when other tools don't 
+        give a good response.
+        
+        Use the entire prompt as input to the tool. For instance, if 
+        the prompt is "Who is Professor Arvind Narayanan?", the input 
+        should be "Who is Professor Arvind Narayanan?".
         """,
-    ),
+        args_schema=SingleTextInput
+    )
 ]
 
 chat_model = ChatOpenAI(

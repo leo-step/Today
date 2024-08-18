@@ -6,6 +6,7 @@ from mixpanel import Mixpanel
 from pydantic import BaseModel
 from utils.async_utils import async_retry
 from agents.tay_agent import tay_agent_executor
+from models.chat_query import ChatQueryInput, ChatQueryOutput
 from typing import Any
 import pymongo
 import os
@@ -53,9 +54,9 @@ async def invoke_agent_with_retry(query: str):
     return await tay_agent_executor.ainvoke({"input": query})
 
 @app.post("/api/chat")
-async def query_hospital_agent(
-    query: HospitalQueryInput,
-) -> HospitalQueryOutput:
+async def query_agent(
+    query: ChatQueryInput,
+) -> ChatQueryOutput:
     query_response = await invoke_agent_with_retry(query.text)
     query_response["intermediate_steps"] = [
         str(s) for s in query_response["intermediate_steps"]
