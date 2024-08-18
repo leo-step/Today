@@ -4,6 +4,8 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from pydantic import BaseModel
+from utils.async_utils import async_retry
+from agents.tay_agent import tay_agent_executor
 from typing import Any
 import pymongo
 import os
@@ -29,6 +31,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ========== EXTENSION ==========
+
 @app.get("/api/extension/widget-data")
 async def index():
     client = pymongo.MongoClient(os.getenv("DB_CONN"))
@@ -40,3 +44,21 @@ async def index():
 @app.post("/api/track")
 async def track(data: Event):
     mp.track(data.uuid, data.event, data.properties)
+
+
+# ========== CHATBOT ==========
+
+@async_retry(max_retries=10, delay=1)
+async def invoke_agent_with_retry(query: str):
+    return await tay_agent_executor.ainvoke({"input": query})
+
+@app.post("/api/chat")
+async def query_hospital_agent(
+    query: HospitalQueryInput,
+) -> HospitalQueryOutput:
+    query_response = await invoke_agent_with_retry(query.text)
+    query_response["intermediate_steps"] = [
+        str(s) for s in query_response["intermediate_steps"]
+    ]
+
+    return query_response
