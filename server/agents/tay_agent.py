@@ -42,14 +42,14 @@ chat_model = ChatOpenAI(
     temperature=0,
 )
 
-hospital_rag_agent = create_openai_functions_agent(
+tay_agent = create_openai_functions_agent(
     llm=chat_model,
     prompt=agent_prompt,
     tools=tools,
 )
 
 tay_agent_executor = AgentExecutor(
-    agent=hospital_rag_agent,
+    agent=tay_agent,
     tools=tools,
     return_intermediate_steps=True,
     verbose=True,
