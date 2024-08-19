@@ -1,6 +1,7 @@
 import os
 
 from chains.crawl_hybrid_search_chain import crawl_hybrid_search_chain
+from chains.email_hybrid_search_chain import email_hybrid_search_chain
 from langchain import hub
 from langchain.tools import StructuredTool
 from langchain.agents import AgentExecutor, create_openai_functions_agent
@@ -32,6 +33,23 @@ tools = [
         Use the entire prompt as input to the tool. For instance, if 
         the prompt is "Who is Professor Arvind Narayanan?", the input 
         should be "Who is Professor Arvind Narayanan?".
+        """,
+        args_schema=SingleTextInput
+    ),
+    StructuredTool(
+        name="Emails",
+        func=email_hybrid_search_chain.invoke,
+        description="""This tool accesses the latest Princeton listserv
+        emails. Useful when you need to answer question about real time
+        events, clubs, job opportunity postings, deadlines for auditions,
+        and things going on in campus life.
+        
+        Not useful for answering questions about academic facts or 
+        professors.
+        
+        Use the entire prompt as input to the tool. For instance, if 
+        the prompt is "What dance shows are coming up?", the input 
+        should be "What dance shows are coming up?".
         """,
         args_schema=SingleTextInput
     )

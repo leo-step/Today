@@ -35,7 +35,7 @@ class MongoHybridRetriever(BaseRetriever):
     def _get_relevant_documents(self, query: str):
         docs = self.perform_hybrid_search(query)
         for doc in docs:
-            if doc["url"]: # TODO: this should just be a schema change in data pipeline
+            if "url" in doc: # TODO: this should just be a schema change in data pipeline
                 doc["links"] = [doc["url"]]
             links = "\n".join(self.clean_up_links(doc["links"]))
             time_ago = self.get_time_ago(doc["time"])
@@ -65,6 +65,7 @@ class MongoHybridRetriever(BaseRetriever):
                     "_id": 1,
                     "text": 1,
                     "url": 1,
+                    "links": 1,
                     "time": 1,
                     "vs_score": {
                         "$divide": [1.0, {"$add": [{"$indexOfArray": [None, "$_id"]}, self.vector_penalty, 1]}]
@@ -92,7 +93,8 @@ class MongoHybridRetriever(BaseRetriever):
                 "$project": {
                     "_id": 1,
                     "text": 1,
-                    "url": 1,
+                    "url": 1, # TODO: see other todo
+                    "links": 1, 
                     "time": 1,
                     "fts_score": {
                         "$divide": [1.0, {"$add": [{"$indexOfArray": [None, "$_id"]}, self.full_text_penalty, 1]}]
