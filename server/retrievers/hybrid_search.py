@@ -35,7 +35,7 @@ class MongoHybridRetriever(BaseRetriever):
     def _get_relevant_documents(self, query: str):
         docs = self.perform_hybrid_search(query)
         for doc in docs:
-            if doc["url"]:
+            if doc["url"]: # TODO: this should just be a schema change in data pipeline
                 doc["links"] = [doc["url"]]
             links = "\n".join(self.clean_up_links(doc["links"]))
             time_ago = self.get_time_ago(doc["time"])

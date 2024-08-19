@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from pydantic import BaseModel
 from utils.async_utils import async_retry
+from utils.link_utils import extract_links
 from agents.tay_agent import tay_agent_executor
 from models.chat_query import ChatQueryInput, ChatQueryOutput
 from typing import Any
@@ -58,4 +59,5 @@ async def query_agent(
     query: ChatQueryInput,
 ) -> ChatQueryOutput:
     query_response = await invoke_agent_with_retry(query.text)
+    query_response["links"] = extract_links(query_response["output"])
     return query_response
