@@ -20,6 +20,7 @@ client = MongoClient(os.getenv("MONGO_CONN"))
 db_name = "today"
 collection_name = "crawl"
 atlas_collection = client[db_name][collection_name]
+# atlas_collection.delete_many({})
 vector_search_index = "vector_index"
 
 vector_store = MongoDBAtlasVectorSearch(
@@ -76,7 +77,7 @@ class PopulateJob(MapReduce):
                         continue # lol
                     chunk.page_content = collapse_whitespace(chunk.page_content)
                     chunk.metadata = {
-                        "url": self.uuid_url_mapping[uuid],
+                        "links": [self.uuid_url_mapping[uuid]],
                         "time": int(time.time())
                     }
                     doc_id = sha256_hash_string(chunk.page_content)

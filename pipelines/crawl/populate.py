@@ -69,7 +69,7 @@ if __name__ == "__main__":
                     continue # lol
                 chunk.page_content = collapse_whitespace(chunk.page_content)
                 chunk.metadata = {
-                    "url": uuid_url_mapping[uuid],
+                    "links": [uuid_url_mapping[uuid]],
                     "time": int(time.time())
                 }
                 doc_id = sha256_hash_string(chunk.page_content)
