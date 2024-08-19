@@ -35,8 +35,6 @@ class MongoHybridRetriever(BaseRetriever):
     def _get_relevant_documents(self, query: str):
         docs = self.perform_hybrid_search(query)
         for doc in docs:
-            if "url" in doc: # TODO: this should just be a schema change in data pipeline
-                doc["links"] = [doc["url"]]
             links = "\n".join(self.clean_up_links(doc["links"]))
             time_ago = self.get_time_ago(doc["time"])
             metadata_text = f"\n\nLinks: {links}\nHow recent? {time_ago}"
@@ -64,7 +62,6 @@ class MongoHybridRetriever(BaseRetriever):
                 "$project": {
                     "_id": 1,
                     "text": 1,
-                    "url": 1,
                     "links": 1,
                     "time": 1,
                     "vs_score": {
@@ -93,7 +90,6 @@ class MongoHybridRetriever(BaseRetriever):
                 "$project": {
                     "_id": 1,
                     "text": 1,
-                    "url": 1, # TODO: see other todo
                     "links": 1, 
                     "time": 1,
                     "fts_score": {
