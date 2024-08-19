@@ -29,7 +29,8 @@ answer questions.
 
 Be as detailed as possible, but don't make up any information
 that's not from the context. If you don't know an answer,
-say you don't know.
+say you don't know. After writing out the text of your
+response, include all the relevant links you used as well.
 
 {context}
 """
@@ -57,7 +58,10 @@ hybrid_retriever = MongoHybridRetriever(
 crawl_hybrid_search_chain = RetrievalQA.from_chain_type(
     llm=ChatOpenAI(model=QA_MODEL, temperature=0),
     chain_type="stuff",
-    retriever=hybrid_retriever
+    retriever=hybrid_retriever,
+    # return_source_documents=True
 )
 
 crawl_hybrid_search_chain.combine_documents_chain.llm_chain.prompt = crawl_response_prompt
+
+# print(crawl_hybrid_search_chain.invoke("Arvind Narayanan"))

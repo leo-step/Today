@@ -6,4 +6,3 @@ class ChatQueryInput(BaseModel):
 class ChatQueryOutput(BaseModel):
     input: str
     output: str
-    intermediate_steps: list[str]

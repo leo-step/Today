@@ -3,6 +3,7 @@ from langchain_core.retrievers import BaseRetriever
 from pymongo.collection import Collection
 from langchain_openai import OpenAIEmbeddings
 from pydantic import Field
+import time
 
 class MongoHybridRetriever(BaseRetriever):
     collection: Collection = Field(..., description="The name or identifier of the MongoDB collection")
@@ -14,9 +15,34 @@ class MongoHybridRetriever(BaseRetriever):
     fts_limit = 5
     limit = 5
 
+    def get_time_ago(self, doc_time: int) -> str:
+        current_time = int(time.time())
+        time_difference = current_time - doc_time
+        
+        days_ago = time_difference // (24 * 3600)
+        
+        if days_ago == 0:
+            return "Today"
+        elif days_ago == 1:
+            return "1 day ago"
+        else:
+            return f"{days_ago} days ago"
+        
+    def clean_up_links(self, links):
+        # exclude various garbage links
+        return links
+
     def _get_relevant_documents(self, query: str):
         docs = self.perform_hybrid_search(query)
-        return [Document(page_content=doc['text'], metadata={"url": doc['url'], "time": doc['time']}) for doc in docs]
+        for doc in docs:
+            if doc["url"]:
+                doc["links"] = [doc["url"]]
+            links = "\n".join(self.clean_up_links(doc["links"]))
+            time_ago = self.get_time_ago(doc["time"])
+            metadata_text = f"\n\nLinks: {links}\nHow recent? {time_ago}"
+            doc["text"] += metadata_text
+
+        return [Document(page_content=doc['text']) for doc in docs]
 
     def perform_hybrid_search(self, query):
         # start_time = time.time()
@@ -86,7 +112,6 @@ class MongoHybridRetriever(BaseRetriever):
             doc['score'] = vs_score + fts_score
 
         sorted_results = sorted(combined_results, key=lambda x: x['score'], reverse=True)[:self.limit]
-        
         return sorted_results
 
 

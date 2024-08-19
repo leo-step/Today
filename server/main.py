@@ -58,8 +58,4 @@ async def query_agent(
     query: ChatQueryInput,
 ) -> ChatQueryOutput:
     query_response = await invoke_agent_with_retry(query.text)
-    query_response["intermediate_steps"] = [
-        str(s) for s in query_response["intermediate_steps"]
-    ]
-
     return query_response
