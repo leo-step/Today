@@ -4,12 +4,11 @@ from chains.crawl_hybrid_search_chain import crawl_hybrid_search_chain
 from chains.email_hybrid_search_chain import email_hybrid_search_chain
 from langchain import hub
 from langchain.tools import StructuredTool
-from langchain.memory import ConversationBufferMemory
 from langchain_openai import ChatOpenAI
 from models.tool_inputs import SingleTextInput
 from langchain.agents import AgentType, initialize_agent
 from agents.utils import AsyncCallbackHandler
-from agents.memory import MongoDBConversationMemory
+from agents.memory import MongoDBConversationMemory, ChatMemoryWithIntermediates
 from dotenv import load_dotenv
 import os
 
@@ -78,7 +77,7 @@ def get_agent_run_call(session_id):
         history_key="message"
     )
 
-    memory = ConversationBufferMemory(
+    memory = ChatMemoryWithIntermediates(
         chat_memory=message_history,
         memory_key='chat_history',
         return_messages=True,
@@ -92,7 +91,7 @@ def get_agent_run_call(session_id):
         max_iterations=3,
         early_stopping_method="generate",
         memory=memory,
-        return_intermediate_steps=False
+        return_intermediate_steps=True
     )
 
     async def run_call(query: str, stream_it: AsyncCallbackHandler):
