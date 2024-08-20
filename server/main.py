@@ -1,14 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from pydantic import BaseModel
-from utils.async_utils import async_retry
-from utils.link_utils import extract_links
-from agents.tay_agent import tay_agent_executor
+from agents.tay_agent import tay_agent, AsyncCallbackHandler, run_call
 from models.chat_query import ChatQueryInput, ChatQueryOutput
 from typing import Any
+import asyncio
 import pymongo
 import os
 
@@ -50,14 +50,14 @@ async def track(data: Event):
 
 # ========== CHATBOT ==========
 
-@async_retry(max_retries=10, delay=1)
-async def invoke_agent_with_retry(query: str):
-    return await tay_agent_executor.ainvoke({"input": query})
+async def create_gen(query: str, stream_it: AsyncCallbackHandler):
+    task = asyncio.create_task(run_call(query, stream_it))
+    async for token in stream_it.aiter():
+        yield token
+    await task
 
-@app.post("/api/chat")
-async def query_agent(
-    query: ChatQueryInput,
-) -> ChatQueryOutput:
-    query_response = await invoke_agent_with_retry(query.text)
-    query_response["links"] = extract_links(query_response["output"])
-    return query_response
+@app.get("/api/chat")
+async def chat(query: ChatQueryInput = Body(...)):
+    stream_it = AsyncCallbackHandler()
+    gen = create_gen(query.text, stream_it)
+    return StreamingResponse(gen, media_type="text/event-stream")
