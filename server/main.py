@@ -11,6 +11,7 @@ from typing import Any
 import asyncio
 import pymongo
 import os
+import time
 
 load_dotenv()
 app = FastAPI()
@@ -62,7 +63,8 @@ async def chat(query: ChatQueryInput = Body(...)):
     user_conversations = client["today"]["user_conversations"]
     document = {
         'uuid': query.uuid,
-        'session_id': query.session_id
+        'session_id': query.session_id,
+        'time': int(time.time())
     }
     update_fields = {
         '$set': document
