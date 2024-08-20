@@ -23,7 +23,7 @@ class MongoDBConversationMemory(MongoDBChatMessageHistory):
             logger.error(error)
 
         if cursor:
-            items = [json.loads(document[self.history_key]) for document in cursor][::-1]
+            items = [json.loads(document[self.history_key]) for document in cursor][::-1] # is this right?
         else:
             items = []
 

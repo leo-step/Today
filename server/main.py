@@ -58,10 +58,20 @@ async def create_gen(query: str, stream_it: AsyncCallbackHandler, run_call):
 
 @app.post("/api/chat")
 async def chat(query: ChatQueryInput = Body(...)):
+    client = pymongo.MongoClient(os.getenv("MONGO_CONN"))
+    user_conversations = client["today"]["user_conversations"]
+    document = {
+        'uuid': query.uuid,
+        'session_id': query.session_id
+    }
+    update_fields = {
+        '$set': document
+    }
+
+    user_conversations.update_one(document, update_fields, upsert=True)
+
     stream_it = AsyncCallbackHandler()
-    # add a check to a collection called user_conversations
-    # where you validate that the session id belongs to the user
-    # or doesn't exist
     agent_run_call = get_agent_run_call(query.session_id)
     gen = create_gen(query.text, stream_it, agent_run_call)
+    # save tool calling artifacts?
     return StreamingResponse(gen, media_type="text/event-stream")
