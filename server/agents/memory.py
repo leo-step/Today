@@ -23,7 +23,7 @@ class MongoDBConversationMemory(MongoDBChatMessageHistory):
     @property
     def messages(self) -> List[BaseMessage]:
         try:
-            cursor = self.collection.find({self.session_id_key: self.session_id}).sort("time", -1).limit(MAX_DOCUMENTS)
+            cursor = self.collection.find({self.session_id_key: self.session_id}).sort("index", -1).limit(MAX_DOCUMENTS)
         except errors.OperationFailure as error:
             logger.error(error)
 
@@ -37,10 +37,12 @@ class MongoDBConversationMemory(MongoDBChatMessageHistory):
 
     def add_message(self, message: BaseMessage) -> None:
         try:
+            index = self.collection.count_documents({self.session_id_key: self.session_id})
             self.collection.insert_one(
                 {
                     self.session_id_key: self.session_id,
                     self.history_key: json.dumps(message_to_dict(message)),
+                    "index": index,
                     "time": int(time.time())
                 }
             )
