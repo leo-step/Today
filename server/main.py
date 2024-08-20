@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from pydantic import BaseModel
-from agents.tay_agent import tay_agent, AsyncCallbackHandler, run_call
-from models.chat_query import ChatQueryInput, ChatQueryOutput
+from agents.tay_agent import AsyncCallbackHandler, get_agent_run_call
+from models.chat_query import ChatQueryInput
 from typing import Any
 import asyncio
 import pymongo
@@ -50,14 +50,18 @@ async def track(data: Event):
 
 # ========== CHATBOT ==========
 
-async def create_gen(query: str, stream_it: AsyncCallbackHandler):
+async def create_gen(query: str, stream_it: AsyncCallbackHandler, run_call):
     task = asyncio.create_task(run_call(query, stream_it))
     async for token in stream_it.aiter():
         yield token
     await task
 
-@app.get("/api/chat")
+@app.post("/api/chat")
 async def chat(query: ChatQueryInput = Body(...)):
     stream_it = AsyncCallbackHandler()
-    gen = create_gen(query.text, stream_it)
+    # add a check to a collection called user_conversations
+    # where you validate that the session id belongs to the user
+    # or doesn't exist
+    agent_run_call = get_agent_run_call(query.session_id)
+    gen = create_gen(query.text, stream_it, agent_run_call)
     return StreamingResponse(gen, media_type="text/event-stream")
