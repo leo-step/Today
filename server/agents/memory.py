@@ -52,6 +52,7 @@ class ChatMemoryWithIntermediates(ConversationBufferMemory):
     def _save_intermediates_to_mongo(self, actions: List[Tuple[AgentAction, str]]):
         client = pymongo.MongoClient(os.getenv("MONGO_CONN"))
         collection = client["today"]["intermediate_steps"]
+
         data = []
         for action in actions:
             agent_action, output = action[0], action[1]
@@ -61,11 +62,20 @@ class ChatMemoryWithIntermediates(ConversationBufferMemory):
                 "tool_input": agent_action["kwargs"]["tool_input"],
                 "tool_output": output["result"]
             })
-        document = {
-            'session_id': self.chat_memory.session_id,
-            'actions': data
-        }
-        collection.insert_one(document)
+
+        existing_document = collection.find_one({'session_id': self.chat_memory.session_id})
+
+        if existing_document:
+            collection.update_one(
+                {'session_id': self.chat_memory.session_id},
+                {'$push': {'actions': {'$each': data}}}
+            )
+        else:
+            document = {
+                'session_id': self.chat_memory.session_id,
+                'actions': data
+            }
+            collection.insert_one(document)
 
     def _get_input_output(
         self, inputs: Dict[str, Any], outputs: Dict[str, str]
