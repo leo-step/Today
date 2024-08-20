@@ -9,59 +9,69 @@ from models.tool_inputs import SingleTextInput
 from langchain.agents import AgentType, initialize_agent
 from agents.utils import AsyncCallbackHandler
 from agents.memory import MongoDBConversationMemory, ChatMemoryWithIntermediates
+from mixpanel import Mixpanel
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 AGENT_MODEL = os.getenv("AGENT_MODEL")
+mp = Mixpanel(os.getenv("MIXPANEL"))
 
 agent_prompt = hub.pull("hwchase17/openai-functions-agent")
 
-tools = [
-    StructuredTool(
-        name="Crawl",
-        func=crawl_hybrid_search_chain.invoke,
-        description="""This tool accesses a crawl of all Princeton
-        and Princeton-related webpages. Useful when you need to answer
-        questions about the university, academic requirements, professors,
-        various academic programs, general information about campus life,
-        and other general things that would be listed on a university 
-        webpage. 
-        
-        Not useful for answering questions that involve real time
-        information about campus life, clubs, events, job opportunity 
-        postings, and other similar kinds of information.
+def invoke_wrapper(uuid, session_id, tool_name, invoke_func):
+    def invoke_with_tracking(input):
+        mp.track(uuid, tool_name, {'session_id': session_id})
+        return invoke_func(input)
+    return invoke_with_tracking
 
-        Should be used as a default fallback when other tools don't 
-        give a good response.
-        
-        Use the entire prompt as input to the tool. For instance, if 
-        the prompt is "Who is Professor Arvind Narayanan?", the input 
-        should be "Who is Professor Arvind Narayanan?".
-        """,
-        args_schema=SingleTextInput
-    ),
-    StructuredTool(
-        name="Emails",
-        func=email_hybrid_search_chain.invoke,
-        description="""This tool accesses the latest Princeton listserv
-        emails. Useful when you need to answer question about real time
-        events, clubs, job opportunity postings, deadlines for auditions,
-        and things going on in campus life.
-        
-        Not useful for answering questions about academic facts or 
-        professors.
-        
-        Use the entire prompt as input to the tool. For instance, if 
-        the prompt is "What dance shows are coming up?", the input 
-        should be "What dance shows are coming up?".
-        """,
-        args_schema=SingleTextInput
-    )
-]
+def get_tools(uuid, session_id):
+    tools = [
+        StructuredTool(
+            name="Crawl",
+            func=invoke_wrapper(uuid, session_id, "tool_Crawl", crawl_hybrid_search_chain.invoke),
+            description="""This tool accesses a crawl of all Princeton
+            and Princeton-related webpages. Useful when you need to answer
+            questions about the university, academic requirements, professors,
+            various academic programs, general information about campus life,
+            and other general things that would be listed on a university 
+            webpage. 
+            
+            Not useful for answering questions that involve real time
+            information about campus life, clubs, events, job opportunity 
+            postings, and other similar kinds of information.
 
-def get_agent_run_call(session_id):
+            Should be used as a default fallback when other tools don't 
+            give a good response.
+            
+            Use the entire prompt as input to the tool. For instance, if 
+            the prompt is "Who is Professor Arvind Narayanan?", the input 
+            should be "Who is Professor Arvind Narayanan?".
+            """,
+            args_schema=SingleTextInput
+        ),
+        StructuredTool(
+            name="Emails",
+            func=invoke_wrapper(uuid, session_id, "tool_Emails", email_hybrid_search_chain.invoke),
+            description="""This tool accesses the latest Princeton listserv
+            emails. Useful when you need to answer question about real time
+            events, clubs, job opportunity postings, deadlines for auditions,
+            and things going on in campus life.
+            
+            Not useful for answering questions about academic facts or 
+            professors.
+            
+            Use the entire prompt as input to the tool. For instance, if 
+            the prompt is "What dance shows are coming up?", the input 
+            should be "What dance shows are coming up?".
+            """,
+            args_schema=SingleTextInput
+        )
+    ]
+    return tools
+
+def get_agent_run_call(uuid, session_id):
     chat_model = ChatOpenAI(
         model=AGENT_MODEL,
         temperature=0,
@@ -85,7 +95,7 @@ def get_agent_run_call(session_id):
 
     tay_agent = initialize_agent(
         agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
-        tools=tools,
+        tools=get_tools(uuid, session_id),
         llm=chat_model,
         verbose=True,
         max_iterations=3,

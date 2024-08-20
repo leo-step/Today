@@ -73,7 +73,9 @@ async def chat(query: ChatQueryInput = Body(...)):
     user_conversations.update_one(document, update_fields, upsert=True)
 
     stream_it = AsyncCallbackHandler()
-    agent_run_call = get_agent_run_call(query.session_id)
+    agent_run_call = get_agent_run_call(query.uuid, query.session_id)
     gen = create_gen(query.text, stream_it, agent_run_call)
-    # save tool calling artifacts?
+
+    mp.track(query.uuid, "chat", {'session_id': query.session_id})
+
     return StreamingResponse(gen, media_type="text/event-stream")
