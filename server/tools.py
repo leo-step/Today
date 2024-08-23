@@ -1,6 +1,5 @@
 
 from dotenv import load_dotenv
-from memory import Memory
 from retrievers import retrieve_crawl, retrieve_emails
 from enum import Enum
 from clients import openai_client
@@ -31,7 +30,7 @@ def invoke_tool(tool: Tool, tool_input: str):
         return "\n\n".join(texts)
     
 @with_timing
-def choose_tool_and_rewrite(memory: Memory, query_text):
+def choose_tool_and_rewrite(memory, query_text):
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[

@@ -9,10 +9,9 @@ from tools import choose_tool_and_rewrite, invoke_tool
 from response import generate_response
 from models import ChatQueryInput
 from typing import Any
-from memory import Memory
+from memory import Memory, ToolInvocation, MessageType
 import pymongo
 import os
-import time
 
 load_dotenv()
 app = FastAPI()
@@ -58,9 +57,15 @@ async def chat(query: ChatQueryInput = Body(...)):
 
     tool, query_rewrite = choose_tool_and_rewrite(memory, query.text)
     tool_result = invoke_tool(tool, query_rewrite)
+    tool_use: ToolInvocation = {
+        "tool": tool,
+        "input": query_rewrite,
+        "output": tool_result
+    }
 
+    memory.add_message(MessageType.HUMAN, query.text)
     mp.track(query.uuid, "chat", {'session_id': query.session_id})
 
     return StreamingResponse(
-        generate_response(query_rewrite, tool_result), 
+        generate_response(memory, tool_use), 
     media_type="text/plain")

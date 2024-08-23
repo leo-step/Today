@@ -3,11 +3,11 @@ from clients import db_client
 from utils import with_timing
 
 def retrieve_crawl(query_text):
-    collection = db_client["today"]["crawl"]
+    collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
 def retrieve_emails(query_text):
-    collection = db_client["today"]["emails"]
+    collection = db_client["emails"]
     return hybrid_search(collection, query_text)
 
 def hybrid_search(collection, query_text):

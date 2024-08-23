@@ -1,6 +1,9 @@
 from clients import async_openai_client
+from memory import Memory, MessageType, ToolInvocation
 
-async def generate_response(query_text, context):
+async def generate_response(memory: Memory, tool_use: ToolInvocation):
+    query = tool_use["input"]
+    context = tool_use["output"]
     response = await async_openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -18,7 +21,7 @@ async def generate_response(query_text, context):
                 "content": [
                     {
                         "type": "text",
-                        "text": query_text
+                        "text": query
                     }
                 ]
             },
@@ -31,6 +34,12 @@ async def generate_response(query_text, context):
         stream=True
     )
 
+    full_response = []
     async for chunk in response:
-        if chunk.choices[0].delta.content != None:
-            yield chunk.choices[0].delta.content
+        chunk_content = chunk.choices[0].delta.content
+        if chunk_content != None:
+            full_response.append(chunk_content)
+            yield chunk_content
+
+    content = ''.join(full_response)
+    memory.add_message(MessageType.AI, content, tool_use=tool_use)
