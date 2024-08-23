@@ -1,38 +1,15 @@
 from clients import async_openai_client
 from memory import Memory, MessageType, ToolInvocation
+from prompts import user_query, respond_with_context
+from utils import async_openai_stream
 
 async def generate_response(memory: Memory, tool_use: ToolInvocation):
     query = tool_use["input"]
     context = tool_use["output"]
-    response = await async_openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": f"Answer the user's question using the following documents as context:\n\n{context}"
-                    }
-                ]
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": query
-                    }
-                ]
-            },
-        ],
-        temperature=1,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-        stream=True
-    )
+    response = await async_openai_stream([
+        respond_with_context(context),
+        user_query(query)
+    ])
 
     full_response = []
     async for chunk in response:

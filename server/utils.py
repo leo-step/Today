@@ -1,7 +1,9 @@
-from clients import openai_client
+from clients import openai_client, async_openai_client
 from dotenv import load_dotenv
+from typing import List
 import time
 import os
+import json
 
 load_dotenv()
 
@@ -19,3 +21,62 @@ def with_timing(func):
         print(f"[TIMING] '{func.__name__}' executed in {end_time - start_time:.4f} seconds")
         return result
     return wrapper
+
+def system_prompt(func):
+    def wrapper(*args, **kwargs):
+        text = func(*args, **kwargs)
+        return {
+            "role": "system",
+            "content": [
+                {
+                    "type": "text",
+                    "text": text
+                }
+            ]
+        }
+    return wrapper
+
+def user_prompt(func):
+    def wrapper(*args, **kwargs):
+        text = func(*args, **kwargs)
+        return {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": text
+                }
+            ]
+        }
+    return wrapper
+
+def openai_json_response(messages: List, model="gpt-4o-mini", temp=1, max_tokens=256):
+    response = openai_client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temp,
+        max_tokens=max_tokens,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        response_format={
+            "type": "json_object"
+        }
+    )
+    return json.loads(response.choices[0].message.content)
+
+async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_tokens=256):
+    response = async_openai_client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temp,
+        max_tokens=max_tokens,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+        response_format={
+            "type": "json_object"
+        },
+        stream=True
+    )
+    return response
