@@ -1,13 +1,36 @@
-from openai import OpenAI
+
 from dotenv import load_dotenv
+from memory import Memory
+from retrievers import retrieve_crawl, retrieve_emails
+from enum import Enum
+from clients import openai_client
 import json
 
 load_dotenv()
 
-client = OpenAI()
+class Tool(Enum):
+    CRAWL = "crawl"
+    EMAILS = "emails"
+    NONE = None
 
-def rewrite_and_choose_tool(query_text):
-    response = client.chat.completions.create(
+def document_to_str(document):
+    return document["text"]
+
+def invoke_tool(tool: Tool, tool_input: str):
+    if tool == Tool.NONE:
+        return ""
+    elif tool == Tool.EMAILS:
+        documents = retrieve_emails(tool_input)
+        texts = [document_to_str(doc) for doc in documents]
+        return "\n\n".join(texts)
+    else:
+        documents = retrieve_crawl(tool_input)
+        texts = [document_to_str(doc) for doc in documents]
+        return "\n\n".join(texts)
+    
+
+def choose_tool_and_rewrite(memory: Memory, query_text):
+    response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
@@ -39,4 +62,6 @@ def rewrite_and_choose_tool(query_text):
         }
     )
 
-    return query_text, json.loads(response.choices[0].message.content)["tool"]
+    tool: Tool = json.loads(response.choices[0].message.content)["tool"]
+
+    return tool, query_text

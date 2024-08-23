@@ -1,14 +1,7 @@
-from openai import AsyncOpenAI
-from dotenv import load_dotenv
+from clients import async_openai_client
 
-load_dotenv()
-
-client = AsyncOpenAI()
-
-async def generate_response(query_text, documents):
-    context = "\n".join(list(map(lambda doc: doc["text"], documents)))
-
-    response = await client.chat.completions.create(
+async def generate_response(query_text, context):
+    response = await async_openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {

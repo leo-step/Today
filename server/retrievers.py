@@ -1,15 +1,12 @@
 from utils import get_embedding
-import pymongo
-import os
+from clients import db_client
 
 def retrieve_crawl(query_text):
-    client = pymongo.MongoClient(os.getenv("MONGO_CONN"))
-    collection = client["today"]["crawl"]
+    collection = db_client["today"]["crawl"]
     return hybrid_search(collection, query_text)
 
 def retrieve_emails(query_text):
-    client = pymongo.MongoClient(os.getenv("MONGO_CONN"))
-    collection = client["today"]["emails"]
+    collection = db_client["today"]["emails"]
     return hybrid_search(collection, query_text)
 
 def hybrid_search(collection, query_text):
