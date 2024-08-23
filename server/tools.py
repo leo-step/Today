@@ -4,6 +4,7 @@ from memory import Memory
 from retrievers import retrieve_crawl, retrieve_emails
 from enum import Enum
 from clients import openai_client
+from utils import with_timing
 import json
 
 load_dotenv()
@@ -16,6 +17,7 @@ class Tool(Enum):
 def document_to_str(document):
     return document["text"]
 
+@with_timing
 def invoke_tool(tool: Tool, tool_input: str):
     if tool == Tool.NONE:
         return ""
@@ -28,7 +30,7 @@ def invoke_tool(tool: Tool, tool_input: str):
         texts = [document_to_str(doc) for doc in documents]
         return "\n\n".join(texts)
     
-
+@with_timing
 def choose_tool_and_rewrite(memory: Memory, query_text):
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",

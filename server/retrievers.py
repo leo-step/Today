@@ -1,5 +1,6 @@
 from utils import get_embedding
 from clients import db_client
+from utils import with_timing
 
 def retrieve_crawl(query_text):
     collection = db_client["today"]["crawl"]
