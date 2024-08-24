@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum
-from typing import TypedDict, List
+from typing import TypedDict, List, Optional
 
 # ========= SERVER I/O ========= #
 
@@ -32,3 +32,15 @@ class ToolInvocation(TypedDict):
     tool: Tool
     input: str
     output: str
+
+class Message(TypedDict):
+    type: MessageType
+    content: str
+    tool_use: Optional[ToolInvocation]
+    time: int
+
+class Conversation(TypedDict):
+    uuid: str
+    session_id: str
+    time: int
+    messages: List[Message]
