@@ -34,7 +34,7 @@ class ToolInvocation(TypedDict):
     output: str
 
 class Message(TypedDict):
-    type: MessageType
+    type: str
     content: str
     tool_use: Optional[ToolInvocation]
     time: int

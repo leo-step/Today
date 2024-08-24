@@ -12,9 +12,7 @@ def format_documents(documents):
 
 @with_timing
 def invoke_tool(tool: Tool, tool_input: str):
-    if tool == Tool.NONE:
-        return ""
-    elif tool == Tool.EMAILS:
+    if tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
         return format_documents(documents)
     else:
@@ -24,11 +22,12 @@ def invoke_tool(tool: Tool, tool_input: str):
 @with_timing
 def choose_tool_and_rewrite(tools, memory, query_text):
     response = openai_json_response([
-        tool_and_rewrite(tools, memory, query_text),
+        tool_and_rewrite(tools, memory),
         user_query(query_text),
     ])
     tool: Tool = response["tool"]
-    return tool, query_text
+    query_rewrite = response["query_rewrite"]
+    return tool, query_rewrite
 
 
 # =========== TOOLS =========== #

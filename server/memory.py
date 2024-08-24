@@ -28,15 +28,20 @@ class Memory:
         return []
 
     def add_message(self, type: MessageType, content: str, tool_use: Optional[ToolInvocation] = None):
+        timestamp = int(time.time())
+
         message: Message = {
-            "type": type,
+            "type": type.value,
             "content": content,
             "tool_use": tool_use,
-            "time": int(time.time())
+            "time": timestamp
         }
         
         self.conversations.update_one(
-            {"uuid": self.uuid, "session_id": self.session_id, "time": int(time.time())},
-            {"$push": {"messages": message}},
+            {"uuid": self.uuid, "session_id": self.session_id},
+            {
+                "$push": {"messages": message}, 
+                "$set": {"time": timestamp}
+            },
             upsert=True
         )

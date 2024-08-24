@@ -25,6 +25,8 @@ def with_timing(func):
 def system_prompt(func):
     def wrapper(*args, **kwargs):
         text = func(*args, **kwargs)
+        # if os.getenv("DEBUG") == "1":
+        #     print("[PROMPT]", text)
         return {
             "role": "system",
             "content": [
@@ -39,6 +41,8 @@ def system_prompt(func):
 def user_prompt(func):
     def wrapper(*args, **kwargs):
         text = func(*args, **kwargs)
+        # if os.getenv("DEBUG") == "1":
+        #     print("[PROMPT]", text)
         return {
             "role": "user",
             "content": [

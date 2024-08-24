@@ -68,7 +68,7 @@
   
       async function chatWithAPI(queryText) {
         const startTime = performance.now();
-        const requestBody = JSON.stringify({ text: queryText, uuid: crypto.randomUUID(), session_id: crypto.randomUUID() });
+        const requestBody = JSON.stringify({ text: queryText, uuid: "a5ec8ab3-1dc3-4738-a2f1-27ed951b0af3", session_id: "32a7dd3a-b32a-4f20-8d8c-73daaad88949" });
   
         const response = await fetch(apiUrl, {
           method: "POST",
