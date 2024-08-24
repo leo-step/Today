@@ -1,18 +1,7 @@
-from enum import Enum
 from clients import db_client
-from tools import Tool
-from typing import TypedDict, Optional
-from utils import with_timing
+from typing import Optional
+from models import MessageType, ToolInvocation
 import time
-
-class MessageType(Enum):
-    HUMAN = "human"
-    AI = "ai"
-
-class ToolInvocation(TypedDict):
-    tool: Tool
-    input: str
-    output: str
 
 class Memory:
     def __init__(self, uuid, session_id):

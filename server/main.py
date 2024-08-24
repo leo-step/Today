@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from pydantic import BaseModel
-from tools import choose_tool_and_rewrite, invoke_tool
+from tools import tools, choose_tool_and_rewrite, invoke_tool
 from response import generate_response
 from models import ChatQueryInput
 from typing import Any
@@ -55,7 +55,7 @@ async def track(data: Event):
 async def chat(query: ChatQueryInput = Body(...)):
     memory = Memory(query.uuid, query.session_id)
 
-    tool, query_rewrite = choose_tool_and_rewrite(memory, query.text)
+    tool, query_rewrite = choose_tool_and_rewrite(tools, memory, query.text)
     tool_result = invoke_tool(tool, query_rewrite)
     tool_use: ToolInvocation = {
         "tool": tool,

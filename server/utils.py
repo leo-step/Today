@@ -66,7 +66,7 @@ def openai_json_response(messages: List, model="gpt-4o-mini", temp=1, max_tokens
     return json.loads(response.choices[0].message.content)
 
 async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_tokens=256):
-    response = async_openai_client.chat.completions.create(
+    response = await async_openai_client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=temp,
@@ -74,9 +74,6 @@ async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_t
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
-        response_format={
-            "type": "json_object"
-        },
         stream=True
     )
     return response
