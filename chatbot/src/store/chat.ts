@@ -6,15 +6,16 @@ export interface UseChatProps {
     chat: Chat[],
     selectedChat: Chat | undefined,
     setChat: (payload: Chat) => void,
-    addChat: (callback?: (id: string) => void) => void,
+    addChat: (callback?: (id: string, selectedChat: Chat | undefined) => void) => void,
     editChat: (id: string, payload: Partial<Chat>) => void,
     addMessage: (id: string, action: ChatContent) => void,
+    editMessage: (id: string, text: string) => void,
     setSelectedChat: (payload: { id: string }) => void,
     removeChat: (pyload: { id: string }) => void,
     clearAll: () => void,
 };
 
-type Chat = {
+export type Chat = {
     id: string,
     role: string,
     content: ChatContent[]
@@ -73,21 +74,22 @@ export const useChat = create<UseChatProps>((set, get) => ({
     setChat: async (payload) => set(({ chat }) => ({ chat: [...chat, payload] })),
     addChat: async (callback) => {
         const hasNewChat = get().chat.find(({ content }) => (content.length === 0));
-
+        let id: string
         if (!hasNewChat) {
-            const id = v4()
-            get().setChat({
-                role: "New chat",
-                id: id,
-                content: []
-            });
+            id = v4()
             get().setSelectedChat({ id });
-            if (callback) callback(id);
+            
         } else {
-            const { id } = hasNewChat;
+            id = hasNewChat.id;
             get().setSelectedChat({ id });
-            if (callback) callback(id);
         };
+        get().setChat({
+            role: "New chat",
+            id: id,
+            content: []
+        });
+        const selectedChat = get().chat.find((query) => (query.id === id));
+        if (callback) callback(id, selectedChat);
     },
     editChat: async (id, payload) => set(({ chat }) => {
         const selectedChat = chat.findIndex((query) => (query.id === id));
@@ -107,6 +109,15 @@ export const useChat = create<UseChatProps>((set, get) => ({
             return ({ chat, selectedChat: chat[selectedChat] });
         };
 
+        return ({});
+    }),
+    editMessage: async (id, text) => set(({ chat }) => {
+        const selectedChat = chat.findIndex((query) => (query.id === id));
+        if (selectedChat > -1) {
+            const index = chat[selectedChat].content.length-1
+            chat[selectedChat].content[index].message = text
+            return ({ chat, selectedChat: chat[selectedChat] })
+        };
         return ({});
     }),
     setSelectedChat: async (payload) => set(({ chat }) => {
