@@ -52,7 +52,7 @@ function DHallTable() {
   const currentHour = time.currentHourPrinceton;
 
   let meal: MealSession = "Breakfast";
-  if (currentDay === Days.Saturday || currentDay === Days.Sunday) {
+  if ((currentDay === Days.Saturday || currentDay === Days.Sunday) && currentHour < Hours._10AM) {
     meal = "Lunch";
   } else if (Hours._10AM <= currentHour && currentHour < Hours._2PM) {
     meal = "Lunch";
