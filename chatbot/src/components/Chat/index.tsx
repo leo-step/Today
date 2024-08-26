@@ -1,7 +1,5 @@
 //Modules
-import gptAvatar from "@/assets/gpt-avatar.svg";
 import warning from "@/assets/warning.svg";
-import user from "@/assets/user.png";
 import { useRef, useEffect } from "react";
 import { Chat, useChat } from "@/store/chat";
 import { useForm } from "react-hook-form";
@@ -10,6 +8,7 @@ import { OpenAIApi, Configuration } from "openai";
 import { useMutation } from "react-query";
 import TayAvatar from "@/assets/tayavatar.png";
 import UserAvatar from "@/assets/useravatar.png"
+import { useSearchParams } from "react-router-dom";
 
 //Components
 import { Input } from "@/components/Input";
@@ -28,6 +27,7 @@ interface ChatSchema {
 
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { selectedChat, addMessage, editMessage, addChat, editChat } =
     useChat();
   const selectedId = selectedChat?.id,
@@ -76,8 +76,8 @@ export const Chat = ({ ...props }: ChatProps) => {
         },
         body: JSON.stringify({
           text: prompt,
-          uuid: "a5ec8ab3-1dc3-4738-a2f1-27ed951b0af5",
-          session_id: "32a7dd3a-b32a-4f20-8d8c-73daaad88947",
+          uuid: searchParams.get("uuid"),
+          session_id: selectedId,
         }),
         signal: controller.signal,
       })

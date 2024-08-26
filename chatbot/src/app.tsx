@@ -9,10 +9,14 @@ import Home from '@/pages/Home';
 import '@/styles/global.css';
 import { Providers } from './components/Providers';
 
+import { Router, Route, BrowserRouter } from 'react-router-dom';
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <Providers>
-      <Home />
+      <BrowserRouter>
+        <Home />
+      </BrowserRouter>
     </Providers>
   </React.StrictMode>,
 )

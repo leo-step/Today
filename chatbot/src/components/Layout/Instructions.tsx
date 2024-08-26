@@ -5,7 +5,7 @@ import TayLogo from "assets/taylogo.png";
 
 type Introdution = {
   icon: IconType;
-  name: "Examples" | "Capabilities" | "Limitations";
+  name: "Ask me..." | "Examples" | "Capabilities" | "Limitations";
   list: string[];
 };
 
