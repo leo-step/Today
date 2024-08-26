@@ -8,11 +8,12 @@ import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { OpenAIApi, Configuration } from "openai";
 import { useMutation } from "react-query";
-import { AxiosResponse } from "axios";
+import TayAvatar from "@/assets/tayavatar.png";
+import UserAvatar from "@/assets/useravatar.png"
 
 //Components
 import { Input } from "@/components/Input";
-import { FiSend } from "react-icons/fi";
+import { FiSend, FiUser } from "react-icons/fi";
 import { Avatar, IconButton, Spinner, Stack, Text } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -27,7 +28,8 @@ interface ChatSchema {
 
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
-  const { selectedChat, addMessage, editMessage, addChat, editChat } = useChat();
+  const { selectedChat, addMessage, editMessage, addChat, editChat } =
+    useChat();
   const selectedId = selectedChat?.id,
     selectedRole = selectedChat?.role;
 
@@ -54,7 +56,10 @@ export const Chat = ({ ...props }: ChatProps) => {
   });
 
   const handleAsk = async ({ input: prompt }: ChatSchema) => {
-    const sendRequest = (selectedId: string, selectedChat: Chat | undefined) => {
+    const sendRequest = (
+      selectedId: string,
+      selectedChat: Chat | undefined
+    ) => {
       setValue("input", "");
 
       addMessage(selectedId, {
@@ -82,8 +87,8 @@ export const Chat = ({ ...props }: ChatProps) => {
           let message = "";
           if (reader) {
             addMessage(selectedId, {
-                emitter: "gpt",
-                message,
+              emitter: "gpt",
+              message,
             });
             while (true) {
               const { done, value } = await reader.read();
@@ -91,12 +96,12 @@ export const Chat = ({ ...props }: ChatProps) => {
               const chunk = decoder.decode(value, { stream: true });
               message += chunk;
               if (selectedChat) {
-                editMessage(selectedId, message)
+                editMessage(selectedId, message);
               }
             }
 
             if (selectedRole == "New chat" || selectedRole == undefined) {
-                editChat(selectedId, { role: prompt });
+              editChat(selectedId, { role: prompt });
             }
           }
         })
@@ -129,13 +134,14 @@ export const Chat = ({ ...props }: ChatProps) => {
   };
 
   return (
-    <Stack width="full" height="full">
+    <Stack width="full" height="full" backgroundColor="#212529">
       <Stack
         maxWidth="768px"
         width="full"
         marginX="auto"
-        height="88%"
+        height="82%"
         overflow="auto"
+        backgroundColor="#212529"
       >
         <Stack spacing={2} padding={2} ref={parentRef} height="full">
           {hasSelectedChat ? (
@@ -143,11 +149,11 @@ export const Chat = ({ ...props }: ChatProps) => {
               const getAvatar = () => {
                 switch (emitter) {
                   case "gpt":
-                    return gptAvatar;
+                    return TayAvatar;
                   case "error":
                     return warning;
                   default:
-                    return user;
+                    return UserAvatar;
                 }
               };
 
@@ -165,12 +171,15 @@ export const Chat = ({ ...props }: ChatProps) => {
                   direction="row"
                   padding={4}
                   rounded={8}
-                  backgroundColor={
-                    emitter == "gpt" ? "blackAlpha.200" : "transparent"
-                  }
+                  backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
                   spacing={4}
                 >
-                  <Avatar name={emitter} mt={2} size="sm" src={getAvatar()} />
+                  <Avatar
+                    name={emitter}
+                    mt={2}
+                    boxSize={"54px"}
+                    src={getAvatar()}
+                  />
                   <Text
                     whiteSpace="pre-wrap"
                     marginTop=".75em !important"
@@ -190,9 +199,9 @@ export const Chat = ({ ...props }: ChatProps) => {
         </Stack>
       </Stack>
       <Stack
-        height="12%"
+        height="18%"
         padding={4}
-        backgroundColor="blackAlpha.400"
+        backgroundColor="#151719"
         justifyContent="center"
         alignItems="center"
         overflow="hidden"
@@ -216,13 +225,13 @@ export const Chat = ({ ...props }: ChatProps) => {
                 handleAsk({ input: e.currentTarget.value });
               }
             }}
+            backgroundColor="whiteAlpha.200"
           />
-          {/* <Text
-                        textAlign="center"
-                        fontSize="sm"
-                        opacity={.5}
-                    >Free Research Preview. Our goal is to make AI systems more natural and safe to interact with. Your feedback will help us improve.</Text> */}
-          {/* {"TODO: We might want to say here something about how its not mean for education and to abide by course policy and honor code"} */}
+          <Text textAlign="center" fontSize="sm" opacity={0.5}>
+            ⚠️ Highly experimental. Responses may not be accurate. Not intended
+            for academic use. Our goal is to make information accessible. Your
+            feedback will help us improve.
+          </Text>
         </Stack>
       </Stack>
     </Stack>
