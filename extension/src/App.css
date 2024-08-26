@@ -1,3 +1,8 @@
+.slide-pane__content {
+  padding: 0;
+  overflow-y: hidden;
+}
+
 .centered {
   text-align: center;
 }
