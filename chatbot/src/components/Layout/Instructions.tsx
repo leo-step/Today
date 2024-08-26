@@ -42,7 +42,7 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
             ]
         }
     ];
-
+    
     return (
         <Stack
             justifyContent="center"
@@ -54,7 +54,7 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
                 size="lg"
                 marginY={8}
             >ChatGPT</Heading>
-            <Stack
+            {/* <Stack
                 direction={["column", "column", "row"]}
             >
                 {introdution.map(({ icon, list, name }, key) => {
@@ -91,7 +91,7 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
                         </Stack>
                     )
                 })}
-            </Stack>
+            </Stack> */}
         </Stack>
     );
 };

@@ -71,8 +71,8 @@ export const Chat = ({ ...props }: ChatProps) => {
         },
         body: JSON.stringify({
           text: prompt,
-          uuid: "a5ec8ab3-1dc3-4738-a2f1-27ed951b0af4",
-          session_id: "32a7dd3a-b32a-4f20-8d8c-73daaad88948",
+          uuid: "a5ec8ab3-1dc3-4738-a2f1-27ed951b0af5",
+          session_id: "32a7dd3a-b32a-4f20-8d8c-73daaad88947",
         }),
         signal: controller.signal,
       })
