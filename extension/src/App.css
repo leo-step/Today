@@ -1,6 +1,7 @@
 .slide-pane__content {
   padding: 0;
   overflow-y: hidden;
+  background-color: #151719;
 }
 
 .centered {

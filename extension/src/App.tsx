@@ -9,7 +9,7 @@ import { useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Carousel from "./components/Carousel";
 import { EventTypes, useMixpanel } from "./context/MixpanelContext";
-import { useStorage } from "./context/StorageContext";
+import { StorageKeys, useStorage } from "./context/StorageContext";
 import { useState } from "react";
 import SlidingPane from "react-sliding-pane";
 import "react-sliding-pane/dist/react-sliding-pane.css";
@@ -67,7 +67,7 @@ function App() {
         width="640px"
       >
         <iframe 
-          src="http://localhost:5173/" 
+          src={`http://localhost:5173?uuid=${storage.getLocalStorage(StorageKeys.UUID)}`}
           width="100%" 
           height="100%" 
           style={{ border: 'none' }} 
