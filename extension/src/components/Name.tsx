@@ -40,7 +40,7 @@ function Name() {
       <Modal show={showPopup} onHide={() => setShowPopup(false)} centered>
         <Modal.Header>
           <Modal.Title>🎉 Thank you for downloading Today!</Modal.Title>
-          {showPopup && text === "" && <ConfettiExplosion zIndex={1200}/>}
+          {showPopup && <ConfettiExplosion zIndex={1200}/>}
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
@@ -52,7 +52,7 @@ function Name() {
                 onChange={handleInputChange}
                 placeholder="Enter your name"
               />
-              {showPopup && text === "" && <ConfettiExplosion zIndex={1200}/>}
+              {showPopup && <ConfettiExplosion zIndex={1200}/>}
             </Form.Group>
             <Button
               variant="primary"
