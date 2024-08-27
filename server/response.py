@@ -1,14 +1,13 @@
-from clients import async_openai_client
 from memory import Memory, MessageType, ToolInvocation
-from prompts import user_query, respond_with_context
+from prompts import user_query_with_context, agent_system_prompt
 from utils import async_openai_stream
 
 async def generate_response(memory: Memory, tool_use: ToolInvocation):
     query = tool_use["input"]
     context = tool_use["output"]
     response = await async_openai_stream([
-        respond_with_context(context),
-        user_query(query)
+        agent_system_prompt(),
+        user_query_with_context(context, query)
     ])
 
     full_response = []
