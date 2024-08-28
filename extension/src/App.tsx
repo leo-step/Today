@@ -1,4 +1,4 @@
-import WeatherTable from "./components/Weather";
+import Chat from "./components/Chat";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import DHallTable from "./components/DiningHalls";
@@ -9,9 +9,7 @@ import { useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Carousel from "./components/Carousel";
 import { EventTypes, useMixpanel } from "./context/MixpanelContext";
-import { StorageKeys, useStorage } from "./context/StorageContext";
-import { useState } from "react";
-import SlidingPane from "react-sliding-pane";
+import { useStorage } from "./context/StorageContext";
 import "react-sliding-pane/dist/react-sliding-pane.css";
 import "./App.css";
 
@@ -19,7 +17,6 @@ function App() {
   const time = useTime();
   const storage = useStorage()
   const mixpanel = useMixpanel()
-  const [isPaneOpen, setPaneOpen] = useState(true)
 
   useEffect(() => {
     const state = storage.getLocalStorageObject()
@@ -43,7 +40,8 @@ function App() {
           </Col>
           <Col>
             <Row className="my-4">
-              <WeatherTable />
+              <Chat />
+              {/* <WeatherTable /> */}
             </Row>
             <Row className="my-4">
               <SneakyLinksTable />
@@ -54,25 +52,6 @@ function App() {
           </Col>
         </Row>
       </div>
-      <SlidingPane
-        // className="some-custom-class"
-        // overlayClassName="some-custom-overlay-class"
-        isOpen={isPaneOpen}
-        // title="Hey, it is optional pane title.  I can be React component too."
-        // subtitle="Optional subtitle."
-        onRequestClose={() => {
-          // triggered on "<" on left top click or on outside click
-          setPaneOpen(false);
-        }}
-        width="640px"
-      >
-        <iframe 
-          src={`http://localhost:5173?uuid=${storage.getLocalStorage(StorageKeys.UUID)}`}
-          width="100%" 
-          height="100%" 
-          style={{ border: 'none' }} 
-        />
-      </SlidingPane>
     </Container>
   );
 }
