@@ -1,35 +1,73 @@
 import Table from "react-bootstrap/Table";
 import React from "react";
-import Tay from "../images/tay.png"
+import Tay from "../images/tay.png";
 import { useState } from "react";
 import SlidingPane from "react-sliding-pane";
 // import Typewriter from 'typewriter-effect';
 import { StorageKeys, useStorage } from "../context/StorageContext";
-// import { Button } from "react-bootstrap";
+import { Form } from "react-bootstrap";
+import { Button } from "react-bootstrap";
+import { FiSend } from "react-icons/fi";
 
 function Chat() {
-  const [isPaneOpen, setPaneOpen] = useState(false)
-  const storage = useStorage()
+  const storage = useStorage();
+
+  const [isPaneOpen, setPaneOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [query, setQuery] = useState('');
+
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    setQuery(inputValue);
+    setInputValue('');
+    setPaneOpen(true);
+  };
 
   return (
-    <div className={"weather"}>
-      <Table variant="dark" borderless style={{marginBottom: 16}}>
+    <div className={"weather flow-border"}>
+      <Table variant="dark" borderless style={{ marginBottom: 24 }}>
         <tbody>
           <tr>
-            <th style={{width: "25%"}}></th>
+            <th style={{ width: "30%" }}></th>
             <th></th>
             <th></th>
             <th></th>
           </tr>
           <tr>
-            <td colSpan={1}>
-              <img src={Tay} width={120}/>
+            <td colSpan={1} style={{ verticalAlign: "middle" }}>
+              <img
+                id="tay-img"
+                src={Tay}
+                style={{ width: "100%" }}
+                onClick={() => setPaneOpen(true)}
+              />
             </td>
-            <td colSpan={3}>
-              Hello world
+            <td colSpan={3} id="chat-cell">
+              <Form
+                onSubmit={handleSubmit}
+              >
+                <Form.Group>
+                  <Form.Label>
+                    Hey! My name is Tay, and I'm an AI assistant.
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    id="chat-input"
+                    placeholder="Ask me anything about Princeton"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                  />
+                  <Button
+                    variant="primary"
+                    id="chat-button"
+                    type="submit"
+                  >
+                    <FiSend />
+                  </Button>
+                </Form.Group>
+              </Form>
             </td>
           </tr>
-          {/* <Button onClick={() => setPaneOpen(!isPaneOpen)}>Open</Button> */}
         </tbody>
       </Table>
       <SlidingPane
@@ -39,11 +77,13 @@ function Chat() {
         }}
         width="640px"
       >
-        <iframe 
-          src={`http://localhost:5173?uuid=${storage.getLocalStorage(StorageKeys.UUID)}`}
-          width="100%" 
-          height="100%" 
-          style={{ border: 'none' }} 
+        <iframe
+          src={`http://localhost:5173?uuid=${storage.getLocalStorage(
+            StorageKeys.UUID
+          )}&query=${query}`}
+          width="100%"
+          height="100%"
+          style={{ border: "none" }}
         />
       </SlidingPane>
     </div>
