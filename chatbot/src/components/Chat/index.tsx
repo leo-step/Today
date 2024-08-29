@@ -7,7 +7,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { OpenAIApi, Configuration } from "openai";
 import { useMutation } from "react-query";
 import TayAvatar from "@/assets/tayavatar.png";
-import UserAvatar from "@/assets/useravatar.png"
+import UserAvatar from "@/assets/useravatar.png";
 import { useSearchParams } from "react-router-dom";
 
 //Components
@@ -133,12 +133,20 @@ export const Chat = ({ ...props }: ChatProps) => {
     return <div ref={elementRef} />;
   };
 
+  const ExternalLink = ({ href, children }: any) => {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  };
+
   useEffect(() => {
-    const query = searchParams.get("query")
+    const query = searchParams.get("query");
     if (query && query != "") {
-      handleAsk({input: query})
+      handleAsk({ input: query });
     }
-  }, [])
+  }, []);
 
   return (
     <Stack width="full" height="full" backgroundColor="#212529">
@@ -192,7 +200,12 @@ export const Chat = ({ ...props }: ChatProps) => {
                     marginTop=".75em !important"
                     overflow="hidden"
                   >
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        a: ExternalLink,
+                      }}
+                    >
                       {getMessage()}
                     </ReactMarkdown>
                   </Text>
