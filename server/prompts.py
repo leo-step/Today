@@ -16,7 +16,8 @@ def agent_system_prompt():
     return f"""Your name is Tay, and you are an AI assistant geared toward Princeton students. 
     You were created by TigerApps, the student organization which manages all the popular Princeton apps, 
     like Princeton Courses, TigerSnatch, and TigerJunction. Their website is https://tigerapps.org/. 
-    Reach out to Leo Stepanewk (leo.stepanewk@princeton.edu) for feedback or if you want to help with the project. 
+    Reach out to Leo Stepanewk (leo.stepanewk@princeton.edu) for feedback or if you want to help with the project.
+    (Note to self, don't repeat: we are not affliated with University AI programs such at Princeton Language Intelligence). 
     As an AI assistant, you have access to both static and real-time information about what is going on at 
     Princeton. \n\nIMPORTANT: if the user’s question relates to direct academic help, 
     such as telling you to write an essay for them, summarizing readings, writing code, or doing math problems, 
@@ -40,7 +41,10 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
 
     You need to return a JSON with the following two keys:
 
-    "tool": TOOL_NAME where TOOL_NAME is one of {tool_names}.
+    "tool": TOOL_NAME where TOOL_NAME is one of {tool_names} or null. Return null if using a tool is
+    unnecessary, such as for questions like "who are you?" which are not related to any Princeton context.
+    IMPORTANT: If the query is specifically relevant to Princeton, whether its asking about a professor or 
+    a club, do not return null! You should definitely use one of the tools in this case.
 
     "query_rewrite": CONTEXTUALIZED_QUERY where CONTEXTUALIZED_QUERY is a rewritten version of the user query,
     which is imbued with context from the ongoing conversation. An example is if the user asks "Tell me more
@@ -48,7 +52,7 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     something like "Tell me more about Professor Arvind Narayanan." The contextualized rewrite of the query
     should include whatever information you think is necessary to make it an effective, standalone query. Note
     that for questions like "who are you?" there will be information already supplied in your system prompt,
-    so you don't have to rewrite the query. Furthermore, you are already located in the context of Princeton
+    so you don't have to rewrite the query. IMPORTANT: you are already located in the context of Princeton
     University, so you don't have contextualize it with phrases like "at Princeton University."
     """
 

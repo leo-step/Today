@@ -11,8 +11,11 @@ def format_documents(documents):
     return "\n\n".join(texts)
 
 @with_timing
-def invoke_tool(tool: Tool, tool_input: str):
-    if tool == Tool.EMAILS.value:
+def invoke_tool(tool: Tool | None, tool_input: str):
+    if tool == None:
+        print("[INFO] no tool used")
+        return ""
+    elif tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
         return format_documents(documents)
     else:
@@ -25,7 +28,7 @@ def choose_tool_and_rewrite(tools, memory, query_text):
         tool_and_rewrite(tools, memory),
         user_query(query_text),
     ])
-    tool: Tool = response["tool"]
+    tool: Tool | None = response["tool"]
     query_rewrite = response["query_rewrite"]
     return tool, query_rewrite
 
@@ -40,7 +43,8 @@ tools: Tools = [
             questions about the university, academic requirements, professors,
             various academic programs, general information about campus life,
             and other general things that would be listed on a university 
-            webpage. 
+            webpage, as well as recent university-wide news. You should
+            use this tool for any professor related information.
             
             Not useful for answering questions that involve real time
             information about campus life, clubs, events, job opportunity 
@@ -55,7 +59,9 @@ tools: Tools = [
         "description": """This tool accesses the latest Princeton listserv
             emails. Useful when you need to answer question about real time
             events, clubs, job opportunity postings, deadlines for auditions,
-            and things going on in campus life.
+            and things going on in campus life. This accesses information
+            primary relating to student activities, not official university
+            communication.
             
             Not useful for answering questions about academic facts, classes,
             professors, and other general public university information.
