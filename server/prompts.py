@@ -1,6 +1,7 @@
-from utils import system_prompt, user_prompt
+from utils import system_prompt, user_prompt, time_to_date_string
 from memory import Memory
 from models import Tools
+import time
 
 @user_prompt
 def user_query(text: str):
@@ -22,7 +23,11 @@ def agent_system_prompt():
     Princeton. \n\nIMPORTANT: if the user’s question relates to direct academic help, 
     such as telling you to write an essay for them, summarizing readings, writing code, or doing math problems, 
     refuse to answer their query and instead say that they should go to their undergraduate course assistant 
-    office hours and other official channels for academic help."""
+    office hours and other official channels for academic help.\n\nThe current date is {time_to_date_string(time.time())}.
+    When you respond to a user query, reference any relevant links you got from the context documents. Furthermore,
+    if you are talking about time-sensitive information, particularly in the case of past emails, you should tell
+    the user if the context document you used might be out of date. E.g. an email from a month ago is probably
+    outdated and you should note that to the user."""
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):

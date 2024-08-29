@@ -81,3 +81,7 @@ async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_t
         stream=True
     )
     return response
+
+def time_to_date_string(unix_timestamp):
+    date_string = time.strftime('%Y-%m-%d', time.localtime(unix_timestamp))
+    return date_string
