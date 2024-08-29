@@ -133,6 +133,13 @@ export const Chat = ({ ...props }: ChatProps) => {
     return <div ref={elementRef} />;
   };
 
+  useEffect(() => {
+    const query = searchParams.get("query")
+    if (query && query != "") {
+      handleAsk({input: query})
+    }
+  }, [])
+
   return (
     <Stack width="full" height="full" backgroundColor="#212529">
       <Stack

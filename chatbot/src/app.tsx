@@ -12,11 +12,11 @@ import { Providers } from './components/Providers';
 import { Router, Route, BrowserRouter } from 'react-router-dom';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <Providers>
       <BrowserRouter>
         <Home />
       </BrowserRouter>
     </Providers>
-  </React.StrictMode>,
+  // </React.StrictMode>,
 )
