@@ -1,5 +1,4 @@
-import "./App.css";
-import WeatherTable from "./components/Weather";
+import Chat from "./components/Chat";
 import "bootstrap/dist/css/bootstrap.min.css";
 import SneakyLinksTable from "./components/SneakyLinks";
 import DHallTable from "./components/DiningHalls";
@@ -11,6 +10,8 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Carousel from "./components/Carousel";
 import { EventTypes, useMixpanel } from "./context/MixpanelContext";
 import { useStorage } from "./context/StorageContext";
+import "react-sliding-pane/dist/react-sliding-pane.css";
+import "./App.css";
 
 function App() {
   const time = useTime();
@@ -39,7 +40,8 @@ function App() {
           </Col>
           <Col>
             <Row className="my-4">
-              <WeatherTable />
+              <Chat />
+              {/* <WeatherTable /> */}
             </Row>
             <Row className="my-4">
               <SneakyLinksTable />

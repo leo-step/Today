@@ -3,6 +3,7 @@ import React from "react";
 import { StorageKeys, useStorage } from "../context/StorageContext";
 import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 import { Button, Form, Modal } from "react-bootstrap";
+import ConfettiExplosion from 'react-confetti-explosion';
 
 function Name() {
   const storage = useStorage();
@@ -39,6 +40,7 @@ function Name() {
       <Modal show={showPopup} onHide={() => setShowPopup(false)} centered>
         <Modal.Header>
           <Modal.Title>🎉 Thank you for downloading Today!</Modal.Title>
+          {showPopup && <ConfettiExplosion zIndex={1200}/>}
         </Modal.Header>
         <Modal.Body>
           <Form onSubmit={handleSubmit}>
@@ -50,6 +52,7 @@ function Name() {
                 onChange={handleInputChange}
                 placeholder="Enter your name"
               />
+              {showPopup && <ConfettiExplosion zIndex={1200}/>}
             </Form.Group>
             <Button
               variant="primary"
