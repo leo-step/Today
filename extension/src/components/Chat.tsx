@@ -78,7 +78,7 @@ function Chat() {
         width="640px"
       >
         <iframe
-          src={`http://localhost:5173?uuid=${storage.getLocalStorage(
+          src={`http://127.0.0.1:8000?uuid=${storage.getLocalStorage(
             StorageKeys.UUID
           )}&query=${query}`}
           width="100%"
