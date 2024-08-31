@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Body
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
@@ -33,6 +35,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ========== UI ==========
+
+app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="dist"), name="static")
+
+@app.get("/")
+async def serve_react():
+    return FileResponse("dist/index.html")
 
 # ========== EXTENSION ==========
 

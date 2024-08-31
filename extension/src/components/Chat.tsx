@@ -8,6 +8,7 @@ import { StorageKeys, useStorage } from "../context/StorageContext";
 import { Form } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import { FiSend } from "react-icons/fi";
+import config from "../config";
 
 function Chat() {
   const storage = useStorage();
@@ -78,7 +79,7 @@ function Chat() {
         width="640px"
       >
         <iframe
-          src={`http://localhost:5173?uuid=${storage.getLocalStorage(
+          src={config.URL + `?uuid=${storage.getLocalStorage(
             StorageKeys.UUID
           )}&query=${query}`}
           width="100%"

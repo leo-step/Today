@@ -1,5 +1,5 @@
 import Table from "react-bootstrap/Table";
-import PrinceLogo from "../../images/prince.png";
+import TodayLogo from "../../images/logo.png";
 import React from "react";
 import { useData } from "../../context/DataContext";
 import { CarouselWidgetProps, CarouselHeader } from "../Carousel";
@@ -37,11 +37,11 @@ function PrinceNewsTable(props: CarouselWidgetProps) {
       <Table variant="dark" borderless>
         <tbody>
           <CarouselHeader props={props}>
-            The Prince{" "}
+            Today{" "}
             <img
-              alt="Prince"
-              style={{ width: 40, marginLeft: 5, marginBottom: 5 }}
-              src={PrinceLogo}
+              alt="Today"
+              style={{ width: 40, marginLeft: 5, marginBottom: 8 }}
+              src={TodayLogo}
             />{" "}
           </CarouselHeader>
           {rows}

@@ -5,5 +5,8 @@ import tsConfigPaths from 'vite-tsconfig-paths';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tsConfigPaths()],
-  base: "./"
+  base: "/static/",
+  build: {
+    outDir: '../server/dist',
+  },
 })

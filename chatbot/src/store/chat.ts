@@ -15,7 +15,7 @@ export interface UseChatProps {
     clearAll: () => void,
 };
 
-export type Chat = {
+type Chat = {
     id: string,
     role: string,
     content: ChatContent[]

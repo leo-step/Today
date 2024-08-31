@@ -36,7 +36,7 @@ const MixpanelContext = createContext<Mixpanel | null>(null);
 
 const sendEvent = async (event: EventData) => {
   try {
-    await axios.post(config.URL + "/track", event);
+    await axios.post(config.URL + "/api/track", event);
   } catch {}
 };
 
