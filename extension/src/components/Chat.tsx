@@ -9,9 +9,13 @@ import { Form } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import { FiSend } from "react-icons/fi";
 import config from "../config";
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
+import { useTime } from "../context/TimeContext";
 
 function Chat() {
   const storage = useStorage();
+  const mixpanel = useMixpanel();
+  const time = useTime();
 
   const [isPaneOpen, setPaneOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
@@ -22,6 +26,7 @@ function Chat() {
     setQuery(inputValue);
     setInputValue('');
     setPaneOpen(true);
+    mixpanel.trackEvent(EventTypes.OPENED_CHAT, time.getUTC().toString())
   };
 
   return (

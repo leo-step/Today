@@ -11,6 +11,7 @@ export enum EventTypes {
   DHALL_CHANGE = "dhallChange",
   CAROUSEL_CHANGE = "carouselChange",
   NAME_CHANGE = "nameChange",
+  OPENED_CHAT = "openedChat"
 }
 
 type EventData = {
