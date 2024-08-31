@@ -18,6 +18,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Instructions } from "../Layout/Instructions";
 import { useAPI } from "@/store/api";
+import config from "@/config";
 
 export interface ChatProps {}
 
@@ -69,7 +70,7 @@ export const Chat = ({ ...props }: ChatProps) => {
 
       const controller = new AbortController();
 
-      fetch("https://today-app-5df38c20bbaf.herokuapp.com/api/chat", {
+      fetch(config.URL + "/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
