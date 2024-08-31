@@ -1,7 +1,7 @@
 const config = {
-  URL: "https://today-fastapi-nujm46x7ta-uc.a.run.app",
+  URL: "http://127.0.0.1:8000",
   DEV: "http://127.0.0.1:8000",
-  PROD: "https://today-fastapi-nujm46x7ta-uc.a.run.app",
+  PROD: "https://today-app-5df38c20bbaf.herokuapp.com",
 }; // TODO change to enum
 
 export default config;
