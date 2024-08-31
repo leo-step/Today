@@ -1,7 +1,7 @@
 //Modules
 import warning from "@/assets/warning.svg";
 import { useRef, useEffect } from "react";
-import { Chat, useChat } from "@/store/chat";
+import { useChat } from "@/store/chat";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { OpenAIApi, Configuration } from "openai";
@@ -58,7 +58,7 @@ export const Chat = ({ ...props }: ChatProps) => {
   const handleAsk = async ({ input: prompt }: ChatSchema) => {
     const sendRequest = (
       selectedId: string,
-      selectedChat: Chat | undefined
+      selectedChat: any
     ) => {
       setValue("input", "");
 
@@ -69,7 +69,7 @@ export const Chat = ({ ...props }: ChatProps) => {
 
       const controller = new AbortController();
 
-      fetch("http://localhost:8000/api/chat", {
+      fetch("https://today-app-5df38c20bbaf.herokuapp.com/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
