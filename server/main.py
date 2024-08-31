@@ -2,7 +2,8 @@ from fastapi import FastAPI, Body
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 from fastapi.responses import StreamingResponse
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
+# from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
