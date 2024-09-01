@@ -3,8 +3,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, urlunparse
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 import threading
+import os
 
-MAX_DEPTH = 2
+MAX_DEPTH = 12
 
 def remove_fragment(url):
     parsed_url = urlparse(url)
@@ -28,7 +29,7 @@ def get_links(url, allowed_domain):
         print(f"[ERROR] Failed to retrieve {url}: {e}")
         return []
 
-def crawl(url, depth, visited_links, lock, executor, allowed_domain):
+def crawl(url, depth, visited_links, lock, executor, allowed_domain, file):
     if depth > MAX_DEPTH:
         return
     
@@ -39,7 +40,7 @@ def crawl(url, depth, visited_links, lock, executor, allowed_domain):
     
     links = get_links(url, allowed_domain)
     
-    with open("urls.txt", "a") as fp:
+    with open(file, "a") as fp:
         for link in links:
             with lock:
                 if link not in visited_links:
@@ -49,13 +50,13 @@ def crawl(url, depth, visited_links, lock, executor, allowed_domain):
     print(f"[INFO] Crawling depth {depth}: {len(links)} links found on {url}")
     
     # Submit tasks for each link to be crawled in parallel
-    futures = [executor.submit(crawl, link, depth + 1, visited_links, lock, executor, allowed_domain) for link in links]
+    futures = [executor.submit(crawl, link, depth + 1, visited_links, lock, executor, allowed_domain, file) for link in links]
 
     # Wait for all tasks to complete with timeout
     try:
-        for future in as_completed(futures, timeout=60):
+        for future in as_completed(futures, timeout=15):
             try:
-                future.result(timeout=60)  # Timeout for individual tasks
+                future.result(timeout=10)  # Timeout for individual tasks
             except TimeoutError:
                 print("[ERROR] A task timed out.")
             except Exception as e:
@@ -63,17 +64,40 @@ def crawl(url, depth, visited_links, lock, executor, allowed_domain):
     except TimeoutError:
         print("[ERROR] Timeout waiting for futures to complete. Continuing with the next batch...")
 
-if __name__ == "__main__":
-    base_url = "https://www.princeton.edu/"
-    allowed_domain = "princeton.edu"  # Domain restriction
-    visited_links = set()
+def run_crawler_on_urls(input_file):
+    if not os.path.exists("urls_out"):
+        os.makedirs("urls_out")  # Create output directory if it doesn't exist
+
+    with open(input_file, "r") as f:
+        base_urls = [line.strip() for line in f.readlines()]
+    
     lock = threading.Lock()  # Lock for thread-safe access to shared resources
-    
-    with open("urls.txt", "w") as fp:
-        fp.write(base_url + '\n')
-    
-    # Create a ThreadPoolExecutor to manage threads
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        print(f"[INFO] Starting crawl at {base_url} within domain {allowed_domain}")
-        crawl(base_url, 1, visited_links, lock, executor, allowed_domain)
-        print("[INFO] Crawling completed.")
+    visited_links = set()
+    # Create a ThreadPoolExecutor to manage threads across multiple base URLs
+    with ThreadPoolExecutor(max_workers=64) as executor:
+        futures = []
+        for i, base_url in enumerate(base_urls):
+            allowed_domain = "princeton.edu"  # Domain restriction
+            
+            output_file = f"urls_out/{i}.txt"
+
+            with open(output_file, "w") as fp:
+                fp.write(base_url + '\n')
+
+            # Submit the crawl task for each base URL
+            print(f"[INFO] Starting crawl at {base_url} within domain {allowed_domain}")
+            future = executor.submit(crawl, base_url, 1, visited_links, lock, executor, allowed_domain, output_file)
+            futures.append(future)
+
+        # Wait for all futures to complete
+        for future in as_completed(futures):
+            try:
+                future.result()  # Retrieve the result to raise any exceptions
+            except Exception as e:
+                print(f"[ERROR] An error occurred during crawling: {e}")
+
+    print("[INFO] Crawling completed for all base URLs. DONE")
+
+if __name__ == "__main__":
+    input_file = "urls.txt"  # File containing base URLs
+    run_crawler_on_urls(input_file)
