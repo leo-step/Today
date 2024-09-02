@@ -93,16 +93,27 @@ def main():
     
     # Search for unread emails sent to the specific email address
     query = f"to:{specific_email} is:unread"
-    results = service.users().messages().list(userId='me', q=query).execute()
-    messages = results.get('messages', [])
-    
-    if not messages:
+    all_messages = []
+    page_token = None
+
+    while True:
+        # Fetch messages with pagination support
+        response = service.users().messages().list(userId='me', q=query, pageToken=page_token).execute()
+        messages = response.get('messages', [])
+        all_messages.extend(messages)
+        
+        # Check for the nextPageToken to continue fetching if it exists
+        page_token = response.get('nextPageToken')
+        if not page_token:
+            break
+
+    if not all_messages:
         print("[INFO] No unread emails found.")
         return
-    
+
     ids = []
     docs = []
-    for message in messages:
+    for message in all_messages:
         message_id, doc = read_email(service, message['id'])
         print(doc.page_content)
         print(doc.metadata)
@@ -124,14 +135,13 @@ def main():
     )
 
     if not is_dry_run:
+        atlas_collection.delete_many(
+            { "source": "email" },
+        )
+
         vector_store.add_documents(docs, ids=ids)
 
         print(f"[INFO] added {len(docs)} email documents")
-
-        # atlas_collection.update_many(
-        #     { "source": { "$exists": False } },
-        #     { "$set": { "source": "web" } }
-        # )
 
         # print(f"[INFO] updated source: web")
         
