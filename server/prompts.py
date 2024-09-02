@@ -64,6 +64,9 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     University, so you don't have contextualize it with phrases like "at Princeton University." Furthermore,
     this tool is primarily geared for undergraduates, so for any queries about things like classes or academics,
     include "for undergraduates" in the query rewrite unless explicitly asked for graduate work.
+    IMPORTANT: Do not guess at any unknown acronyms that are supplied and rewrite them in full words because you
+    will most likely guess wrong and mess up your resopnse. You may only expand the most obvious ones such as "AI" 
+    = artificial intelligence. 
     """
 
     return prompt
