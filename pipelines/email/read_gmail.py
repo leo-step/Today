@@ -79,7 +79,7 @@ def read_email(service, message_id):
 
     doc = Document(
         page_content="\n".join(text_parts), 
-        metadata={"links": extracted_links, "time": email_timestamp}
+        metadata={"links": extracted_links, "time": email_timestamp, "source": "email"}
     )
 
     return message_id, doc
@@ -115,7 +115,7 @@ def main():
     client = MongoClient(os.getenv("MONGO_CONN"))
     # Define collection and index name
     db_name = "today"
-    collection_name = "emails"
+    collection_name = "crawl"
     atlas_collection = client[db_name][collection_name]
 
     vector_store = MongoDBAtlasVectorSearch(
@@ -127,6 +127,13 @@ def main():
         vector_store.add_documents(docs, ids=ids)
 
         print(f"[INFO] added {len(docs)} email documents")
+
+        # atlas_collection.update_many(
+        #     { "source": { "$exists": False } },
+        #     { "$set": { "source": "web" } }
+        # )
+
+        # print(f"[INFO] updated source: web")
         
         # Mark the email as read
         # service.users().messages().modify(
