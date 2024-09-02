@@ -6,3 +6,4 @@ crawl_index_mapping.txt
 *.txt
 test_documents
 urls_out
+documents.zip

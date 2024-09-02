@@ -42,7 +42,9 @@ def build_crawl_index_url_map():
 
     with open(MAPPING_PATH, 'r') as file:
         for line in file:
-            uuid, url = line.strip().split(',')
+            comma_sep = line.strip().split(',')
+            uuid = comma_sep[0]
+            url = ','.join(comma_sep[1:])
             uuid_url_mapping[uuid] = url
     
     return uuid_url_mapping
