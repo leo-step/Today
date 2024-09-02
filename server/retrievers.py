@@ -12,7 +12,7 @@ def retrieve_emails(query_text):
     return hybrid_search(collection, query_text)
 
 
-def hybrid_search(collection, query_text):
+def hybrid_search(collection, query_text, max_results=5):
     query_vector = get_embedding(query_text)
     vector_results = collection.aggregate([
         {
@@ -53,7 +53,6 @@ def hybrid_search(collection, query_text):
     y = list(keyword_results)
     
     doc_lists = [x,y]
-    print(len(x), len(y))
 
     for i in range(len(doc_lists)):
         doc_lists[i] = [
@@ -65,7 +64,7 @@ def hybrid_search(collection, query_text):
     
     fused_documents = weighted_reciprocal_rank(doc_lists)
 
-    return fused_documents
+    return fused_documents[:max_results]
 
 
 def weighted_reciprocal_rank(doc_lists):
