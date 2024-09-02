@@ -10,7 +10,9 @@ def user_query(text: str):
 @user_prompt
 def user_query_with_context(context: str, query: str):
     return f"""The user will now supply you with a query.\n\nAnswer the user's question using the following 
-    documents as context:\n\n{context}\n\nUser query: {query}"""
+    documents as context. You need to be as accurate as possible, so if you don't know some details do not
+    guess at them. Instead tell them that you don't have that information. Here are the documents:\n\n{context}
+    \n\nUser query: {query}"""
 
 @system_prompt
 def agent_system_prompt():
@@ -58,7 +60,9 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     should include whatever information you think is necessary to make it an effective, standalone query. Note
     that for questions like "who are you?" there will be information already supplied in your system prompt,
     so you don't have to rewrite the query. IMPORTANT: you are already located in the context of Princeton
-    University, so you don't have contextualize it with phrases like "at Princeton University."
+    University, so you don't have contextualize it with phrases like "at Princeton University." Furthermore,
+    this tool is primarily geared for undergraduates, so for any queries about things like classes or academics,
+    include "for undergraduates" in the query rewrite unless explicitly asked for graduate work.
     """
 
     return prompt

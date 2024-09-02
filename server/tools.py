@@ -21,6 +21,7 @@ def document_to_str(document):
     text = document["text"]
     links = '\n'.join(document["links"])
     days_ago = get_days_ago(document["time"])
+    # scores = "vs:{}, fts:{}, score:{}".format(document["vs_score"], document["fts_score"], document["score"])
     return "{}\n{}\n{}".format(text, links, days_ago)
 
 def format_documents(documents):

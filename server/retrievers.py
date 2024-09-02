@@ -1,75 +1,123 @@
 from utils import get_embedding
 from clients import db_client
-from utils import with_timing
+
 
 def retrieve_crawl(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
+
 def retrieve_emails(query_text):
     collection = db_client["emails"]
     return hybrid_search(collection, query_text)
+
 
 def hybrid_search(collection, query_text):
     query_vector = get_embedding(query_text)
     vector_results = collection.aggregate([
         {
-            "$vectorSearch": {
-                "index": "vector_index",
-                "path": "embedding",
-                "queryVector": query_vector,
-                "numCandidates": 20,
-                "limit": 5
-            }
+            "$vectorSearch":
+                {
+                    "queryVector": query_vector,
+                    "path": "embedding",
+                    "numCandidates": 20,
+                    "limit": 5,
+                    "index": "vector_index"
+                },
         },
         {
-            "$project": {
-                "_id": 1,
-                "text": 1,
-                "links": 1,
-                "time": 1,
-                "vs_score": {
-                    "$divide": [1.0, {"$add": [{"$indexOfArray": [None, "$_id"]}, 1, 1]}]
+            "$project": 
+                {
+                    "_id": 1,
+                    "text": 1,
+                    "links": 1,
+                    "time": 1,
+                    "score":{"$meta":"vectorSearchScore"}
                 }
-            }
         }
     ])
-
-    full_text_results = collection.aggregate([
-        {
+    x = list(vector_results)
+       
+    keyword_results = collection.aggregate([{
             "$search": {
                 "index": "full-text-search",
-                "phrase": {
+                "text": {
                     "query": query_text,
                     "path": "text"
                 }
             }
         },
-        {
-            "$limit": 5
-        },
-        {
-            "$project": {
-                "_id": 1,
-                "text": 1,
-                "links": 1, 
-                "time": 1,
-                "fts_score": {
-                    "$divide": [1.0, {"$add": [{"$indexOfArray": [None, "$_id"]}, 1, 1]}]
-                }
-            }
-        }
+        { "$addFields" : { "score": { "$meta": "searchScore" } } },
+        { "$limit": 5 }
     ])
+    y = list(keyword_results)
     
-    vector_results = list(vector_results)
-    full_text_results = list(full_text_results)
+    doc_lists = [x,y]
+    print(len(x), len(y))
 
-    combined_results = vector_results + full_text_results
+    for i in range(len(doc_lists)):
+        doc_lists[i] = [
+            {"_id":str(doc["_id"]), "text":doc["text"], 
+             "links":doc["links"], "time":doc["time"], 
+             "score": doc["score"]}
+            for doc in doc_lists[i]
+        ]
     
-    for doc in combined_results:
-        vs_score = doc.get('vs_score', 0) if doc.get('vs_score') is not None else 0
-        fts_score = doc.get('fts_score', 0) if doc.get('fts_score') is not None else 0
-        doc['score'] = vs_score + fts_score
+    fused_documents = weighted_reciprocal_rank(doc_lists)
 
-    sorted_results = sorted(combined_results, key=lambda x: x['score'], reverse=True)[:5]
-    return sorted_results
+    return fused_documents
+
+
+def weighted_reciprocal_rank(doc_lists):
+    """
+    This is a modified version of the fuction in the langchain repo
+    https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/retrievers/ensemble.py
+    
+    Perform weighted Reciprocal Rank Fusion on multiple rank lists.
+    You can find more details about RRF here:
+    https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
+
+    Args:
+        doc_lists: A list of rank lists, where each rank list contains unique items.
+
+    Returns:
+        list: The final aggregated list of items sorted by their weighted RRF
+                scores in descending order.
+    """
+    c=60 #c comes from the paper
+    weights=[1]*len(doc_lists) #you can apply weights if you like, here they are all the same, ie 1
+    
+    if len(doc_lists) != len(weights):
+        raise ValueError(
+            "Number of rank lists must be equal to the number of weights."
+        )
+
+    # Create a union of all unique documents in the input doc_lists
+    all_documents = set()
+    for doc_list in doc_lists:
+        for doc in doc_list:
+            all_documents.add(doc["text"])
+
+    # Initialize the RRF score dictionary for each document
+    rrf_score_dic = {doc: 0.0 for doc in all_documents}
+
+    # Calculate RRF scores for each document
+    for doc_list, weight in zip(doc_lists, weights):
+        for rank, doc in enumerate(doc_list, start=1):
+            rrf_score = weight * (1 / (rank + c))
+            rrf_score_dic[doc["text"]] += rrf_score
+
+    # Sort documents by their RRF scores in descending order
+    sorted_documents = sorted(
+        rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
+    )
+
+    # Map the sorted page_content back to the original document objects
+    page_content_to_doc_map = {
+        doc["text"]: doc for doc_list in doc_lists for doc in doc_list
+    }
+    sorted_docs = [
+        page_content_to_doc_map[page_content] for page_content in sorted_documents
+    ]
+
+    return sorted_docs
