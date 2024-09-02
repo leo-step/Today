@@ -11,7 +11,8 @@ def user_query(text: str):
 def user_query_with_context(context: str, query: str):
     return f"""The user will now supply you with a query.\n\nAnswer the user's question using the following 
     documents as context. You need to be as accurate as possible, so if you don't know some details do not
-    guess at them. Instead tell them that you don't have that information. Here are the documents:\n\n{context}
+    guess at them. Instead tell them that you don't have that information. IMPORTANT: Don't be lazy. Give
+    full detailed answers to the user when all the details are available. Here are the documents:\n\n{context}
     \n\nUser query: {query}"""
 
 @system_prompt
