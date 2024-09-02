@@ -4,17 +4,23 @@ from clients import db_client
 
 def retrieve_crawl(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text)
+    return hybrid_search(collection, query_text, "web")
 
 
 def retrieve_emails(query_text):
-    collection = db_client["emails"]
+    collection = db_client["crawl"]
+    return hybrid_search(collection, query_text, "email")
+
+
+def retrieve_any(query_text):
+    collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
 
-def hybrid_search(collection, query_text, max_results=5):
+def hybrid_search(collection, query_text, source=None, max_results=5):
     query_vector = get_embedding(query_text)
-    vector_results = collection.aggregate([
+
+    vector_pipeline = [
         {
             "$vectorSearch":
                 {
@@ -35,10 +41,20 @@ def hybrid_search(collection, query_text, max_results=5):
                     "score":{"$meta":"vectorSearchScore"}
                 }
         }
-    ])
+    ]
+
+    if source:
+        vector_pipeline.insert(0, [{
+            "$match": {
+                "source": source
+            }
+        }])
+
+    vector_results = collection.aggregate(vector_pipeline)
     x = list(vector_results)
-       
-    keyword_results = collection.aggregate([{
+    
+    keyword_pipeline = [
+        {
             "$search": {
                 "index": "full-text-search",
                 "text": {
@@ -49,7 +65,16 @@ def hybrid_search(collection, query_text, max_results=5):
         },
         { "$addFields" : { "score": { "$meta": "searchScore" } } },
         { "$limit": 5 }
-    ])
+    ]
+
+    if source:
+        keyword_pipeline.insert(0, [{
+            "$match": {
+                "source": source
+            }
+        }])
+
+    keyword_results = collection.aggregate(keyword_pipeline)
     y = list(keyword_results)
     
     doc_lists = [x,y]
