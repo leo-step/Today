@@ -135,9 +135,9 @@ def main():
     )
 
     if not is_dry_run:
-        atlas_collection.delete_many(
-            { "source": "email" },
-        )
+        # atlas_collection.delete_many(
+        #     { "source": "email" },
+        # )
 
         vector_store.add_documents(docs, ids=ids)
 

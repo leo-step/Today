@@ -1,4 +1,4 @@
-from retrievers import retrieve_crawl, retrieve_emails
+from retrievers import retrieve_crawl, retrieve_emails, retrieve_any
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
@@ -35,6 +35,9 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         return ""
     elif tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
+        return format_documents(documents)
+    elif tool == Tool.CATCHALL.value:
+        documents = retrieve_any(tool_input)
         return format_documents(documents)
     else:
         documents = retrieve_crawl(tool_input)
@@ -79,10 +82,20 @@ tools: Tools = [
             events, clubs, job opportunity postings, deadlines for auditions,
             and things going on in campus life. This accesses information
             primary relating to student activities, not official university
-            communication.
+            communication. ***IMPORTANT: you must use this tool when prompted
+            about club related things because all real-time club information
+            is here!***
             
             Not useful for answering questions about academic facts, classes,
             professors, and other general public university information.
         """
+    },
+    {
+        "name": Tool.CATCHALL,
+        "description": """This tool serves as a catch-all where it searches
+        across all data sources, including the web crawl and emails. This tool
+        is meant to be used when the query contains a lot of acronyms or unfamilar
+        language. For example, 'when is PUCP meeting?' should be directed to this
+        tool because PUCP is an unknown acronym that needs to be searched for."""
     }
 ]

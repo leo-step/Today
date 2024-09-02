@@ -26,7 +26,7 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
                 {
                     "queryVector": query_vector,
                     "path": "embedding",
-                    "numCandidates": 20,
+                    "numCandidates": 50,
                     "limit": 5,
                     "index": "vector_index"
                 },
@@ -44,11 +44,11 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
     ]
 
     if source:
-        vector_pipeline.insert(0, {
-            "$match": {
-                "source": source
+        vector_pipeline[0]["$vectorSearch"]["filter"] = {
+            "source": {
+                "$eq": source
             }
-        })
+        }
 
     vector_results = collection.aggregate(vector_pipeline)
     x = list(vector_results)
@@ -68,7 +68,7 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
     ]
 
     if source:
-        keyword_pipeline.insert(0, {
+        keyword_pipeline.insert(1, {
             "$match": {
                 "source": source
             }
