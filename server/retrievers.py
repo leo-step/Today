@@ -44,11 +44,11 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
     ]
 
     if source:
-        vector_pipeline.insert(0, [{
+        vector_pipeline.insert(0, {
             "$match": {
                 "source": source
             }
-        }])
+        })
 
     vector_results = collection.aggregate(vector_pipeline)
     x = list(vector_results)
@@ -68,11 +68,11 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
     ]
 
     if source:
-        keyword_pipeline.insert(0, [{
+        keyword_pipeline.insert(0, {
             "$match": {
                 "source": source
             }
-        }])
+        })
 
     keyword_results = collection.aggregate(keyword_pipeline)
     y = list(keyword_results)
