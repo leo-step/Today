@@ -1,0 +1,30 @@
+name: get-emails
+
+on:
+  schedule:
+    - cron: "30 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10.13"
+          architecture: "x64"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r pipelines/requirements.txt
+      - run: |
+          cd pipelines
+          python email/read_gmail.py
+        env:
+          WEATHER: ${{ secrets.WEATHER }}
+          DB_CONN: ${{ secrets.DB_CONN }}
+          DATABASE: ${{ secrets.DATABASE }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MONGO_CONN: ${{ secrets.MONGO_CONN }}
+          GMAIL_TOKEN_JSON: ${{ secrets.GMAIL_TOKEN_JSON }}
