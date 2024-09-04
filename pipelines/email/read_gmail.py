@@ -118,9 +118,9 @@ def main():
     docs = []
     for message in all_messages:
         message_id, doc = read_email(service, message['id'])
-        print(doc.page_content)
-        print(doc.metadata)
-        print("\n\n===================\n\n")
+        # print(doc.page_content)
+        # print(doc.metadata)
+        # print("\n\n===================\n\n")
         ids.append(message_id)
         docs.append(doc)
 
