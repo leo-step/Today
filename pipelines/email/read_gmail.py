@@ -24,6 +24,9 @@ def extract_text_and_links_from_html(html_string: str):
     return text, list(set(links))
 
 def get_gmail_service():
+    token_json = os.getenv("GMAIL_TOKEN_JSON")
+    with open("token.json", "w") as fp:
+        fp.write(token_json)
     creds = None
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
@@ -141,16 +144,15 @@ def main():
 
         vector_store.add_documents(docs, ids=ids)
 
-        print(f"[INFO] added {len(docs)} email documents")
-
-        # print(f"[INFO] updated source: web")
-        
         # Mark the email as read
-        # service.users().messages().modify(
-        #     userId='me', 
-        #     id=message['id'], 
-        #     body={'removeLabelIds': ['UNREAD']}
-        # ).execute()
+        for msg_id in ids:
+            service.users().messages().modify(
+                userId='me', 
+                id=msg_id, 
+                body={'removeLabelIds': ['UNREAD']}
+            ).execute()
+
+        print(f"[INFO] added {len(docs)} email documents")
     else:
         print("[INFO] finished email dry run")
 
