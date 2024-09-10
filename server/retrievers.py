@@ -1,5 +1,6 @@
 from utils import get_embedding
 from clients import db_client
+import time
 
 
 def retrieve_crawl(query_text):
@@ -43,7 +44,19 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
         }
     ]
 
-    if source:
+    if source and source == "email":
+        vector_pipeline[0]["$vectorSearch"]["filter"] = {
+            "$and": {
+                "source": {
+                    "$eq": source
+                },
+                "expiry": {
+                    "$gt": int(time.time())
+                }
+            }
+            
+        }
+    elif source:
         vector_pipeline[0]["$vectorSearch"]["filter"] = {
             "source": {
                 "$eq": source
