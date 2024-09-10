@@ -53,6 +53,7 @@ pydantic_core==2.20.1
 pymongo==4.8.0
 pyparsing==3.1.2
 python-dotenv==1.0.1
+pytz==2024.1
 PyYAML==6.0.2
 regex==2024.7.24
 requests==2.32.3
