@@ -81,10 +81,12 @@ def read_email(service, message_id):
             text_parts.append(f"Body: {text}")
             extracted_links = links
 
+    page_content = "\n".join(text_parts)
+
     doc = Document(
-        page_content="\n".join(text_parts), 
+        page_content=page_content, 
         metadata={"links": extracted_links, "time": email_timestamp, 
-                  "expiry": get_expiry_time(), "source": "email"}
+                  "expiry": get_expiry_time(page_content), "source": "email"}
     )
 
     return message_id, doc
