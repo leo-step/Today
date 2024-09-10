@@ -10,7 +10,7 @@ def retrieve_crawl(query_text):
 
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text, "email")
+    return hybrid_search(collection, query_text, "email", expiry=True)
 
 
 def retrieve_any(query_text):
@@ -18,7 +18,7 @@ def retrieve_any(query_text):
     return hybrid_search(collection, query_text)
 
 
-def hybrid_search(collection, query_text, source=None, max_results=5):
+def hybrid_search(collection, query_text, source=None, expiry=False, max_results=5):
     query_vector = get_embedding(query_text)
 
     vector_pipeline = [
@@ -44,17 +44,20 @@ def hybrid_search(collection, query_text, source=None, max_results=5):
         }
     ]
 
-    if source and source == "email":
+    if expiry:
         vector_pipeline[0]["$vectorSearch"]["filter"] = {
-            "$and": {
-                "source": {
-                    "$eq": source
+            "$and": [
+                {
+                    "source": {
+                        "$eq": source
+                    }
                 },
-                "expiry": {
-                    "$gt": int(time.time())
+                {
+                    "expiry": {
+                        "$gt": int(time.time())
+                    }
                 }
-            }
-            
+            ]
         }
     elif source:
         vector_pipeline[0]["$vectorSearch"]["filter"] = {
