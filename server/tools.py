@@ -83,8 +83,9 @@ tools: Tools = [
             and things going on in campus life. This accesses information
             primary relating to student activities, not official university
             communication. ***IMPORTANT: you must use this tool when prompted
-            about club related things because all real-time club information
-            is here!***
+            about club related things that are coming up in the future because 
+            all real-time club information is here! Note that past / expired
+            events should not be accessed here***
             
             Not useful for answering questions about academic facts, classes,
             professors, and other general public university information.
@@ -96,6 +97,8 @@ tools: Tools = [
         across all data sources, including the web crawl and emails. This tool
         is meant to be used when the query contains a lot of acronyms or unfamilar
         language. For example, 'when is PUCP meeting?' should be directed to this
-        tool because PUCP is an unknown acronym that needs to be searched for."""
+        tool because PUCP is an unknown acronym that needs to be searched for.
+        Additionally, use this tool when prompted about club events that happened
+        in the past."""
     }
 ]
