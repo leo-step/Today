@@ -12,6 +12,7 @@ from pymongo import MongoClient
 import base64
 import os
 from preprocess import get_expiry_time
+import time
 
 load_dotenv()
 
@@ -86,7 +87,7 @@ def read_email(service, message_id):
     doc = Document(
         page_content=page_content, 
         metadata={"links": extracted_links, "time": email_timestamp, 
-                  "expiry": get_expiry_time(page_content), "source": "email"}
+                  "expiry": get_expiry_time(page_content, int(time.time())), "source": "email"}
     )
 
     return message_id, doc
