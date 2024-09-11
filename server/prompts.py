@@ -30,7 +30,7 @@ def agent_system_prompt():
     When you respond to a user query, reference any relevant links you got from the context documents. Furthermore,
     if you are talking about time-sensitive information, particularly in the case of past emails, you should tell
     the user if the context document you used might be out of date. E.g. an email from a month ago is probably
-    outdated and you should note that to the user."""
+    outdated and you should note that to the user.""" # TODO: make sure its told to the user that event is out of date!!
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):
