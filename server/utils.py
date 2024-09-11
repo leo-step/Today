@@ -4,6 +4,8 @@ from typing import List
 import time
 import os
 import json
+from datetime import datetime
+from pytz import timezone
 
 load_dotenv()
 
@@ -82,6 +84,12 @@ async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_t
     )
     return response
 
-def time_to_date_string(unix_timestamp):
-    date_string = time.strftime('%Y-%m-%d', time.localtime(unix_timestamp))
-    return date_string
+def time_to_date_string():
+    # Define the New York timezone
+    ny_timezone = timezone('America/New_York')
+
+    # Get the current time in New York
+    current_time_ny = datetime.now(ny_timezone)
+
+    # Format the current time as a string
+    return current_time_ny.strftime("%A, %B %d, %Y %I:%M %p")
