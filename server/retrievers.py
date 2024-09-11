@@ -2,6 +2,9 @@ from utils import get_embedding
 from clients import db_client
 import time
 
+def retrieve_widget_data():
+    collection = db_client["widgets"]
+    return collection.find_one({"_id": "data"})
 
 def retrieve_crawl(query_text):
     collection = db_client["crawl"]
