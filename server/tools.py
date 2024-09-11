@@ -1,4 +1,4 @@
-from retrievers import retrieve_crawl, retrieve_emails, retrieve_any
+from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, retrieve_any_emails
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
@@ -30,11 +30,15 @@ def format_documents(documents):
 
 @with_timing
 def invoke_tool(tool: Tool | None, tool_input: str):
+    print("[INFO]", tool)
     if tool == None:
         print("[INFO] no tool used")
         return ""
     elif tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
+        return format_documents(documents)
+    elif tool == Tool.ALL_EMAILS.value:
+        documents = retrieve_any_emails(tool_input)
         return format_documents(documents)
     elif tool == Tool.CATCHALL.value:
         documents = retrieve_any(tool_input)
@@ -86,6 +90,20 @@ tools: Tools = [
             about club related things that are coming up in the future because 
             all real-time club information is here! Note that past / expired
             events should not be accessed here***
+            
+            Not useful for answering questions about academic facts, classes,
+            professors, and other general public university information.
+        """
+    },
+    {
+        "name": Tool.ALL_EMAILS,
+        "description": """This tool accesses all past Princeton listserv emails
+            emails. Useful when you need to answer question about club and campus
+            life events that may or may not have happened already. 
+            ***IMPORTANT: you must use this tool when prompted about club related 
+            things that can be general questions or questions about events that
+            happened in the past. Don't refer to this tool for current or future
+            events or club information.***
             
             Not useful for answering questions about academic facts, classes,
             professors, and other general public university information.

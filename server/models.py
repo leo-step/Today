@@ -14,6 +14,7 @@ class ChatQueryInput(BaseModel):
 class Tool(Enum):
     CRAWL = "crawl"
     EMAILS = "emails"
+    ALL_EMAILS = "allemails"
     CATCHALL = "catchall"
     NONE = None
 

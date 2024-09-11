@@ -13,6 +13,11 @@ def retrieve_emails(query_text):
     return hybrid_search(collection, query_text, "email", expiry=True)
 
 
+def retrieve_any_emails(query_text):
+    collection = db_client["crawl"]
+    return hybrid_search(collection, query_text, "email")
+
+
 def retrieve_any(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
