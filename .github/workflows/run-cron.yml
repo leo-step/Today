@@ -25,3 +25,10 @@ jobs:
           WEATHER: ${{ secrets.WEATHER }}
           DB_CONN: ${{ secrets.DB_CONN }}
           DATABASE: ${{ secrets.DATABASE }}
+      - run: |
+          python pipelines/extension/scrape.py
+          python pipelines/extension/scrape_new.py
+        env:
+          WEATHER: ${{ secrets.WEATHER }}
+          DB_CONN: ${{ secrets.MONGO_CONN }}
+          DATABASE: today

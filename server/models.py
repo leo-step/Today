@@ -16,6 +16,7 @@ class Tool(Enum):
     EMAILS = "emails"
     ALL_EMAILS = "allemails"
     CATCHALL = "catchall"
+    # WIDGET_DATA = "widgetdata"
     NONE = None
 
 class ToolDetails(TypedDict):

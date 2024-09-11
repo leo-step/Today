@@ -40,6 +40,12 @@ def invoke_tool(tool: Tool | None, tool_input: str):
     elif tool == Tool.ALL_EMAILS.value:
         documents = retrieve_any_emails(tool_input)
         return format_documents(documents)
+    # elif tool == Tool.WIDGET_DATA.value:
+    #     documents = retrieve_widget_data()
+    #     return format_documents()
+    # TODO: widget data, eating club data, courses data, 
+    # club/people data through google form (with approval)
+    # ^^ interesting utility idea
     elif tool == Tool.CATCHALL.value:
         documents = retrieve_any(tool_input)
         return format_documents(documents)
@@ -109,6 +115,12 @@ tools: Tools = [
             professors, and other general public university information.
         """
     },
+    # {
+    #     "name": Tool.WIDGET_DATA,
+    #     "description": """This tool retrieves the current dining hall menus,
+    #     weather data for Princeton, and a couple recent news articles from 
+    #     the Daily Princetonian newspaper."""
+    # },
     {
         "name": Tool.CATCHALL,
         "description": """This tool serves as a catch-all where it searches
