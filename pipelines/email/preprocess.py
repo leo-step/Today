@@ -23,7 +23,13 @@ def openai_json_response(messages, model="gpt-4o-mini", temp=1, max_tokens=1024)
     )
     return json.loads(response.choices[0].message.content)
 
-def get_expiry_time(page_content):
+def get_expiry_time(page_content, time):
+    ny_timezone = pytz.timezone('America/New_York')
+    current_time_ny = datetime.fromtimestamp(time, ny_timezone)
+    today_date_string = current_time_ny.strftime("%A, %B %d, %Y")
+
+    # print(today_date_string)
+
     result = openai_json_response([{
         "role": "system",
         "content": [
@@ -31,8 +37,8 @@ def get_expiry_time(page_content):
                 "type": "text",
                 "text": f"""{page_content}\n\nReturn a JSON with key 'time' and value in the format MM-DD-YYYY 
                 where the date is the latest date found in this email. Consider all the dates! It's important to find
-                the latest date out of all of them, no matter the format. Today's date is Tuesday, September 10th, 
-                2024, and you can use this fact to reason about any relative dates. If there is no date referenced,
+                the latest date out of all of them, no matter the format. Today's date is {today_date_string}, 
+                and you can use this fact to reason about any relative dates. If there is no date referenced,
                 return null for the time."""
             }
         ]
