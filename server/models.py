@@ -15,6 +15,7 @@ class Tool(Enum):
     CRAWL = "crawl"
     EMAILS = "emails"
     ALL_EMAILS = "allemails"
+    LOCATION = "LOCATION"
     CATCHALL = "catchall"
     WIDGET_DATA = "widgetdata"
     NONE = None

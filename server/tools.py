@@ -1,4 +1,5 @@
-from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, retrieve_any_emails, retrieve_widget_data
+from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, \
+    retrieve_any_emails, retrieve_widget_data, retrieve_location_data
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
@@ -43,7 +44,11 @@ def invoke_tool(tool: Tool | None, tool_input: str):
     elif tool == Tool.WIDGET_DATA.value:
         widget_data = retrieve_widget_data()
         return str(widget_data)
-    # TODO: eating club data, courses data, 
+    elif tool == Tool.LOCATION.value:
+        documents = retrieve_location_data(tool_input)
+        texts = [doc["text"] for doc in documents]
+        return "\n\n".join(texts)
+    # TODO: eating club data, courses data, past emails
     # club/people data through google form (with approval)
     # ^^ interesting utility idea
     elif tool == Tool.CATCHALL.value:
@@ -120,6 +125,18 @@ tools: Tools = [
         "description": """This tool retrieves the current dining hall menus,
         weather data for Princeton, and a couple recent news articles from 
         the Daily Princetonian newspaper."""
+    },
+    {
+        "name": Tool.LOCATION,
+        "description": """This tool lets you find simple location information.
+        It contains directories of cafes, sports fields, libraries, academic departments,
+        residential colleges, and other physical locations. These locations
+        have simple data associated with them, such as a phone number and the
+        building they are in. Some contain other descriptions, such as what
+        sports team plays on the field or what food in general is sold at the
+        cafe. Useful for simple location queries such as naming the locations
+        of a specific type and seeing where they are at. Not useful for
+        detailed descriptions."""
     },
     {
         "name": Tool.CATCHALL,

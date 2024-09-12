@@ -6,10 +6,13 @@ def retrieve_widget_data():
     collection = db_client["widgets"]
     return collection.find_one({"_id": "data"})
 
+def retrieve_location_data(query_text):
+    collection = db_client["crawl"]
+    return hybrid_search(collection, query_text, "map")
+
 def retrieve_crawl(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "web")
-
 
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
