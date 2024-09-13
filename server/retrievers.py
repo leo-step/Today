@@ -1,8 +1,9 @@
-from utils import get_embedding
+from utils import get_embedding, openai_json_response, delete_dict_key_recursively
 from clients import db_client
 import time
 import requests
-from utils import delete_dict_key_recursively
+from prompts import get_courses_search_query, user_query
+import os
 
 def retrieve_widget_data():
     collection = db_client["widgets"]
@@ -25,23 +26,41 @@ def retrieve_any_emails(query_text):
     return hybrid_search(collection, query_text, "email")
 
 def retrieve_princeton_courses(query_text):
-    semester = 1252
+    response = openai_json_response([
+        get_courses_search_query(),
+        user_query(query_text)
+    ])
+    search_query = response["search_query"]
+    print("[INFO] courses search query:", search_query)
+
+    semester = int(os.getenv("SEMESTER"))
     headers = {
-        "Authorization": "Bearer a099f84f-d187-47e9-9b2b-019f7fe4c0d5"
+        "Authorization": "Bearer " + os.getenv("COURSES_API_KEY")
     }
-    response = requests.get(f"https://www.princetoncourses.com/api/search/{query_text}?semester={semester}&sort=rating&detectClashes=false", headers=headers)
     try:
-        search_results = response.json()
-        if len(search_results) == 0:
-            return {}
-        course_id = search_results[0]["_id"]
-        response = requests.get(f"https://www.princetoncourses.com/api/course/{course_id}", headers=headers)
-        data = delete_dict_key_recursively(response.json(), "courses")
-        data = delete_dict_key_recursively(data, "course")
-        data = delete_dict_key_recursively(data, "_id")
-        return data
+        for i in range(8):
+            print("[INFO] trying semester", semester)
+            response = requests.get(f"https://www.princetoncourses.com/api/search/{search_query}?semester={semester}&sort=rating&detectClashes=false", headers=headers)
+            try:
+                search_results = response.json()
+                if len(search_results) == 0:
+                    if semester % 10 == 2:
+                        semester -= 8
+                    else:
+                        semester -= 2
+                    continue
+                course_id = search_results[0]["_id"]
+                response = requests.get(f"https://www.princetoncourses.com/api/course/{course_id}", headers=headers)
+                data = delete_dict_key_recursively(response.json(), "courses")
+                data = delete_dict_key_recursively(data, "course")
+                data = delete_dict_key_recursively(data, "_id")
+                return data, i == 0
+            except:
+                print("[ERROR] response 1 failed")
+                return {}, True
     except:
-        return {}
+        print("[ERROR] response 2 failed")
+        return {}, True
 
 def retrieve_any(query_text):
     collection = db_client["crawl"]

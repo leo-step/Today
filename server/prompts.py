@@ -1,7 +1,6 @@
 from utils import system_prompt, user_prompt, time_to_date_string
 from memory import Memory
 from models import Tools
-import time
 
 @user_prompt
 def user_query(text: str):
@@ -14,6 +13,32 @@ def user_query_with_context(context: str, query: str):
     guess at them. Instead tell them that you don't have that information. ***IMPORTANT: Don't be lazy. Give
     full detailed answers to the user when all the details are available.*** Here are the documents:\n\n{context}
     \n\nUser query: {query}"""
+
+@system_prompt
+def get_courses_search_query():
+    return """You will receive a piece of text related to looking up a college course, and you need to shorten
+    it down into a course code or a couple concise keywords. Here are a couple examples:
+    
+    Example 1
+    Input: "class about artificial intelligence and education for undergraduates"
+    Output: "AI and education"
+
+    Example 2
+    Input: "what semester is baby wants candy offered in"
+    Output: "Baby wants candy"
+
+    Example 3
+    Input: "should I take COS217"
+    Output: "COS 217"
+
+    ***IMPORTANT: Never include extra descriptive words like "classes" or "undergraduate."
+    You must keep it very simple otherwise the search will not work***
+
+    Return a JSON where your output is a string under the key "search_query". For example,
+    {
+        "search_query": "AI and education"
+    }
+    """
 
 @system_prompt
 def agent_system_prompt():
@@ -30,7 +55,7 @@ def agent_system_prompt():
     When you respond to a user query, reference any relevant links you got from the context documents. Furthermore,
     if you are talking about time-sensitive information, particularly in the case of past emails, you should tell
     the user if the context document you used might be out of date. E.g. an email from a month ago is probably
-    outdated and you should note that to the user.""" # TODO: make sure its told to the user that event is out of date!!
+    outdated and you should note that to the user."""
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):
@@ -47,7 +72,7 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     Here are the tools available to you to answer the user query:
     {tool_context}
 
-    You need to return a JSON with the following three keys:
+    You need to return a JSON with the following two keys:
 
     "tool": TOOL_NAME where TOOL_NAME is one of {tool_names} or null. Return null if using a tool is
     unnecessary, such as for questions like "who are you?" which are not related to any Princeton context.
@@ -64,12 +89,10 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     University, so you don't have contextualize it with phrases like "at Princeton University." Furthermore,
     this tool is primarily geared for undergraduates, so for any queries about things like classes or academics,
     include "for undergraduates" in the query rewrite unless explicitly asked for graduate work.
+
     ***VERY IMPORTANT: Never guess at any unknown acronyms that are supplied and rewrite them. Keep the acronyms as they
     are, especially any potentially relating to student groups or academic departments. You may only expand the 
     most obvious ones such as "AI" = artificial intelligence.***
-
-    "arg": ARG where ARG is an optional return value for some specific tool usage. The tool will specify when
-    to include a value here. By default, return null.
     """
 
     return prompt

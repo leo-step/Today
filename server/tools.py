@@ -31,7 +31,7 @@ def format_documents(documents):
     return "\n\n".join(texts)
 
 @with_timing
-def invoke_tool(tool: Tool | None, tool_input: str, arg: str | None):
+def invoke_tool(tool: Tool | None, tool_input: str):
     print("[INFO]", tool)
     if tool == None:
         print("[INFO] no tool used")
@@ -50,10 +50,15 @@ def invoke_tool(tool: Tool | None, tool_input: str, arg: str | None):
         texts = [doc["text"] for doc in documents]
         return "\n\n".join(texts)
     elif tool == Tool.COURSES.value:
-        data = retrieve_princeton_courses(arg)
+        data, is_current_semester = retrieve_princeton_courses(tool_input)
         if len(data.keys()) == 0:
             return "Search results didn't return any courses."
-        return json.dumps(data)
+        if is_current_semester:
+            return json.dumps(data)
+        return """***[WARNING]: This class happened in a past semester.
+        Please note that to the user so they are not confused. Also,
+        everything you say should be in past tense!***
+        """ + json.dumps(data)
     # TODO: eating club data, past emails
     # club/people data through google form (with approval)
     # ^^ interesting utility idea
@@ -72,8 +77,7 @@ def choose_tool_and_rewrite(tools, memory, query_text):
     ], model="gpt-4o")
     tool: Tool | None = response["tool"]
     query_rewrite = response["query_rewrite"]
-    arg = response["arg"]
-    return tool, query_rewrite, arg
+    return tool, query_rewrite
 
 
 # =========== TOOLS =========== #
@@ -151,14 +155,9 @@ tools: Tools = [
         is able to retrieve any information about a course, including its
         reviews, description, rating, grading policy, etc. ***IMPORTANT:
         This tool operates on keywords and course codes. To look up a 
-        class effectively, you must provide either a course code (e.g.
+        class effectively, you must provide reference a course code (e.g.
         "COS217") or keywords for the name (e.g. "natural algorithms") in
-        the "arg" tool-calling field as a string.*** 
-        
-        If there is ***any indication that the person is querying for a course***
-        (such as asking for the semester when it took place), use this tool. 
-        The course name might be strange, but you should still invoke this tool 
-        if you suspect its a class."""
+        the query rewriting stage.***"""
     },
     {
         "name": Tool.CATCHALL,
