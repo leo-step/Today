@@ -153,7 +153,12 @@ tools: Tools = [
         This tool operates on keywords and course codes. To look up a 
         class effectively, you must provide either a course code (e.g.
         "COS217") or keywords for the name (e.g. "natural algorithms") in
-        the "arg" tool-calling field as a string.***"""
+        the "arg" tool-calling field as a string.*** 
+        
+        If there is ***any indication that the person is querying for a course***
+        (such as asking for the semester when it took place), use this tool. 
+        The course name might be strange, but you should still invoke this tool 
+        if you suspect its a class."""
     },
     {
         "name": Tool.CATCHALL,
