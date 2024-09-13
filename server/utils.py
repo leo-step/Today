@@ -93,3 +93,13 @@ def time_to_date_string():
 
     # Format the current time as a string
     return current_time_ny.strftime("%A, %B %d, %Y %I:%M %p")
+
+def delete_dict_key_recursively(data, del_key):
+    if isinstance(data, dict):
+        if del_key in data:
+            del data[del_key]
+        for key in data:
+            data[key] = delete_dict_key_recursively(data[key], del_key)
+    elif isinstance(data, list):
+        data = [delete_dict_key_recursively(item, del_key) for item in data]
+    return data

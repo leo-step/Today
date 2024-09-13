@@ -67,8 +67,8 @@ async def track(data: Event):
 async def chat(query: ChatQueryInput = Body(...)):
     memory = Memory(query.uuid, query.session_id)
 
-    tool, query_rewrite = choose_tool_and_rewrite(tools, memory, query.text)
-    tool_result = invoke_tool(tool, query_rewrite)
+    tool, query_rewrite, arg = choose_tool_and_rewrite(tools, memory, query.text)
+    tool_result = invoke_tool(tool, query_rewrite, arg)
     tool_use: ToolInvocation = {
         "tool": tool,
         "input": query_rewrite,

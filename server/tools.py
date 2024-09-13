@@ -1,9 +1,10 @@
 from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, \
-    retrieve_any_emails, retrieve_widget_data, retrieve_location_data
+    retrieve_any_emails, retrieve_widget_data, retrieve_location_data, retrieve_princeton_courses
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
 import time
+import json
 
 def get_days_ago(past_time: int):
     current_time = time.time()
@@ -30,7 +31,7 @@ def format_documents(documents):
     return "\n\n".join(texts)
 
 @with_timing
-def invoke_tool(tool: Tool | None, tool_input: str):
+def invoke_tool(tool: Tool | None, tool_input: str, arg: str | None):
     print("[INFO]", tool)
     if tool == None:
         print("[INFO] no tool used")
@@ -43,12 +44,17 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         return format_documents(documents)
     elif tool == Tool.WIDGET_DATA.value:
         widget_data = retrieve_widget_data()
-        return str(widget_data)
+        return json.dumps(widget_data)
     elif tool == Tool.LOCATION.value:
         documents = retrieve_location_data(tool_input)
         texts = [doc["text"] for doc in documents]
         return "\n\n".join(texts)
-    # TODO: eating club data, courses data, past emails
+    elif tool == Tool.COURSES.value:
+        data = retrieve_princeton_courses(arg)
+        if len(data.keys()) == 0:
+            return "Search results didn't return any courses."
+        return json.dumps(data)
+    # TODO: eating club data, past emails
     # club/people data through google form (with approval)
     # ^^ interesting utility idea
     elif tool == Tool.CATCHALL.value:
@@ -66,7 +72,8 @@ def choose_tool_and_rewrite(tools, memory, query_text):
     ], model="gpt-4o")
     tool: Tool | None = response["tool"]
     query_rewrite = response["query_rewrite"]
-    return tool, query_rewrite
+    arg = response["arg"]
+    return tool, query_rewrite, arg
 
 
 # =========== TOOLS =========== #
@@ -137,6 +144,16 @@ tools: Tools = [
         cafe. Useful for simple location queries such as naming the locations
         of a specific type and seeing where they are at. Not useful for
         detailed descriptions."""
+    },
+    {
+        "name": Tool.COURSES,
+        "description": """This tool accesses the Princeton Courses API and
+        is able to retrieve any information about a course, including its
+        reviews, description, rating, grading policy, etc. ***IMPORTANT:
+        This tool operates on keywords and course codes. To look up a 
+        class effectively, you must provide either a course code (e.g.
+        "COS217") or keywords for the name (e.g. "natural algorithms") in
+        the "arg" tool-calling field as a string.***"""
     },
     {
         "name": Tool.CATCHALL,

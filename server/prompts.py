@@ -47,7 +47,7 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     Here are the tools available to you to answer the user query:
     {tool_context}
 
-    You need to return a JSON with the following two keys:
+    You need to return a JSON with the following three keys:
 
     "tool": TOOL_NAME where TOOL_NAME is one of {tool_names} or null. Return null if using a tool is
     unnecessary, such as for questions like "who are you?" which are not related to any Princeton context.
@@ -64,10 +64,12 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     University, so you don't have contextualize it with phrases like "at Princeton University." Furthermore,
     this tool is primarily geared for undergraduates, so for any queries about things like classes or academics,
     include "for undergraduates" in the query rewrite unless explicitly asked for graduate work.
-
     ***VERY IMPORTANT: Never guess at any unknown acronyms that are supplied and rewrite them. Keep the acronyms as they
     are, especially any potentially relating to student groups or academic departments. You may only expand the 
     most obvious ones such as "AI" = artificial intelligence.***
+
+    "arg": ARG where ARG is an optional return value for some specific tool usage. The tool will specify when
+    to include a value here. By default, return null.
     """
 
     return prompt

@@ -1,6 +1,8 @@
 from utils import get_embedding
 from clients import db_client
 import time
+import requests
+from utils import delete_dict_key_recursively
 
 def retrieve_widget_data():
     collection = db_client["widgets"]
@@ -18,11 +20,28 @@ def retrieve_emails(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "email", expiry=True)
 
-
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "email")
 
+def retrieve_princeton_courses(query_text):
+    semester = 1252
+    headers = {
+        "Authorization": "Bearer a099f84f-d187-47e9-9b2b-019f7fe4c0d5"
+    }
+    response = requests.get(f"https://www.princetoncourses.com/api/search/{query_text}?semester={semester}&sort=rating&detectClashes=false", headers=headers)
+    try:
+        search_results = response.json()
+        if len(search_results) == 0:
+            return {}
+        course_id = search_results[0]["_id"]
+        response = requests.get(f"https://www.princetoncourses.com/api/course/{course_id}", headers=headers)
+        data = delete_dict_key_recursively(response.json(), "courses")
+        data = delete_dict_key_recursively(data, "course")
+        data = delete_dict_key_recursively(data, "_id")
+        return data
+    except:
+        return {}
 
 def retrieve_any(query_text):
     collection = db_client["crawl"]
@@ -172,3 +191,6 @@ def weighted_reciprocal_rank(doc_lists):
     ]
 
     return sorted_docs
+
+if __name__ == "__main__":
+    print(retrieve_princeton_courses("baby"))
