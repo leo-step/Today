@@ -164,7 +164,7 @@ def main():
         for msg_id in ids:
             service.users().messages().modify(
                 userId='me', 
-                id=msg_id, 
+                id=msg_id.split("__")[0], 
                 body={'removeLabelIds': ['UNREAD']}
             ).execute()
 
