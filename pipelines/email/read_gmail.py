@@ -11,7 +11,7 @@ from langchain_mongodb import MongoDBAtlasVectorSearch
 from pymongo import MongoClient
 import base64
 import os
-from preprocess import get_expiry_time
+from preprocess import get_expiry_time, is_eating_club
 import time
 
 load_dotenv()
@@ -84,13 +84,27 @@ def read_email(service, message_id):
 
     page_content = "\n".join(text_parts)
 
-    doc = Document(
+    expiry_time = get_expiry_time(page_content, int(time.time()))
+    eating_club = is_eating_club(page_content)
+
+    ids = []
+    docs = []
+
+    docs.append(Document(
         page_content=page_content, 
         metadata={"links": extracted_links, "time": email_timestamp, 
-                  "expiry": get_expiry_time(page_content, int(time.time())), "source": "email"}
-    )
+                  "expiry": expiry_time, "source": "email"}
+    ))
+    ids.append(message_id)
+    if eating_club:
+        docs.append(Document(
+            page_content=page_content, 
+            metadata={"links": extracted_links, "time": email_timestamp, 
+                    "expiry": expiry_time, "source": "eatingclub"}
+        ))
+        ids.append(message_id + "__ec")
 
-    return message_id, doc
+    return ids, docs
 
 def main():
     is_dry_run = False
@@ -122,12 +136,9 @@ def main():
     ids = []
     docs = []
     for message in all_messages:
-        message_id, doc = read_email(service, message['id'])
-        # print(doc.page_content)
-        # print(doc.metadata)
-        # print("\n\n===================\n\n")
-        ids.append(message_id)
-        docs.append(doc)
+        msg_ids, msg_docs = read_email(service, message['id'])
+        ids.extend(msg_ids)
+        docs.extend(msg_docs)
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
 

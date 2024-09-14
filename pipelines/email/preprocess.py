@@ -23,6 +23,23 @@ def openai_json_response(messages, model="gpt-4o-mini", temp=1, max_tokens=1024)
     )
     return json.loads(response.choices[0].message.content)
 
+def is_eating_club(page_content):
+    result = openai_json_response([{
+        "role": "system",
+        "content": [
+            {
+                "type": "text",
+                "text": f"""{page_content}\n\nReturn a JSON with key 'is_eating_club' and value of a boolean
+                that is true if the content above is related to an eating club at Princeton. The eating clubs are Tower Club 
+                (Tower), Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), Charter Club (Charter), Cloister 
+                Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club (Ivy), Quadrangle Club (Quad), 
+                Terrace Club (Terrace), and Tiger Inn (TI). Otherwise, return false."""
+            }
+        ]
+    }])
+
+    return result["is_eating_club"]
+
 def get_expiry_time(page_content, time):
     ny_timezone = pytz.timezone('America/New_York')
     current_time_ny = datetime.fromtimestamp(time, ny_timezone)
