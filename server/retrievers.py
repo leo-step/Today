@@ -25,6 +25,10 @@ def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "email")
 
+def retrieve_eating_clubs(query_text):
+    collection = db_client["crawl"]
+    return hybrid_search(collection, query_text, "eatingclub", expiry=True)
+
 def retrieve_princeton_courses(query_text):
     response = openai_json_response([
         get_courses_search_query(),
@@ -93,7 +97,9 @@ def hybrid_search(collection, query_text, source=None, expiry=False, max_results
         }
     ]
 
-    if expiry:
+    current_time = int(time.time())
+
+    if source and expiry:
         vector_pipeline[0]["$vectorSearch"]["filter"] = {
             "$and": [
                 {
@@ -103,7 +109,7 @@ def hybrid_search(collection, query_text, source=None, expiry=False, max_results
                 },
                 {
                     "expiry": {
-                        "$gt": int(time.time())
+                        "$gt": current_time
                     }
                 }
             ]
@@ -132,7 +138,14 @@ def hybrid_search(collection, query_text, source=None, expiry=False, max_results
         { "$limit": 5 }
     ]
 
-    if source:
+    if source and expiry: 
+        keyword_pipeline.insert(1, {
+            "$match": {
+                    "source": source,
+                    "expiry": { "$gt": current_time }
+                }
+            })
+    elif source:
         keyword_pipeline.insert(1, {
             "$match": {
                 "source": source

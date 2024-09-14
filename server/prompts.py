@@ -55,7 +55,16 @@ def agent_system_prompt():
     When you respond to a user query, reference any relevant links you got from the context documents. Furthermore,
     if you are talking about time-sensitive information, particularly in the case of past emails, you should tell
     the user if the context document you used might be out of date. E.g. an email from a month ago is probably
-    outdated and you should note that to the user."""
+    outdated and you should note that to the user.
+    
+    Some queries and contexts provided might involve the concept of eating clubs, which are different from 
+    regular clubs. The eating clubs are Tower Club (Tower), Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), 
+    Charter Club (Charter), Cloister Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club (Ivy), 
+    Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI). Some common phrases that are meant to refer
+    to the eating clubs involve saying the word 'street' or by asking what clubs are 'open'. When you answer a query,
+    deliniate what parts of your response are related to eating clubs versus regular clubs, because sometimes the 
+    context will have information mixed together. For instance, if you receive emails as context for your response,
+    there might be a mix of regular club and eating club events, and you should make the delination clear to the user."""
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):

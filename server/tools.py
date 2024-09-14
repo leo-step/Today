@@ -1,5 +1,6 @@
 from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, \
-    retrieve_any_emails, retrieve_widget_data, retrieve_location_data, retrieve_princeton_courses
+    retrieve_any_emails, retrieve_widget_data, retrieve_location_data, \
+    retrieve_princeton_courses, retrieve_eating_clubs
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
@@ -59,9 +60,9 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         Please note that to the user so they are not confused. Also,
         everything you say should be in past tense!***
         """ + json.dumps(data)
-    # TODO: eating club data, past emails
-    # club/people data through google form (with approval)
-    # ^^ interesting utility idea
+    elif tool == Tool.EATING_CLUBS.value:
+        documents = retrieve_eating_clubs()
+        return format_documents(documents)
     elif tool == Tool.CATCHALL.value:
         documents = retrieve_any(tool_input)
         return format_documents(documents)
@@ -130,6 +131,17 @@ tools: Tools = [
             Not useful for answering questions about academic facts, classes,
             professors, and other general public university information.
         """
+    },
+    {
+        "name": Tool.EATING_CLUBS,
+        "description": """This tool accesses information about eating clubs, which 
+        are different from regular clubs. The eating clubs are Tower Club (Tower), 
+        Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), Charter Club (Charter), 
+        Cloister Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club 
+        (Ivy), Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI).
+        Some common phrases that are meant to refer to the eating clubs involve saying 
+        the word 'street' or by asking what clubs are 'open'. Use this tool when asked
+        about eating club information."""
     },
     {
         "name": Tool.WIDGET_DATA,

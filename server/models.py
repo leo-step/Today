@@ -19,6 +19,7 @@ class Tool(Enum):
     COURSES = "courses"
     CATCHALL = "catchall"
     WIDGET_DATA = "widgetdata"
+    EATING_CLUBS = "eatingclubs"
     NONE = None
 
 class ToolDetails(TypedDict):

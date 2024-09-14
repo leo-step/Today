@@ -1,6 +1,9 @@
 from pymongo import MongoClient
 from preprocess import get_expiry_time
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = MongoClient(os.getenv("MONGO_CONN"))
 # Define collection and index name
