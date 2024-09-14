@@ -145,7 +145,7 @@ tools: Tools = [
         
         ***IMPORTANT: if the user is asking about eating club events that happened in
         the past, you should use the {Tool.ALL_EMAILS} tool. This tool will only access
-        the upcoming events or general eating club information."""
+        the upcoming events or general eating club information.***"""
     },
     {
         "name": Tool.WIDGET_DATA,
