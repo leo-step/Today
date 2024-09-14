@@ -134,14 +134,18 @@ tools: Tools = [
     },
     {
         "name": Tool.EATING_CLUBS,
-        "description": """This tool accesses information about eating clubs, which 
+        "description": f"""This tool accesses information about eating clubs, which 
         are different from regular clubs. The eating clubs are Tower Club (Tower), 
         Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), Charter Club (Charter), 
         Cloister Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club 
         (Ivy), Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI).
         Some common phrases that are meant to refer to the eating clubs involve saying 
         the word 'street' or by asking what clubs are 'open'. Use this tool when asked
-        about eating club information."""
+        about eating club information.
+        
+        ***IMPORTANT: if the user is asking about eating club events that happened in
+        the past, you should use the {Tool.ALL_EMAILS} tool. This tool will only access
+        the upcoming events or general eating club information."""
     },
     {
         "name": Tool.WIDGET_DATA,
