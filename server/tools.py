@@ -61,7 +61,7 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         everything you say should be in past tense!***
         """ + json.dumps(data)
     elif tool == Tool.EATING_CLUBS.value:
-        documents = retrieve_eating_clubs()
+        documents = retrieve_eating_clubs(tool_input)
         return format_documents(documents)
     elif tool == Tool.CATCHALL.value:
         documents = retrieve_any(tool_input)
