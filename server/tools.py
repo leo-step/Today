@@ -141,7 +141,8 @@ tools: Tools = [
         (Ivy), Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI).
         Some common phrases that are meant to refer to the eating clubs involve saying 
         the word 'street' or by asking what clubs are 'open'. Use this tool when asked
-        about eating club information.
+        about eating club information or anything relating to ***bicker***. A reference
+        to the word ***street*** should also always invoke this tool!***
         
         ***IMPORTANT: if the user is asking about eating club events that happened in
         the past, you should use the {Tool.ALL_EMAILS} tool. This tool will only access

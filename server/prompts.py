@@ -64,7 +64,11 @@ def agent_system_prompt():
     to the eating clubs involve saying the word 'street' or by asking what clubs are 'open'. When you answer a query,
     deliniate what parts of your response are related to eating clubs versus regular clubs, because sometimes the 
     context will have information mixed together. For instance, if you receive emails as context for your response,
-    there might be a mix of regular club and eating club events, and you should make the delination clear to the user."""
+    there might be a mix of regular club and eating club events, and you should make the delination clear to the user.
+    
+    When a user asks a question, be specific when answering. For example, if the user asks about classes in a minor
+    program, make sure to list out the specific class codes. Or if the user asks about what questions are asked
+    during eating club bicker, you should provide specific examples from the context provided. Don't be lazy."""
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):
