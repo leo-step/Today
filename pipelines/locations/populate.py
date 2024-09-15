@@ -26,8 +26,8 @@ vector_store = MongoDBAtlasVectorSearch(
 )
 
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=8096,
-    chunk_overlap=0,
+    chunk_size=2048,
+    chunk_overlap=256,
     length_function=len,
     is_separator_regex=False,
 )
@@ -45,6 +45,8 @@ def collapse_whitespace(text):
 if __name__ == "__main__":
     is_dry_run = False
     OUTPUT_PATH = "locations/data"
+
+    # atlas_collection.delete_many({"source": "map"})
 
     count = 0
     id_set = set()
