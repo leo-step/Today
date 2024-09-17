@@ -94,7 +94,10 @@ export const Chat = ({ ...props }: ChatProps) => {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
-              const chunk = decoder.decode(value, { stream: true });
+              let chunk = decoder.decode(value, { stream: true });
+              console.log(chunk
+                .replace(/\n/g, "\\n")  // Replace newline characters with visible \n
+                .replace(/\r/g, "\\r"));
               message += chunk;
               if (selectedChat) {
                 editMessage(selectedId, message);
@@ -174,9 +177,9 @@ export const Chat = ({ ...props }: ChatProps) => {
               };
 
               const getMessage = () => {
-                if (message.slice(0, 2) == "\n\n") {
-                  return message.slice(2, Infinity);
-                }
+                // if (message.slice(0, 2) == "\n\n") {
+                //   return message.slice(2, Infinity);
+                // }
 
                 return message;
               };
@@ -197,9 +200,10 @@ export const Chat = ({ ...props }: ChatProps) => {
                     src={getAvatar()}
                   />
                   <Text
-                    whiteSpace="pre-wrap"
+                    className="children-spacing"
+                    // whiteSpace="pre-wrap"
                     marginTop=".75em !important"
-                    overflow="hidden"
+                    // overflow="hidden"
                   >
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}

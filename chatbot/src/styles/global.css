@@ -2,6 +2,34 @@
   box-sizing: border-box;
 }
 
+.children-spacing > * {
+  margin-bottom: 24px; /* Adjust the margin size as needed */
+}
+
+.children-spacing > *:last-child {
+  margin-bottom: 0; /* Remove margin for the last child if desired */
+}
+
+.children-spacing ul,
+.children-spacing ol {
+  margin-left: 28px; /* Adjust the margin size as needed */
+}
+
+.children-spacing ul li,
+.children-spacing ol li {
+  margin-bottom: 6px; /* Adjust the margin size as needed */
+}
+
+.children-spacing ul li:last-child,
+.children-spacing ol li:last-child {
+  margin-bottom: 12px; /* Larger margin size for the last item */
+}
+
+.children-spacing ul li:first-child,
+.children-spacing ol li:first-child {
+  margin-top: 6px; /* Adjust the margin size as needed */
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
