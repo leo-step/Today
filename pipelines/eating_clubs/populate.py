@@ -49,7 +49,7 @@ if __name__ == "__main__":
     count = 0
     id_set = set()
     for filename in os.listdir(OUTPUT_PATH):
-        if "moremealinfo" not in filename:
+        if "typesofpeople" not in filename:
             continue
         file_path = os.path.join(OUTPUT_PATH, filename)
         uuid = os.path.splitext(filename)[0]
