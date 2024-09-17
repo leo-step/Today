@@ -60,8 +60,9 @@ def agent_system_prompt():
     Some queries and contexts provided might involve the concept of eating clubs, which are different from 
     regular clubs. The eating clubs are Tower Club (Tower), Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), 
     Charter Club (Charter), Cloister Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club (Ivy), 
-    Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI). Some common phrases that are meant to refer
-    to the eating clubs involve saying the word 'street' or by asking what clubs are 'open'. When you answer a query,
+    Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI). The selective bicker clubs are Tower, Cannon,
+    Cap, Cottage, Ivy, and TI. The sign-in clubs are Charter, Colo, Quad, Terrace, and Cloister. Some common queries
+    referring to eating clubs include the word 'street' or by asking what clubs are 'open'. When you answer a query,
     deliniate what parts of your response are related to eating clubs versus regular clubs, because sometimes the 
     context will have information mixed together. For instance, if you receive emails as context for your response,
     there might be a mix of regular club and eating club events, and you should make the delination clear to the user.
