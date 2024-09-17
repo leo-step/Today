@@ -58,6 +58,15 @@ export const Chat = ({ ...props }: ChatProps) => {
       }),
   });
 
+  const getUuid = () => {
+    let uuid = searchParams.get("uuid") || window.localStorage.getItem("uuid")
+    if (!uuid) {
+      uuid = uuidv4();
+      window.localStorage.setItem("uuid", uuid)
+    }
+    return uuid
+  }
+
   const handleAsk = async ({ input: prompt }: ChatSchema) => {
     const sendRequest = (
       selectedId: string,
@@ -72,11 +81,7 @@ export const Chat = ({ ...props }: ChatProps) => {
 
       const controller = new AbortController();
 
-      let uuid = searchParams.get("uuid") || window.localStorage.getItem("uuid")
-      if (!uuid) {
-        uuid = uuidv4();
-        window.localStorage.setItem("uuid", uuid)
-      }
+      const uuid = getUuid();
 
       fetch(config.URL + "/api/chat", {
         method: "POST",
@@ -103,9 +108,6 @@ export const Chat = ({ ...props }: ChatProps) => {
               const { done, value } = await reader.read();
               if (done) break;
               let chunk = decoder.decode(value, { stream: true });
-              console.log(chunk
-                .replace(/\n/g, "\\n")  // Replace newline characters with visible \n
-                .replace(/\r/g, "\\r"));
               message += chunk;
               if (selectedChat) {
                 editMessage(selectedId, message);
@@ -145,9 +147,32 @@ export const Chat = ({ ...props }: ChatProps) => {
     return <div ref={elementRef} />;
   };
 
+  const trackEvent = async (eventType: string, properties: any) => {
+    const uuid = getUuid();
+    if (typeof properties === "string") {
+      properties = { property: properties };
+    }
+    const event = {
+      uuid,
+      event: eventType,
+      properties
+    }
+    try {
+      fetch(config.URL + "/api/track", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(event)
+      })
+    } catch {}
+  }
+
   const ExternalLink = ({ href, children }: any) => {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer">
+      <a href={href} onClick={() =>
+        trackEvent("citationLinkClick", href)
+      } target="_blank" rel="noopener noreferrer">
         {children}
       </a>
     );
