@@ -4,28 +4,29 @@ from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, \
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
-import time
+# import time
 import json
 
-def get_days_ago(past_time: int):
-    current_time = time.time()
-    current_day = int(current_time // 86400)
-    given_day = int(past_time // 86400)
-    days_diff = current_day - given_day
+# def get_days_ago(past_time: int):
+#     current_time = time.time()
+#     current_day = int(current_time // 86400)
+#     given_day = int(past_time // 86400)
+#     days_diff = current_day - given_day
 
-    if days_diff == 0:
-        return "today"
-    elif days_diff == 1:
-        return "1 day ago"
-    else:
-        return f"{days_diff} days ago"
+#     if days_diff == 0:
+#         return "today"
+#     elif days_diff == 1:
+#         return "1 day ago"
+#     else:
+#         return f"{days_diff} days ago"
 
 def document_to_str(document):
     text = document["text"]
     links = '\n'.join(document["links"])
-    days_ago = get_days_ago(document["time"])
+    # days_ago = get_days_ago(document["time"])
     # scores = "vs:{}, fts:{}, score:{}".format(document["vs_score"], document["fts_score"], document["score"])
-    return "{}\n{}\n{}".format(text, links, days_ago)
+    # return "{}\n{}\n{}".format(text, links, days_ago)
+    return "{}\n{}".format(text, links)
 
 def format_documents(documents):
     texts = [document_to_str(doc) for doc in documents]
