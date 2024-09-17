@@ -20,6 +20,8 @@ import { Instructions } from "../Layout/Instructions";
 import { useAPI } from "@/store/api";
 import config from "@/config";
 
+import { v4 as uuidv4 } from "uuid";
+
 export interface ChatProps {}
 
 interface ChatSchema {
@@ -70,6 +72,12 @@ export const Chat = ({ ...props }: ChatProps) => {
 
       const controller = new AbortController();
 
+      let uuid = searchParams.get("uuid") || window.localStorage.getItem("uuid")
+      if (!uuid) {
+        uuid = uuidv4();
+        window.localStorage.setItem("uuid", uuid)
+      }
+
       fetch(config.URL + "/api/chat", {
         method: "POST",
         headers: {
@@ -77,7 +85,7 @@ export const Chat = ({ ...props }: ChatProps) => {
         },
         body: JSON.stringify({
           text: prompt,
-          uuid: searchParams.get("uuid"),
+          uuid: uuid,
           session_id: selectedId,
         }),
         signal: controller.signal,
