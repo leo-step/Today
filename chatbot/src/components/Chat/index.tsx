@@ -188,10 +188,10 @@ export const Chat = ({ ...props }: ChatProps) => {
   return (
     <Stack width="full" height="full" backgroundColor="#212529">
       <Stack
+        className="outputStack"
         maxWidth="768px"
         width="full"
         marginX="auto"
-        height="82%"
         overflow="auto"
         backgroundColor="#212529"
       >
@@ -257,7 +257,7 @@ export const Chat = ({ ...props }: ChatProps) => {
         </Stack>
       </Stack>
       <Stack
-        height="18%"
+        className="inputStack"
         padding={4}
         backgroundColor="#151719"
         justifyContent="center"
@@ -285,7 +285,7 @@ export const Chat = ({ ...props }: ChatProps) => {
             }}
             backgroundColor="whiteAlpha.200"
           />
-          <Text textAlign="center" fontSize="sm" opacity={0.5}>
+          <Text className="disclaimer" textAlign="center" fontSize="sm" opacity={0.5}>
             ⚠️ Highly experimental. Responses may not be accurate. Not intended
             for academic use. Our goal is to make information accessible. Your
             feedback will help us improve.
