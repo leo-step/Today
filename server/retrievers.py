@@ -33,7 +33,7 @@ def retrieve_princeton_courses(query_text):
     response = openai_json_response([
         get_courses_search_query(),
         user_query(query_text)
-    ], temp=0)
+    ])
     search_query = response["search_query"]
     print("[INFO] courses search query:", search_query)
 
