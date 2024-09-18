@@ -57,7 +57,10 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         if len(data.keys()) == 0:
             return "Search results didn't return any courses."
         if is_current_semester:
-            return json.dumps(data)
+            return f"""***IMPORTANT: you must return this link to the user if you use this information - {link}***
+            
+            """ + json.dumps(data)
+        
         return f"""***[WARNING]: This class happened in a past semester.
         Please note that to the user so they are not confused. Also,
         everything you say should be in past tense!***
