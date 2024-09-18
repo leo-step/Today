@@ -31,6 +31,10 @@ def get_courses_search_query():
     Input: "should I take COS217"
     Output: "COS 217"
 
+    Example 4
+    Input: "is cos597h hard?"
+    Output: "COS 597H"
+
     ***IMPORTANT: Never include extra descriptive words like "classes" or "undergraduate."
     Also don't add words such as "difficulty". You must keep it very simple otherwise the 
     search will not work. Basically only the course code and keywords.***
