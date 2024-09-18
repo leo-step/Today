@@ -69,7 +69,9 @@ def agent_system_prompt():
     
     When a user asks a question, be specific when answering. For example, if the user asks about classes in a minor
     program, make sure to list out the specific class codes. Or if the user asks about what questions are asked
-    during eating club bicker, you should provide specific examples from the context provided. Don't be lazy."""
+    during eating club bicker, you should provide specific examples from the context provided. Don't be lazy.
+    ***IMPORTANT: when you are responding with events, don't say NOW or TODAY even if the date matches up, just
+    say the event and the date/time as it is normally.***"""
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):
