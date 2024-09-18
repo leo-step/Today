@@ -4,6 +4,7 @@ import time
 import requests
 from prompts import get_courses_search_query, user_query
 import os
+import random
 
 def retrieve_widget_data():
     collection = db_client["widgets"]
@@ -35,6 +36,10 @@ def retrieve_princeton_courses(query_text):
         user_query(query_text)
     ], model="gpt-4o")
     search_query = response["search_query"]
+    replace_words = ["undergraduate", "Princeton", "class", "classes", "difficulty", "course", "courses"]
+    for word in replace_words:
+        search_query = search_query.replace(word, "")
+    search_query = search_query.strip()
     print("[INFO] courses search query:", search_query)
 
     semester = int(os.getenv("SEMESTER"))
@@ -53,19 +58,25 @@ def retrieve_princeton_courses(query_text):
                     else:
                         semester -= 2
                     continue
-                course_id = search_results[0]["_id"]
+                course_id = random.choice(search_results)["_id"]
                 response = requests.get(f"https://www.princetoncourses.com/api/course/{course_id}", headers=headers)
                 data = delete_dict_key_recursively(response.json(), "courses")
                 data = delete_dict_key_recursively(data, "course")
                 data = delete_dict_key_recursively(data, "_id")
                 link = f"https://www.princetoncourses.com/course/{course_id}"
-                return data, link, i == 0
-            except:
-                print("[ERROR] response 1 failed")
-                return {}, None, True
-    except:
-        print("[ERROR] response 2 failed")
-    return {}, None, True
+                other_search_results = []
+                for search_result in search_results:
+                    if search_result["_id"] == course_id:
+                        continue
+                    other_search_results.append("{} {}: {}".format(search_result["department"], 
+                                        search_result["catalogNumber"], search_result["title"]))
+                return data, other_search_results, link, i == 0
+            except Exception as e:
+                print("[ERROR] response 1 failed:", e)
+                return {}, [], None, True
+    except Exception as e:
+        print("[ERROR] response 2 failed:", e)
+    return {}, [], None, True
 
 def retrieve_any(query_text):
     collection = db_client["crawl"]

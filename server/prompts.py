@@ -16,8 +16,8 @@ def user_query_with_context(context: str, query: str):
 
 @system_prompt
 def get_courses_search_query():
-    return """You will receive a piece of text related to looking up a college course, and you need to shorten
-    it down into a course code or a couple concise keywords. Here are a couple examples:
+    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
+    shorten it down into a course code or a couple concise keywords. Here are a couple examples:
     
     Example 1
     Input: "class about artificial intelligence and education for undergraduates"
@@ -35,9 +35,19 @@ def get_courses_search_query():
     Input: "is cos597h hard?"
     Output: "COS 597H"
 
+    Example 5
+    Input: "cool music course"
+    Output: "Music"
+
+    Example 6
+    Input: "computer science classes"
+    Output: "COS"
+
     ***IMPORTANT: Never include extra descriptive words like "classes" or "undergraduate."
     Also don't add words such as "difficulty". You must keep it very simple otherwise the 
-    search will not work. Basically only the course code and keywords.***
+    search will not work. Basically only the course code and keywords. Also if the query
+    is general for a department, such as computer science classes or music classes, use
+    the department code such as COS or MUS.***
 
     Return a JSON where your output is a string under the key "search_query". For example,
     {
