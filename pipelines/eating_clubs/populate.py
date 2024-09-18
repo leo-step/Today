@@ -49,7 +49,7 @@ if __name__ == "__main__":
     count = 0
     id_set = set()
     for filename in os.listdir(OUTPUT_PATH):
-        if "typesofpeople" not in filename:
+        if "bickerinfodump1" not in filename:
             continue
         file_path = os.path.join(OUTPUT_PATH, filename)
         uuid = os.path.splitext(filename)[0]
@@ -78,11 +78,15 @@ if __name__ == "__main__":
                     documents.append(chunk)
                     id_set.add(doc_id)
             
-            if not is_dry_run:
-                vector_store.add_documents(documents, ids=ids)
-                count += len(documents)
-                print(f"[INFO] added {len(documents)} documents to vector store")
-            else:
-                print(f"[INFO] processed {len(documents)} documents in dry run")
+            for i, document in enumerate(documents):
+                try:
+                    if not is_dry_run:
+                        vector_store.add_documents([document], ids=[ids[i]])
+                        count += len(documents)
+                        print(f"[INFO] added {len(documents)} documents to vector store")
+                    else:
+                        print(f"[INFO] processed {len(documents)} documents in dry run")
+                except:
+                    pass
 
     print(f"[INFO] finished with count = {count}")
