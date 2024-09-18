@@ -62,7 +62,7 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         Please note that to the user so they are not confused. Also,
         everything you say should be in past tense!***
 
-        Link to cite and return to user: {link}
+        ***IMPORTANT: you must return this link to the user if you use this information - {link}***
 
         """ + json.dumps(data)
     elif tool == Tool.EATING_CLUBS.value:
