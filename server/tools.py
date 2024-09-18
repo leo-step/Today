@@ -52,7 +52,6 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         texts = [doc["text"] for doc in documents]
         return "\n\n".join(texts)
     elif tool == Tool.COURSES.value:
-        print(retrieve_princeton_courses(tool_input))
         data, link, is_current_semester = retrieve_princeton_courses(tool_input)
         if len(data.keys()) == 0:
             return "Search results didn't return any courses."
