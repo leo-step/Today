@@ -83,7 +83,7 @@ def choose_tool_and_rewrite(tools, memory, query_text):
     response = openai_json_response([
         tool_and_rewrite(tools, memory),
         user_query(query_text),
-    ], model="gpt-4o", temp=0)
+    ], model="gpt-4o")
     tool: Tool | None = response["tool"]
     query_rewrite = response["query_rewrite"]
     return tool, query_rewrite
