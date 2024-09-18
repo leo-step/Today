@@ -2,11 +2,11 @@
   box-sizing: border-box;
 }
 
-.inputStack {
+.input-stack {
   height: 18%
 }
 
-.outputStack {
+.output-stack {
   height: 82%
 }
 
@@ -15,12 +15,21 @@
     display: none;
   }
 
-  .inputStack {
+  .input-stack {
     height: 12%;
   }
 
-  .outputStack {
+  .output-stack {
     height: 88%;
+  }
+
+  .instruction-stack {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .sample-queries-stack {
+    margin-inline-start: 32px !important;
   }
 }
 

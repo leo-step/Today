@@ -188,7 +188,7 @@ export const Chat = ({ ...props }: ChatProps) => {
   return (
     <Stack width="full" height="full" backgroundColor="#212529">
       <Stack
-        className="outputStack"
+        className="output-stack"
         maxWidth="768px"
         width="full"
         marginX="auto"
@@ -257,7 +257,7 @@ export const Chat = ({ ...props }: ChatProps) => {
         </Stack>
       </Stack>
       <Stack
-        className="inputStack"
+        className="input-stack"
         padding={4}
         backgroundColor="#151719"
         justifyContent="center"

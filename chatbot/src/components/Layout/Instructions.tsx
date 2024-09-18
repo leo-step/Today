@@ -50,7 +50,7 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
       height="full"
       overflow="auto"
     >
-      <Stack direction={["row", "row", "row"]} spacing={16} align="center">
+      <Stack className="instruction-stack" direction={["row", "row", "row"]} spacing={16} align="center">
         <Heading
           size="lg"
           // marginY={8}
@@ -68,7 +68,7 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
           };
 
           return (
-            <Stack key={key} alignItems="center">
+            <Stack className="sample-queries-stack" key={key} alignItems="center">
               <Heading size="sm">
                 {" "}
                 <Icon as={icon} marginRight={"2px"} marginBottom={"-2px"} /> {name}
