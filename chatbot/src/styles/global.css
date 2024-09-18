@@ -64,9 +64,9 @@
     overflow: hidden !important;
   }
 
-  .children-spacing ul,
-  .children-spacing ol {
-    margin-left: 10px; /* Adjust the margin size as needed */
+  .children-spacing > ul,
+  .children-spacing > ol {
+    margin-left: 0px; /* Adjust the margin size as needed */
   }
 }
 
