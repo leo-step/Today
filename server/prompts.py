@@ -32,7 +32,8 @@ def get_courses_search_query():
     Output: "COS 217"
 
     ***IMPORTANT: Never include extra descriptive words like "classes" or "undergraduate."
-    You must keep it very simple otherwise the search will not work***
+    Also don't add words such as "difficulty". You must keep it very simple otherwise the 
+    search will not work. Basically only the course code and keywords.***
 
     Return a JSON where your output is a string under the key "search_query". For example,
     {
@@ -70,7 +71,7 @@ def agent_system_prompt():
     When a user asks a question, be specific when answering. For example, if the user asks about classes in a minor
     program, make sure to list out the specific class codes. Or if the user asks about what questions are asked
     during eating club bicker, you should provide specific examples from the context provided. Don't be lazy.
-    
+
     ***IMPORTANT: when you are responding with events, don't say NOW or TODAY even if the date matches up, just
     say the event and the date/time as it is normally. Do not say the words "happening right now" explicitly even
     if an email says it.***"""

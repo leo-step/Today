@@ -65,7 +65,7 @@ def retrieve_princeton_courses(query_text):
                 return {}, None, True
     except:
         print("[ERROR] response 2 failed")
-        return {}, None, True
+    return {}, None, True
 
 def retrieve_any(query_text):
     collection = db_client["crawl"]
