@@ -52,14 +52,17 @@ def invoke_tool(tool: Tool | None, tool_input: str):
         texts = [doc["text"] for doc in documents]
         return "\n\n".join(texts)
     elif tool == Tool.COURSES.value:
-        data, is_current_semester = retrieve_princeton_courses(tool_input)
+        data, link, is_current_semester = retrieve_princeton_courses(tool_input)
         if len(data.keys()) == 0:
             return "Search results didn't return any courses."
         if is_current_semester:
             return json.dumps(data)
-        return """***[WARNING]: This class happened in a past semester.
+        return f"""***[WARNING]: This class happened in a past semester.
         Please note that to the user so they are not confused. Also,
         everything you say should be in past tense!***
+
+        Link to cite and return to user: {link}
+
         """ + json.dumps(data)
     elif tool == Tool.EATING_CLUBS.value:
         documents = retrieve_eating_clubs(tool_input)

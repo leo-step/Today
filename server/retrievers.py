@@ -58,13 +58,14 @@ def retrieve_princeton_courses(query_text):
                 data = delete_dict_key_recursively(response.json(), "courses")
                 data = delete_dict_key_recursively(data, "course")
                 data = delete_dict_key_recursively(data, "_id")
-                return data, i == 0
+                link = f"https://www.princetoncourses.com/course/{course_id}"
+                return data, link, i == 0
             except:
                 print("[ERROR] response 1 failed")
-                return {}, True
+                return {}, None, True
     except:
         print("[ERROR] response 2 failed")
-        return {}, True
+        return {}, None, True
 
 def retrieve_any(query_text):
     collection = db_client["crawl"]
