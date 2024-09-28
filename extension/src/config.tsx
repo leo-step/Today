@@ -1,7 +1,7 @@
 const config = {
-  URL: "https://todayapp.org",
+  URL: "https://tay.tigerapps.org/",
   DEV: "http://127.0.0.1:8000",
-  PROD: "https://todayapp.org",
+  PROD: "https://tay.tigerapps.org/",
 };
 
 export default config;
