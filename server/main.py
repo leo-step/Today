@@ -39,8 +39,6 @@ app.add_middleware(
 
 # ========== UI ==========
 
-# app = FastAPI() #duplicate app call overwrites other things no?
-
 app.mount("/static", StaticFiles(directory="dist"), name="static")
 
 @app.get("/")
