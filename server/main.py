@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Query
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 from fastapi.responses import StreamingResponse
@@ -14,6 +14,7 @@ from typing import Any
 from memory import Memory, ToolInvocation, MessageType
 import pymongo
 import os
+import uuid
 
 load_dotenv()
 app = FastAPI()
@@ -37,8 +38,6 @@ app.add_middleware(
 )
 
 # ========== UI ==========
-
-app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="dist"), name="static")
 
@@ -81,3 +80,35 @@ async def chat(query: ChatQueryInput = Body(...)):
     return StreamingResponse(
         generate_response(memory, tool_use), 
     media_type="text/plain")
+
+
+# ========== iOS SHORTCUT ==========
+
+@app.get("/api/ios_chat")
+async def ios_chat(query: str = Query(..., description="The user's chat query")):
+    # generate a random UUID and session ID
+    temp_uuid = str(uuid.uuid4())
+    temp_session_id = str(uuid.uuid4())
+
+    memory = Memory(temp_uuid, temp_session_id)
+
+    tool, query_rewrite = choose_tool_and_rewrite(tools, memory, query)
+    tool_result = invoke_tool(tool, query_rewrite)
+    tool_use: ToolInvocation = {
+        "tool": tool,
+        "input": query_rewrite,
+        "output": tool_result
+    }
+
+    memory.add_message(MessageType.HUMAN, query)
+    mp.track(temp_uuid, "ios_chat", {'session_id': temp_session_id})
+
+    # use list to collect the repsonse chunks
+    response_chunks = []
+    async for chunk in generate_response(memory, tool_use):
+        response_chunks.append(chunk)
+    
+    # join all chunks into single response
+    full_response = ''.join(response_chunks)
+    
+    return {"response": full_response}
