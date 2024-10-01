@@ -83,7 +83,7 @@ async def chat(query: ChatQueryInput = Body(...)):
 
 
 # ========== iOS SHORTCUT ==========
-
+a
 @app.get("/api/ios_chat")
 async def ios_chat(query: str = Query(..., description="The user's chat query")):
     # generate a random UUID and session ID
