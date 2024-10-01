@@ -66,16 +66,3 @@ npm run dev
 ```
 git subtree push --prefix server heroku main
 ```
-
-### Serverless
-```
-gcloud builds submit --tag gcr.io/ml-deployment-365514/today-fastapi
-
-gcloud run deploy today-fastapi \
-  --image gcr.io/ml-deployment-365514/today-fastapi \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars [ENVIRONMENT VARIABLES]
-```
-
