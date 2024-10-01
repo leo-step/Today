@@ -9,6 +9,7 @@ import axios from "axios";
 import { StorageKeys, useStorage } from "./StorageContext";
 import { useTime } from "./TimeContext";
 import { EventTypes, useMixpanel } from "./MixpanelContext";
+import config from "../config";
 
 const TICK_INTERVAL = 60000;
 
@@ -21,7 +22,7 @@ const DataProvider = ({ children }: { children: ReactNode }) => {
   const time = useTime();
 
   const requestAndSetData = async () => {
-    await axios.get("https://today-fastapi-nujm46x7ta-uc.a.run.app/api/extension/widget-data").then((res) => {
+    await axios.get(config.URL + "/api/extension/widget-data").then((res) => {
       storage.setLocalStorage(StorageKeys.DATA, JSON.stringify(res.data));
       setData(res.data);
     });

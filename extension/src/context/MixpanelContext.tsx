@@ -2,6 +2,7 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { StorageKeys, useStorage } from "./StorageContext";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
+import config from "../config";
 
 export enum EventTypes {
   PAGE_LOAD = "pageLoad",
@@ -36,7 +37,7 @@ const MixpanelContext = createContext<Mixpanel | null>(null);
 
 const sendEvent = async (event: EventData) => {
   try {
-    await axios.post("https://today-fastapi-nujm46x7ta-uc.a.run.app/api/track", event);
+    await axios.post(config.URL + "/api/track", event);
   } catch {}
 };
 
