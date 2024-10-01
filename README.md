@@ -47,22 +47,47 @@ POST http://127.0.0.1:8000/api/chat
 
 
 ### Extension
+#### Development
+If you want to use local server, switch URL in `src/config.tsx` to the DEV url.
 ```
 cd extension
 npm install
 npm start
 ```
+#### Release
+Before creating a production build:
+1. Return the url in `src/config.tsx` back to the PROD url.
+2. Bump the version number in `public/manifest.json` and commit.
+```
+npm run build
+```
+Then zip the build folder and upload to the Chrome extension store.
 
 ### Chatbot
+#### Development
+If you want to use local server, switch URL in `src/config.tsx` to the DEV url.
 ```
 cd chatbot
 npm install
 npm run dev
 ```
+#### Release
+Before creating a production build:
+1. Return the url in `src/config.tsx` back to the PROD url.
+```
+npm run build
+cd ..
+git add .
+git commit -m "build"
+```
+The last steps are required because the build command updates the `dist` folder in `server`.
 
-## Deployment
+## Deployment (ask Leo)
 
-### Heroku
+### Chatbot UI and server (for widget data and chatbot)
 ```
 git subtree push --prefix server heroku main
 ```
+
+### Core extension
+Follow the release steps and zip the build folder and upload to the Chrome extension store. Remember to accurately update the description and screenshots if new visual features were added.
