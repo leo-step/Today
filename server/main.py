@@ -12,7 +12,7 @@ from response import generate_response
 from models import ChatQueryInput
 from typing import Any
 from memory import Memory, ToolInvocation, MessageType
-import pymongo
+from clients import db_client
 import os
 import uuid
 
@@ -49,9 +49,7 @@ async def serve_react():
 
 @app.get("/api/extension/widget-data")
 async def index():
-    client = pymongo.MongoClient(os.getenv("DB_CONN"))
-    db = client[os.getenv("DATABASE")]
-    data = db.widgets.find_one({'_id': 'data'})
+    data = db_client["widgets"].find_one({'_id': 'data'})
     data["timestamp"] = str(datetime.now(timezone.utc))
     return data
 
