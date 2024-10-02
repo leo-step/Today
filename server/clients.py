@@ -8,4 +8,3 @@ load_dotenv()
 
 db_client = pymongo.MongoClient(os.getenv("MONGO_CONN"))["today"]
 openai_client = OpenAI()
-async_openai_client = AsyncOpenAI()

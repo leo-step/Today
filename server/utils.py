@@ -1,4 +1,4 @@
-from clients import openai_client, async_openai_client
+from clients import openai_client
 from dotenv import load_dotenv
 from typing import List
 import time
@@ -71,8 +71,8 @@ def openai_json_response(messages: List, model="gpt-4o-mini", temp=1, max_tokens
     )
     return json.loads(response.choices[0].message.content)
 
-async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_tokens=1024):
-    response = await async_openai_client.chat.completions.create(
+def openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_tokens=1024):
+    stream = openai_client.chat.completions.create(
         model=model,
         messages=messages,
         temperature=temp,
@@ -82,7 +82,7 @@ async def async_openai_stream(messages: List, model="gpt-4o-mini", temp=1, max_t
         presence_penalty=0,
         stream=True
     )
-    return response
+    return stream
 
 def time_to_date_string():
     # Define the New York timezone

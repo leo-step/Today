@@ -1,8 +1,13 @@
 from pydantic import BaseModel
 from enum import Enum
-from typing import TypedDict, List, Optional
+from typing import TypedDict, List, Optional, Any
 
 # ========= SERVER I/O ========= #
+
+class Event(BaseModel):
+    uuid: str
+    event: str
+    properties: Any
 
 class ChatQueryInput(BaseModel):
     uuid: str
