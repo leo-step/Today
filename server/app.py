@@ -95,7 +95,7 @@ def ios_chat():
     # join all chunks into single response
     full_response = ''.join(response_chunks)
     
-    return {"response": full_response}
+    return jsonify({"response": full_response})
 
 if __name__ == '__main__':
     app.run(debug=True)
