@@ -29,11 +29,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-To run the server, use
-```
-uvicorn main:app --reload
-```
-then call the endpoints through [Postman](https://www.postman.com/), for instance
+Run `app.py` to start the server, then call the endpoints through [Postman](https://www.postman.com/):
 ```
 POST http://127.0.0.1:8000/api/chat
 
