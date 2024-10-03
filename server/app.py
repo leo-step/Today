@@ -10,6 +10,7 @@ from tools import tools, choose_tool_and_rewrite, invoke_tool
 from response import generate_response
 from memory import Memory, ToolInvocation, MessageType
 from cas import CASClient
+from urllib.parse import urlparse, parse_qs
 import os
 import uuid
 
@@ -27,6 +28,15 @@ cas_client = CASClient()
 def authenticated(request):
     if request.args.get('uuid'):
         return True
+    
+    referer = request.headers.get('Referer')
+    if referer:
+        parsed_url = urlparse(referer)
+        query_params = parse_qs(parsed_url.query)
+        
+        if 'uuid' in query_params:
+            return True
+    
     return cas_client.is_logged_in()
 
 # ========== UI ==========
