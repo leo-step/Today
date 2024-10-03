@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory, \
-    session, redirect, url_for, abort
+    session, redirect, url_for, abort, render_template
 from flask_cors import CORS
 from dotenv import load_dotenv
 from mixpanel import Mixpanel
@@ -60,6 +60,10 @@ def login():
     if "next" in session:
         next = session.pop("next")
     return redirect(next)
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
 
 # ========== EXTENSION ==========
 
