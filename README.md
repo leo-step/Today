@@ -8,8 +8,6 @@ analysis - scripts to analyze and dump chatbot conversation data
 
 chatbot - contains the React project for the chat interface
 
-docs - html files that are deployed to github pages e.g. privacy policy
-
 extension - has the React project for the Today chrome extension
 
 pipelines - Python scripts to crawl websites and read emails, very messy
