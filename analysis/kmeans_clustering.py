@@ -3,7 +3,8 @@ import ast
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-df = pd.read_csv("clustering_32.csv") # not much difference between 256 and 32-dim embeddings, same # clusters
+df = pd.read_csv("clustering_768.csv") # not much difference between 256 and 32-dim embeddings, same # clusters
+# also doesn't make difference with embedding model
 df['embedding'] = df['embedding'].apply(ast.literal_eval)
 
 X = list(df['embedding'])
