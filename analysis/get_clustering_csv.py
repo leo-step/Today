@@ -28,7 +28,7 @@ def get_embedding(query_text, model="text-embedding-3-large", dimensions=256):
    return openai_client.embeddings.create(input = [query_text], model=model, dimensions=dimensions).data[0].embedding
 
 def add_embeddings(message):
-    embedding = get_embedding(message["rewritten_query"])
+    embedding = get_embedding(message["rewritten_query"], dimensions=32)
     message["embedding"] = embedding
     return message
 
@@ -36,4 +36,4 @@ with concurrent.futures.ThreadPoolExecutor() as executor:
     clean_messages = list(executor.map(add_embeddings, clean_messages))
 
 df = pd.DataFrame(clean_messages)
-df.to_csv("clustering.csv")
+df.to_csv("clustering_32.csv")
