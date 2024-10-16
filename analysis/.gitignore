@@ -1,2 +1,4 @@
 .venv
 *.txt
+conversations_dump.json
+*.csv
