@@ -6,7 +6,7 @@
 
 analysis - scripts to analyze and dump chatbot conversation data
 
-chatbot - contains the React project for the chat interface
+chatbot - contains the React project for the chat interface + mobile app (new!)
 
 extension - has the React project for the Today chrome extension
 
