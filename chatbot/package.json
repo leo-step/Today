@@ -9,6 +9,8 @@
 		"preview": "vite preview"
 	},
 	"dependencies": {
+		"@capacitor/core": "^6.1.2",
+		"@capacitor/ios": "^6.1.2",
 		"@chakra-ui/react": "^2.5.1",
 		"@emotion/react": "^11.10.6",
 		"@emotion/styled": "^11.10.6",
@@ -29,6 +31,7 @@
 		"zustand": "^4.3.6"
 	},
 	"devDependencies": {
+		"@capacitor/cli": "^6.1.2",
 		"@types/react": "^18.0.27",
 		"@types/react-dom": "^18.0.10",
 		"@vitejs/plugin-react-swc": "^3.0.0",

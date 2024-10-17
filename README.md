@@ -27,7 +27,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Run `app.py` to start the server, then call the endpoints through [Postman](https://www.postman.com/):
+Run `python app.py` to start the server, then call the endpoints through [Postman](https://www.postman.com/):
 ```
 POST http://127.0.0.1:8000/api/chat
 
@@ -76,12 +76,15 @@ git commit -m "build"
 ```
 The last steps are required because the build command updates the `dist` folder in `server`.
 
-## Deployment (ask Leo)
+### Mobile App
+Follow the instructions [here](https://capacitorjs.com/docs/basics/workflow).
+
+## Deployment
 
 ### Chatbot UI and server (for widget data and chatbot)
 ```
 git subtree push --prefix server heroku main
 ```
 
-### Core extension
+### Extension
 Follow the release steps and zip the build folder and upload to the Chrome extension store. Remember to accurately update the description and screenshots if new visual features were added.
