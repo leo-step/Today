@@ -10,6 +10,7 @@
 	},
 	"dependencies": {
 		"@capacitor/core": "^6.1.2",
+		"@capacitor/ios": "^6.1.2",
 		"@chakra-ui/react": "^2.5.1",
 		"@emotion/react": "^11.10.6",
 		"@emotion/styled": "^11.10.6",
