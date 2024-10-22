@@ -62,7 +62,8 @@ def read_email(service, message_id):
     parsed_date = parsedate_tz(date_header)
     email_timestamp = int(mktime_tz(parsed_date))
     
-    text_parts.append(f"Subject: {subject}")
+    # emphasize the subject line
+    text_parts.append(f"SUBJECT: {subject}")
     text_parts.append(f"From: {sender}")
     
     if 'parts' in payload:

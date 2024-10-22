@@ -99,6 +99,9 @@ def agent_system_prompt():
 
     This allows you to provide real-time information about campus events, clubs, job opportunities, deadlines, and other activities.
 
+    When processing emails, pay special attention to the subject line, which is prefixed with 'SUBJECT:'. 
+    The subject line often contains crucial information, especially for brief emails or announcements.
+
     ...
 
     The current date is {time_to_date_string()}.
@@ -148,3 +151,4 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     """
 
     return prompt
+
