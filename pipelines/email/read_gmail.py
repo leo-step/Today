@@ -13,6 +13,7 @@ import base64
 import os
 from preprocess import get_expiry_time, is_eating_club
 import time
+import json
 
 load_dotenv()
 
@@ -26,12 +27,13 @@ def extract_text_and_links_from_html(html_string: str):
     return text, list(set(links))
 
 def get_gmail_service():
-    token_json = os.getenv("GMAIL_TOKEN_JSON")
-    with open("token.json", "w") as fp:
-        fp.write(token_json)
     creds = None
     if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        try:
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        except json.JSONDecodeError:
+            os.remove('token.json')
+    
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
