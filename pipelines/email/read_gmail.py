@@ -109,6 +109,15 @@ def read_email(service, message_id):
 
     return ids, docs
 
+def is_duplicate(message, processed_messages):
+    # compare subject, sender, timestamp
+    for processed in processed_messages:
+        if (message['subject'] == processed['subject'] and
+            message['sender'] == processed['sender'] and
+            abs(message['timestamp'] - processed['timestamp']) < 60):  # 1min
+            return True
+    return False
+
 def main():
     is_dry_run = False
     service = get_gmail_service()
@@ -153,12 +162,18 @@ def main():
         print("[INFO] No unread emails found.")
         return
 
-    ids = []
-    docs = []
+    processed_messages = []
     for message in all_messages:
-        msg_ids, msg_docs = read_email(service, message['id'])
-        ids.extend(msg_ids)
-        docs.extend(msg_docs)
+        msg_data = read_email(service, message['id'])
+        if not is_duplicate(msg_data, processed_messages):
+            processed_messages.append(msg_data)
+            # Process the message as before
+        else:
+            print(f"Skipping duplicate message: {msg_data['subject']}")
+        ids = []
+        docs = []
+        ids.extend(msg_data[0])
+        docs.extend(msg_data[1])
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
 
