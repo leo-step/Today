@@ -118,7 +118,6 @@ def main():
         "westwire@princeton.edu",
         "allug@princeton.edu",
         "freefood@princeton.edu",
-        "transit-alert@princeton.edu",
         "matheymail@princeton.edu",
         "public-lectures@princeton.edu",
         "CampusRecInfoList@princeton.edu",
@@ -126,12 +125,13 @@ def main():
         "tigeralert@princeton.edu",
     ]
     
-    # Build the query string
+    # modify the query to include forwarded emails (for testing purposes)
     email_query = " OR ".join([f"to:{email}" for email in email_addresses])
-    
-    # Search for unread emails sent to any of the specified addresses
-    query = f"({email_query}) is:unread"
-    
+    forwarded_query = "subject:Fwd OR subject:Forwarded"
+    query = f"({email_query} OR {forwarded_query}) is:unread"
+
+    print(f"Full query: {query}")
+
     all_messages = []
     page_token = None
 

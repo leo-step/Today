@@ -90,14 +90,12 @@ def agent_system_prompt():
     - WHITMANWIRE
     - WestWire
     - allug
-    - BSE-soph
     - freefood
-    - transit-alert
     - MatheyMail
     - public-lectures
     - CampusRecInfoList
     - pace-center
-    - tigeralert@princeton.edu
+    - TigerAlerts
 
     This allows you to provide real-time information about campus events, clubs, job opportunities, deadlines, and other activities.
 
