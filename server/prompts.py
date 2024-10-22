@@ -97,7 +97,7 @@ def agent_system_prompt():
     - public-lectures
     - CampusRecInfoList
     - pace-center
-    - TigerAlerts
+    - tigeralert@princeton.edu
 
     This allows you to provide real-time information about campus events, clubs, job opportunities, deadlines, and other activities.
 

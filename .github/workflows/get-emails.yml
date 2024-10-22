@@ -1,8 +1,10 @@
 name: get-emails
 
 on:
+  push:
+    branches: [ main ]
   schedule:
-    - cron: "30 * * * *"
+    - cron: "*/30 * * * *" # run every 30mins instaed of every hr @ the 30min mark
 
   workflow_dispatch:
 

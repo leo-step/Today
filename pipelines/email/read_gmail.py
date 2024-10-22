@@ -110,77 +110,81 @@ def main():
     is_dry_run = False
     service = get_gmail_service()
     
-    # list of emails to scrape; add more listservs here
-    specific_emails = [
+    # list of emails/listservs to check
+    email_addresses = [
         "WHITMANWIRE@princeton.edu",
         "westwire@princeton.edu",
         "allug@princeton.edu",
-        "bse-soph@princeton.edu",
         "freefood@princeton.edu",
         "transit-alert@princeton.edu",
         "matheymail@princeton.edu",
         "public-lectures@princeton.edu",
         "CampusRecInfoList@princeton.edu",
         "pace-center@princeton.edu",
-        "tigeralert@princeton.edu"
+        "tigeralert@princeton.edu",
     ]
     
-    # init empty lists to collect msgs from all emails
-    all_messages = []
-    ids = []
-    docs = []
+    # Build the query string
+    email_query = " OR ".join([f"to:{email}" for email in email_addresses])
     
-    for specific_email in specific_emails:
-        # search for unread emails sent to the specific address
-        query = f"to:{specific_email} is:unread"
-        page_token = None
-        
-        while True:
-            # fetch messages with pagintion support
-            response = service.users().messages().list(userId='me', q=query, pageToken=page_token).execute()
-            messages = response.get('messages', [])
-            if messages:
-                for message in messages:
-                    msg_ids, msg_docs = read_email(service, message['id'])
-                    ids.extend(msg_ids)
-                    docs.extend(msg_docs)
-            # check for the nextPageToken to continue fetching if exissts
-            page_token = response.get('nextPageToken')
-            if not page_token:
-                break
+    # Search for unread emails sent to any of the specified addresses
+    query = f"({email_query}) is:unread"
+    
+    all_messages = []
+    page_token = None
 
-    if not ids:
+    while True:
+        # Fetch messages with pagination support
+        response = service.users().messages().list(
+            userId='me', q=query, pageToken=page_token
+        ).execute()
+        messages = response.get('messages', [])
+        all_messages.extend(messages)
+        
+        # Check for the nextPageToken to continue fetching if it exists
+        page_token = response.get('nextPageToken')
+        if not page_token:
+            break
+
+    if not all_messages:
         print("[INFO] No unread emails found.")
         return
-    
+
+    ids = []
+    docs = []
+    for message in all_messages:
+        msg_ids, msg_docs = read_email(service, message['id'])
+        ids.extend(msg_ids)
+        docs.extend(msg_docs)
+
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
-    
+
     client = MongoClient(os.getenv("MONGO_CONN"))
     # Define collection and index name
     db_name = "today"
     collection_name = "crawl"
     atlas_collection = client[db_name][collection_name]
-    
+
     vector_store = MongoDBAtlasVectorSearch(
         atlas_collection,
         embeddings
     )
-    
+
     if not is_dry_run:
         # atlas_collection.delete_many(
         #     { "source": "email" },
         # )
-    
+
         vector_store.add_documents(docs, ids=ids)
-    
-        # Mark the emails as read
+
+        # Mark the email as read
         for msg_id in ids:
             service.users().messages().modify(
                 userId='me', 
                 id=msg_id.split("__")[0], 
                 body={'removeLabelIds': ['UNREAD']}
             ).execute()
-    
+
         print(f"[INFO] added {len(docs)} email documents")
     else:
         print("[INFO] finished email dry run")
