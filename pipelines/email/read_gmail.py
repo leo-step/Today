@@ -100,7 +100,7 @@ def read_email(service, message_id):
         docs.append(Document(
             page_content=page_content, 
             metadata={"links": extracted_links, "time": email_timestamp, 
-                      "expiry": expiry_time, "source": "eatingclub"}
+                    "expiry": expiry_time, "source": "eatingclub"}
         ))
         ids.append(message_id + "__ec")
 
@@ -110,22 +110,11 @@ def main():
     is_dry_run = False
     service = get_gmail_service()
     
-    # define list of specific emails addresses / liservvs to scrape
-    specific_emails = [
-        "WHITMANWIRE@princeton.edu",
-        "westwire@princeton.edu",
-        "allug@princeton.edu",
-        "freefood@princeton.edu",
-        "transit-alert@princeton.edu",
-        "matheymail@princeton.edu",
-        "public-lectures@princeton.edu",
-        "CampusRecInfoList@princeton.edu",
-        "pace-center@princeton.edu"
-    ]
+    # Replace with the specific email address you're looking for
+    specific_email = "WHITMANWIRE@princeton.edu"
     
-    # create a query string that includes all specific emails
-    query = ' OR '.join([f"to:{email}" for email in specific_emails]) + ' is:unread'
-    
+    # Search for unread emails sent to the specific email address
+    query = f"to:{specific_email} is:unread"
     all_messages = []
     page_token = None
 
@@ -165,14 +154,13 @@ def main():
     )
 
     if not is_dry_run:
-        # Optionally, clear existing email documents
         # atlas_collection.delete_many(
         #     { "source": "email" },
         # )
 
         vector_store.add_documents(docs, ids=ids)
 
-        # Mark the emails as read
+        # Mark the email as read
         for msg_id in ids:
             service.users().messages().modify(
                 userId='me', 
