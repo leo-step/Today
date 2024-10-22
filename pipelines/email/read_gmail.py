@@ -122,6 +122,7 @@ def main():
         "public-lectures@princeton.edu",
         "CampusRecInfoList@princeton.edu",
         "pace-center@princeton.edu",
+        "tigeralert@princeton.edu"
     ]
     
     # init empty lists to collect msgs from all emails
