@@ -136,7 +136,7 @@ def main():
         page_token = None
         
         while True:
-            # Fetch messages with pagination support
+            # fetch messages with pagintion support
             response = service.users().messages().list(userId='me', q=query, pageToken=page_token).execute()
             messages = response.get('messages', [])
             if messages:
