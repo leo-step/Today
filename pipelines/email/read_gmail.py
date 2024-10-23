@@ -107,22 +107,20 @@ def read_email(service, message_id):
         ))
         ids.append(message_id + "__ec")
 
-    return ids, docs
+    return {
+        "ids": ids,
+        "docs": docs,
+        "subject": subject
+    }
 
-def is_duplicate(message, processed_messages):
-    # compare subject, sender, timestamp
-    for processed in processed_messages:
-        if (message['subject'] == processed['subject'] and
-            message['sender'] == processed['sender'] and
-            abs(message['timestamp'] - processed['timestamp']) < 60):  # 1min
-            return True
-    return False
+def is_duplicate(message_id, processed_ids):
+    return message_id in processed_ids
 
 def main():
     is_dry_run = False
     service = get_gmail_service()
     
-    # list of emails/listservs to check
+    # List of emails/listservs to check
     email_addresses = [
         "WHITMANWIRE@princeton.edu",
         "westwire@princeton.edu",
@@ -135,7 +133,7 @@ def main():
         "tigeralert@princeton.edu",
     ]
     
-    # modify the query to include forwarded emails (for testing purposes)
+    # modify the query to include forwarded emails
     email_query = " OR ".join([f"to:{email}" for email in email_addresses])
     forwarded_query = "subject:Fwd OR subject:Forwarded"
     query = f"({email_query} OR {forwarded_query}) is:unread"
@@ -158,22 +156,33 @@ def main():
         if not page_token:
             break
 
+    print(f"Total messages fetched: {len(all_messages)}")
+
     if not all_messages:
         print("[INFO] No unread emails found.")
         return
 
     processed_messages = []
+    processed_ids = set()
+
+    # init ids and docs before the loop (this is important)
+    ids = []
+    docs = []
+
     for message in all_messages:
-        msg_data = read_email(service, message['id'])
-        if not is_duplicate(msg_data, processed_messages):
-            processed_messages.append(msg_data)
-            # Process the message as before
-        else:
-            print(f"Skipping duplicate message: {msg_data['subject']}")
-        ids = []
-        docs = []
-        ids.extend(msg_data[0])
-        docs.extend(msg_data[1])
+        message_id = message['id']
+        if is_duplicate(message_id, processed_ids):
+            print(f"Skipping duplicate message ID: {message_id}")
+            continue
+        msg_data = read_email(service, message_id)
+        processed_messages.append(msg_data)
+        processed_ids.add(message_id)
+        
+        # remove reinitializing ids and docs inside the loop
+        ids.extend(msg_data["ids"])
+        docs.extend(msg_data["docs"])
+
+    print(f"Total unique messages to add: {len(docs)}")
 
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
 
@@ -195,7 +204,7 @@ def main():
 
         vector_store.add_documents(docs, ids=ids)
 
-        # Mark the email as read
+        # Mark the emails as read
         for msg_id in ids:
             service.users().messages().modify(
                 userId='me', 
