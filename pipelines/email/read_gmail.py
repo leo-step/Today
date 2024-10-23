@@ -90,13 +90,19 @@ def read_email(service, message_id):
     expiry_time = get_expiry_time(page_content, int(time.time()))
     eating_club = is_eating_club(page_content)
 
-    ids = []
-    docs = []
+    # 'received_time' field to store when the email was processed
+    # will help prioritize recent emails
+    received_time = int(time.time())
 
     docs.append(Document(
         page_content=page_content, 
-        metadata={"links": extracted_links, "time": email_timestamp, 
-                  "expiry": expiry_time, "source": "email"}
+        metadata={
+            "links": extracted_links, 
+            "time": email_timestamp, 
+            "expiry": expiry_time, 
+            "source": "email",
+            "received_time": received_time
+        }
     ))
     ids.append(message_id)
     if eating_club:
