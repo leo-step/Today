@@ -198,21 +198,21 @@ def main():
     )
 
     if not is_dry_run:
-        # atlas_collection.delete_many(
-        #     { "source": "email" },
-        # )
+        try:
+            # add docs w/ deduplication
+            vector_store.add_documents(docs, ids=ids)
+            
+            # mark as read
+            for msg_id in ids:
+                service.users().messages().modify(
+                    userId='me', 
+                    id=msg_id.split("__")[0], 
+                    body={'removeLabelIds': ['UNREAD']}
+                ).execute()
 
-        vector_store.add_documents(docs, ids=ids)
-
-        # Mark the emails as read
-        for msg_id in ids:
-            service.users().messages().modify(
-                userId='me', 
-                id=msg_id.split("__")[0], 
-                body={'removeLabelIds': ['UNREAD']}
-            ).execute()
-
-        print(f"[INFO] added {len(docs)} email documents")
+            print(f"[INFO] added {len(docs)} email documents")
+        except Exception as e:
+            print(f"[ERROR] Failed to add documents: {e}")
     else:
         print("[INFO] finished email dry run")
 
