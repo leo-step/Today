@@ -61,9 +61,22 @@ def read_email(service, message_id):
     payload = msg['payload']
     headers = payload['headers']
 
-    subject = next(header['value'] for header in headers if header['name'] == 'Subject')
-    sender = next(header['value'] for header in headers if header['name'] == 'From')
-    date_header = next(header['value'] for header in headers if header['name'] == 'Date')
+    # extract headers case-sensitively
+    subject = next(
+        header['value'].strip()
+        for header in headers
+        if header['name'].lower() == 'subject'
+    )
+    sender = next(
+        header['value'].strip()
+        for header in headers
+        if header['name'].lower() == 'from'
+    )
+    date_header = next(
+        header['value'].strip()
+        for header in headers
+        if header['name'].lower() == 'date'
+    )
 
     # Convert the date to a Unix timestamp
     parsed_date = parsedate_tz(date_header)
@@ -209,10 +222,9 @@ def main():
 
     for message in all_messages:
         message_id = message['id']
-        # add message_id to the set of messages to mark as read
         message_ids_to_mark_as_read.add(message_id)
 
-        # get the subject of the email to check for duplicates
+        # Get the email headers with case-insensitive key matching
         msg = service.users().messages().get(
             userId='me',
             id=message_id,
@@ -220,19 +232,29 @@ def main():
             metadataHeaders=['Subject']
         ).execute()
         headers = msg['payload']['headers']
-        subject = next(header['value'] for header in headers if header['name'] == 'Subject')
 
-        # check if subject has been processed
-        if subject in processed_subjects:
+        # normalize subject header (sometimes it's caps and sometimes not)
+        # i genuinely have no idea why
+        subject = next(
+            header['value'].strip()
+            for header in headers
+            if header['name'].lower() == 'subject'
+        ).lower() 
+
+        # normalize subject line
+        normalized_subject = ' '.join(subject.split())
+
+        # skip if processed
+        if normalized_subject in processed_subjects:
             print(f"[INFO] Skipping duplicate email with subject: {subject}")
-            continue  # skip processing this email
+            continue
         else:
-            processed_subjects.add(subject)
+            processed_subjects.add(normalized_subject)
             print(f"[INFO] Processing email with subject: {subject}")
 
         msg_data = read_email(service, message_id)
         if not msg_data:
-            continue  # skip if email content could not be read
+            continue  # skip if email content couldnt be read
 
         processed_messages.append(msg_data)
         processed_ids.add(message_id)
