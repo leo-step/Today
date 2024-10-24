@@ -236,5 +236,41 @@ def weighted_reciprocal_rank(doc_lists):
 
     return sorted_docs
 
+def retrieve_nearby_places(query_text, location):
+    api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+    if not api_key:
+        raise ValueError("GOOGLE_MAPS_API_KEY not set in environment variables") # look at me actually having useful logging *cough leo cough*
+
+    endpoint_url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
+    params = {
+        'key': api_key,
+        'location': f"{location['lat']},{location['lng']}",
+        'radius': 5000,  # radius is in metres
+        'keyword': query_text,
+    }
+
+    response = requests.get(endpoint_url, params=params)
+    data = response.json()
+    if data.get('status') != 'OK':
+        raise Exception(f"Error fetching data from Google Places API: {data.get('error_message', data.get('status'))}")
+
+    results = data.get('results', [])
+    # parse and return
+    places = []
+    for place in results:
+        # just copy/pasted the most relevant info categories from the google api docs
+        # feel free to add more or less as needed
+        place_info = {
+            'name': place.get('name'),
+            'address': place.get('vicinity'),
+            'location': place.get('geometry', {}).get('location'),
+            'types': place.get('types'),
+            'rating': place.get('rating'),
+            'user_ratings_total': place.get('user_ratings_total'),
+            'place_id': place.get('place_id'),
+        }
+        places.append(place_info)
+    return places
+
 if __name__ == "__main__":
     print(retrieve_princeton_courses("baby"))
