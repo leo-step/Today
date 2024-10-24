@@ -21,7 +21,13 @@ def retrieve_crawl(query_text):
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
     # modified to sort by 'received_time' in descending order
-    return hybrid_search(collection, query_text, "email", expiry=True, sort=[("metadata.received_time", -1)])
+    return hybrid_search(
+        collection,
+        query_text,
+        "email",
+        expiry=True,
+        sort=[("metadata.received_time", -1)]
+    )
 
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]

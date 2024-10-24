@@ -14,6 +14,7 @@ import os
 from preprocess import get_expiry_time, is_eating_club
 import time
 import json
+import hashlib
 
 load_dotenv()
 
@@ -46,36 +47,49 @@ def get_gmail_service():
     
     return build('gmail', 'v1', credentials=creds)
 
+def compute_email_hash(subject, sender, body):
+    email_content = f"{subject}{sender}{body}"
+    return hashlib.md5(email_content.encode('utf-8')).hexdigest()
+
 def read_email(service, message_id):
     text_parts = []
     extracted_links = []
+    ids = []
+    docs = []
+
     msg = service.users().messages().get(userId='me', id=message_id, format='full').execute()
-    
     payload = msg['payload']
     headers = payload['headers']
-    
+
     subject = next(header['value'] for header in headers if header['name'] == 'Subject')
     sender = next(header['value'] for header in headers if header['name'] == 'From')
     date_header = next(header['value'] for header in headers if header['name'] == 'Date')
-    
+
     # Convert the date to a Unix timestamp
     parsed_date = parsedate_tz(date_header)
     email_timestamp = int(mktime_tz(parsed_date))
-    
-    # emphasize the subject line
+
+    # Emphasize the subject line
     text_parts.append(f"SUBJECT: {subject}")
     text_parts.append(f"From: {sender}")
-    
+
+    # Extract the email body and links
     if 'parts' in payload:
         for part in payload['parts']:
             if part['mimeType'] == 'text/plain':
                 body = part['body']
                 data = body.get('data')
                 if data:
+                    text = base64.urlsafe_b64decode(data).decode()
+                    text_parts.append(f"Body: {text}")
+            elif part['mimeType'] == 'text/html':
+                body = part['body']
+                data = body.get('data')
+                if data:
                     html = base64.urlsafe_b64decode(data).decode()
                     text, links = extract_text_and_links_from_html(html)
                     text_parts.append(f"Body: {text}")
-                    extracted_links = links
+                    extracted_links.extend(links)
     else:
         body = payload['body']
         data = body.get('data')
@@ -83,35 +97,48 @@ def read_email(service, message_id):
             html = base64.urlsafe_b64decode(data).decode()
             text, links = extract_text_and_links_from_html(html)
             text_parts.append(f"Body: {text}")
-            extracted_links = links
+            extracted_links.extend(links)
 
     page_content = "\n".join(text_parts)
 
-    expiry_time = get_expiry_time(page_content, int(time.time()))
+    # Compute 'expiry_time' using 'get_expiry_time'
+    expiry_time = get_expiry_time(page_content, email_timestamp)
+
+    # Determine if the email is from an eating club
     eating_club = is_eating_club(page_content)
 
+    # Use message_id as the document ID
+    doc_id = message_id
+
     # 'received_time' field to store when the email was processed
-    # will help prioritize recent emails
+    # Will help prioritize recent emails
     received_time = int(time.time())
 
+    # Include 'subject' in the metadata
+    metadata = {
+        "subject": subject,
+        "links": extracted_links,
+        "time": email_timestamp,
+        "expiry": expiry_time,
+        "source": "email",
+        "received_time": received_time
+    }
+
     docs.append(Document(
-        page_content=page_content, 
-        metadata={
-            "links": extracted_links, 
-            "time": email_timestamp, 
-            "expiry": expiry_time, 
-            "source": "email",
-            "received_time": received_time
-        }
+        page_content=page_content,
+        metadata=metadata
     ))
-    ids.append(message_id)
+    ids.append(doc_id)
+
     if eating_club:
+        # Modify the 'source' for eating club emails
+        metadata_ec = metadata.copy()
+        metadata_ec["source"] = "eatingclub"
         docs.append(Document(
-            page_content=page_content, 
-            metadata={"links": extracted_links, "time": email_timestamp, 
-                    "expiry": expiry_time, "source": "eatingclub"}
+            page_content=page_content,
+            metadata=metadata_ec
         ))
-        ids.append(message_id + "__ec")
+        ids.append(doc_id + "__ec")
 
     return {
         "ids": ids,
@@ -126,7 +153,7 @@ def main():
     is_dry_run = False
     service = get_gmail_service()
     
-    # List of emails/listservs to check
+    # list of emails/listservs to check
     email_addresses = [
         "WHITMANWIRE@princeton.edu",
         "westwire@princeton.edu",
@@ -139,9 +166,13 @@ def main():
         "tigeralert@princeton.edu",
     ]
     
-    # modify the query to include forwarded emails
-    email_query = " OR ".join([f"to:{email}" for email in email_addresses])
-    forwarded_query = "subject:Fwd OR subject:Forwarded"
+    # modified the query to include emails where the listserv is in 'to' or 'cc'
+    email_query = " OR ".join([f"(to:{email} OR cc:{email})" for email in email_addresses])
+
+    # include forwarded emails by subject
+    forwarded_query = "subject:(Fwd OR Forwarded)"
+
+    # fetch all unread emails matching the criteria
     query = f"({email_query} OR {forwarded_query}) is:unread"
 
     print(f"Full query: {query}")
@@ -170,21 +201,42 @@ def main():
 
     processed_messages = []
     processed_ids = set()
-
-    # init ids and docs before the loop (this is important)
+    processed_subjects = set()
     ids = []
     docs = []
+    # initialize a set to collect all message IDs to mark as read
+    message_ids_to_mark_as_read = set()
 
     for message in all_messages:
         message_id = message['id']
-        if is_duplicate(message_id, processed_ids):
-            print(f"Skipping duplicate message ID: {message_id}")
-            continue
+        # add message_id to the set of messages to mark as read
+        message_ids_to_mark_as_read.add(message_id)
+
+        # get the subject of the email to check for duplicates
+        msg = service.users().messages().get(
+            userId='me',
+            id=message_id,
+            format='metadata',
+            metadataHeaders=['Subject']
+        ).execute()
+        headers = msg['payload']['headers']
+        subject = next(header['value'] for header in headers if header['name'] == 'Subject')
+
+        # check if subject has been processed
+        if subject in processed_subjects:
+            print(f"[INFO] Skipping duplicate email with subject: {subject}")
+            continue  # skip processing this email
+        else:
+            processed_subjects.add(subject)
+            print(f"[INFO] Processing email with subject: {subject}")
+
         msg_data = read_email(service, message_id)
+        if not msg_data:
+            continue  # skip if email content could not be read
+
         processed_messages.append(msg_data)
         processed_ids.add(message_id)
-        
-        # remove reinitializing ids and docs inside the loop
+
         ids.extend(msg_data["ids"])
         docs.extend(msg_data["docs"])
 
@@ -205,22 +257,46 @@ def main():
 
     if not is_dry_run:
         try:
-            # add docs w/ deduplication
-            vector_store.add_documents(docs, ids=ids)
-            
-            # mark as read
-            for msg_id in ids:
+            if docs:
+                # before adding documents, check for existing IDs
+                existing_ids = set()
+                existing_docs_cursor = atlas_collection.find({'_id': {'$in': ids}}, {'_id': 1})
+                for doc in existing_docs_cursor:
+                    existing_ids.add(doc['_id'])
+
+                # filter out documents with existing ids
+                new_docs = []
+                new_ids = []
+                for doc, id_ in zip(docs, ids):
+                    if id_ not in existing_ids:
+                        new_docs.append(doc)
+                        new_ids.append(id_)
+                    else:
+                        print(f"[INFO] Skipping document with duplicate _id: {id_}")
+
+                if new_docs:
+                    vector_store.add_documents(new_docs, ids=new_ids)
+                    print(f"[INFO] Added {len(new_docs)} new email documents:")
+                    for doc in new_docs:
+                        print(f" - {doc.metadata.get('subject', 'No Subject')}")
+                else:
+                    print("[INFO] All documents already exist in the collection.")
+            else:
+                print("[INFO] No new documents to add.")
+
+            # mark all processed emails as read, including duplicates
+            for msg_id in message_ids_to_mark_as_read:
                 service.users().messages().modify(
-                    userId='me', 
-                    id=msg_id.split("__")[0], 
+                    userId='me',
+                    id=msg_id,
                     body={'removeLabelIds': ['UNREAD']}
                 ).execute()
 
-            print(f"[INFO] added {len(docs)} email documents")
+            print(f"[INFO] Marked {len(message_ids_to_mark_as_read)} emails as read.")
         except Exception as e:
-            print(f"[ERROR] Failed to add documents: {e}")
+            print(f"[ERROR] Failed to process emails: {e}")
     else:
-        print("[INFO] finished email dry run")
+        print("[INFO] Finished email dry run")
 
 if __name__ == '__main__':
     main()
