@@ -1,12 +1,13 @@
 from retrievers import retrieve_crawl, retrieve_emails, retrieve_any, \
     retrieve_any_emails, retrieve_widget_data, retrieve_location_data, \
-    retrieve_princeton_courses, retrieve_eating_clubs
+    retrieve_princeton_courses, retrieve_eating_clubs, retrieve_nearby_places
 from utils import with_timing, openai_json_response
 from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
 # import time
 import json
 from enum import Enum
+import re
 
 # def get_days_ago(past_time: int):
 #     current_time = time.time()
@@ -35,13 +36,90 @@ def format_documents(documents):
     texts = [document_to_str(doc) for doc in documents]
     return "\n\n".join(texts)
 
+def clean_query(query):
+    # Lowercase the query for uniformity
+    query = query.lower()
+    # Remove common phrases
+    common_phrases = [
+        r'\blocation of\b',
+        r'\bfind\b',
+        r'\bin princeton\b',
+        r'\bnear me\b',
+        r'\bnearby\b',
+        r'\baround here\b',
+        r'\baround\b',
+        r'\bwhat is\b',
+        r'\bwhere is\b',
+        r'\bhow close is\b',
+        r'\bhow far is\b',
+        r'\bis there a\b',
+        r'\bnear\b',
+        r'\bthe\b',
+        r'\baddress of\b',
+        r'\blocation\b',
+        r'\bof\b',
+        r'\bin\b'
+    ]
+    # Remove common phrases using regex
+    for phrase in common_phrases:
+        query = re.sub(phrase, '', query)
+    # Remove any extra whitespace
+    query = query.strip()
+    # Return the cleaned query
+    return query
+
+def get_next_event_string(place):
+    next_event = place.get('next_event')
+    if not next_event:
+        return ''
+    # Format the event time
+    event_time = next_event['time'].strftime('%A at %I:%M %p')
+    if next_event['type'] == 'open':
+        return f"\nOpens next on {event_time}"
+    else:
+        return f"\nCloses at {event_time}"
+
+def format_place_response(place):
+    response_parts = []
+
+    # Basic information
+    response_parts.append(f"{place['name']} is located at {place['address']}.")
+
+    # Rating
+    if place['rating'] != 'N/A':
+        response_parts.append(f"It has a rating of {place['rating']} based on {place['user_ratings_total']} reviews.")
+
+    # Current status
+    if place['is_open_now'] is not None:
+        status = "open" if place['is_open_now'] else "closed"
+        response_parts.append(f"It's currently {status}.")
+
+    # Next event (opening or closing time)
+    if place.get('next_event'):
+        event = place['next_event']
+        event_time = event['time'].strftime('%A at %I:%M %p').lstrip('0')
+        if event['type'] == 'open':
+            response_parts.append(f"It will open next on {event_time}.")
+        else:
+            response_parts.append(f"It will close at {event_time}.")
+
+    # Contact information
+    contact_info = []
+    if place['phone_number'] != 'N/A':
+        contact_info.append(f"Phone number: {place['phone_number']}")
+    if place['website'] != 'N/A':
+        contact_info.append(f"Website: {place['website']}")
+
+    if contact_info:
+        response_parts.append("For more information, " + " or ".join(contact_info) + ".")
+
+    # Combine the parts into a single response
+    return " ".join(response_parts)
+
 @with_timing
-def invoke_tool(tool: Tool | None, tool_input: str):
+def invoke_tool(tool: str, tool_input: str) -> str:
     print("[INFO]", tool)
-    if tool == None:
-        print("[INFO] no tool used")
-        return ""
-    elif tool == Tool.EMAILS.value:
+    if tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
         return format_documents(documents)
     elif tool == Tool.ALL_EMAILS.value:
@@ -82,6 +160,20 @@ def invoke_tool(tool: Tool | None, tool_input: str):
     elif tool == Tool.CATCHALL.value:
         documents = retrieve_any(tool_input)
         return format_documents(documents)
+    elif tool == Tool.NEARBY_PLACES.value:
+        # Clean the tool_input to extract the main keyword
+        keyword = clean_query(tool_input)
+        print(f"[INFO] Cleaned keyword: '{keyword}'")
+        # Check if keyword is empty after cleaning
+        if not keyword:
+            return "I'm sorry, I couldn't find any places matching your query."
+        places = retrieve_nearby_places(keyword)
+        if not places:
+            return "I'm sorry, I couldn't find any places matching your query."
+        # Generate a conversational response
+        responses = [format_place_response(place) for place in places]
+        final_response = "\n\n".join(responses)
+        return final_response
     else:
         documents = retrieve_crawl(tool_input)
         return format_documents(documents)
@@ -194,7 +286,7 @@ tools: Tools = [
         sports team plays on the field or what food in general is sold at the
         cafe. Useful for simple location queries such as naming the locations
         of a specific type and seeing where they are at. Not useful for
-        detailed descriptions."""
+        detailed descriptions."""   
     },
     {
         "name": Tool.COURSES,
@@ -208,9 +300,26 @@ tools: Tools = [
     },
     {
         "name": Tool.NEARBY_PLACES,
-        "description": """This tool accesses the Google Places API to find nearby places based on the user's query.
-        It can search for places within a specified radius and provide details such as name, address, types, and ratings.
-        Useful for answering questions about nearby locations, services, or points of interest."""
+        "description": """This tool accesses the Google Places API to find specific places or businesses near Princeton University.
+        Use this tool when the user asks about the location of a specific restaurant, store, or point of interest.
+        It provides accurate and current information, including name, address, and ratings.
+        
+        **Use this tool for queries like:**
+        - "Where is Starbucks?"
+        - "Is there a Maruichi nearby?"
+        - "Find the nearest bookstore."
+        - "Where can I get boba?"
+        """,
+        "examples": """
+        - **User Query**: "Where is Lan Ramen?"
+          **Tool Input**: "Lan Ramen"
+        - **User Query**: "Is there a Junbi nearby?"
+          **Tool Input**: "Junbi"
+        - **User Query**: "Find Starbucks near me."
+          **Tool Input**: "Starbucks"
+        - **User Query**: "Can I get boba nearby?"
+          **Tool Input**: "Boba"
+        """
     },
     {
         "name": Tool.CATCHALL,
