@@ -29,6 +29,9 @@ def extract_text_and_links_from_html(html_string: str):
 
 def get_gmail_service():
     creds = None
+    if os.getenv("GMAIL_TOKEN_JSON"):
+        with open('token.json', 'w') as fp:
+            fp.write(os.getenv("GMAIL_TOKEN_JSON"))
     if os.path.exists('token.json'):
         try:
             creds = Credentials.from_authorized_user_file('token.json', SCOPES)
