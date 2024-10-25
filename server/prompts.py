@@ -85,10 +85,32 @@ def agent_system_prompt():
     When a user asks a question, be specific when answering. For example, if the user asks about classes in a minor
     program, make sure to list out the specific class codes. Or if the user asks about what questions are asked
     during eating club bicker, you should provide specific examples from the context provided. Don't be lazy.
+    You have access to the latest Princeton listserv emails, including:
+
+    - WHITMANWIRE
+    - WestWire
+    - allug
+    - freefood
+    - MatheyMail
+    - public-lectures
+    - CampusRecInfoList
+    - pace-center
+    - TigerAlerts
+
+    This allows you to provide real-time information about campus events, clubs, job opportunities, deadlines, and other activities.
+
+    When processing emails, pay special attention to the subject line, which is prefixed with 'SUBJECT:'. 
+    The subject line often contains crucial information, especially for brief emails or announcements.
+
+    ...
+
+    The current date is {time_to_date_string()}.
+    ...
 
     ***IMPORTANT: when you are responding with events, don't say NOW or TODAY even if the date matches up, just
     say the event and the date/time as it is normally. Do not say the words "happening right now" explicitly even
-    if an email says it.***"""
+    if an email says it.***
+    """
 
 @system_prompt
 def tool_and_rewrite(tools: Tools, memory: Memory):
@@ -129,3 +151,4 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     """
 
     return prompt
+

@@ -20,7 +20,14 @@ def retrieve_crawl(query_text):
 
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text, "email", expiry=True)
+    # modified to sort by 'received_time' in descending order
+    return hybrid_search(
+        collection,
+        query_text,
+        "email",
+        expiry=True,
+        sort=[("metadata.received_time", -1)]
+    )
 
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
@@ -83,8 +90,8 @@ def retrieve_any(query_text):
     return hybrid_search(collection, query_text)
 
 
-def hybrid_search(collection, query_text, source=None, expiry=False, max_results=5):
-    query_vector = get_embedding(query_text)
+def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=5):
+    query_vector = get_embedding(query)
 
     vector_pipeline = [
         {
@@ -141,7 +148,7 @@ def hybrid_search(collection, query_text, source=None, expiry=False, max_results
             "$search": {
                 "index": "full-text-search",
                 "text": {
-                    "query": query_text,
+                    "query": query,
                     "path": "text"
                 }
             }

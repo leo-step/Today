@@ -22,11 +22,13 @@ import json
 
 def document_to_str(document):
     text = document["text"]
+    subject = text.split("\n")[0] if text.startswith("SUBJECT:") else ""
+    body = "\n".join(text.split("\n")[1:]) if subject else text
     links = '\n'.join(document["links"])
     # days_ago = get_days_ago(document["time"])
     # scores = "vs:{}, fts:{}, score:{}".format(document["vs_score"], document["fts_score"], document["score"])
     # return "{}\n{}\n{}".format(text, links, days_ago)
-    return "{}\n{}".format(text, links)
+    return f"{subject}\n\n{body}\n{links}"
 
 def format_documents(documents):
     texts = [document_to_str(doc) for doc in documents]
@@ -122,7 +124,10 @@ tools: Tools = [
             events, clubs, job opportunity postings, deadlines for auditions,
             and things going on in campus life. This accesses information
             primary relating to student activities, not official university
-            communication. ***IMPORTANT: you must use this tool when prompted
+            communication. Pay special attention to the email subject lines, 
+            as they often contain crucial information, especially for brief
+            announcements or events.
+            ***IMPORTANT: you must use this tool when prompted
             about club related things that are coming up in the future because 
             all real-time club information is here! Note that past / expired
             events should not be accessed here***
