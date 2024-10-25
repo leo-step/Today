@@ -149,6 +149,12 @@ td {
   margin-bottom: 6% !important;
 }
 
+.header {
+  float: right;
+
+  /* margin-bottom: 6% !important; */
+}
+
 .greeting {
   color: white !important;
   font-size: 90px !important;
