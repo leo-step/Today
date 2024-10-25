@@ -362,7 +362,7 @@ def get_next_event(opening_hours):
     time_now = int(now.strftime('%H%M'))  # current time in HHMM format
     current_day = now.weekday()
 
-    # google API days: sunday is 0, monday is 1, ..., saturday is 6
+    # Google API days: sunday is 0, monday is 1, ..., saturday is 6
     google_day = (current_day + 1) % 7
 
     upcoming_events = []
@@ -374,7 +374,12 @@ def get_next_event(opening_hours):
         for period in periods:
             if period['open']['day'] == day:
                 open_time = int(period['open']['time'])
-                close_time = int(period['close']['time'])
+                # check if 'close' exists in period
+                if 'close' in period:
+                    close_time = int(period['close']['time'])
+                else:
+                    # handle places that are open 24 hours
+                    close_time = open_time + 2400  # assumes place is open for 24 hours
 
                 # if store closes after midnight
                 if close_time < open_time:
@@ -387,7 +392,7 @@ def get_next_event(opening_hours):
                         event_time = datetime.datetime.combine(
                             event_date,
                             datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
-                            tzinfo=now.tzinfo  
+                            tzinfo=now.tzinfo
                         )
                         upcoming_events.append({'type': 'open', 'time': event_time})
                     elif time_now < close_time:
@@ -395,7 +400,7 @@ def get_next_event(opening_hours):
                         event_time = datetime.datetime.combine(
                             event_date,
                             datetime.datetime.strptime(str(close_time % 2400).zfill(4), '%H%M').time(),
-                            tzinfo=now.tzinfo  
+                            tzinfo=now.tzinfo
                         )
                         upcoming_events.append({'type': 'close', 'time': event_time})
                 else:
@@ -403,7 +408,7 @@ def get_next_event(opening_hours):
                     event_time = datetime.datetime.combine(
                         event_date,
                         datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
-                        tzinfo=now.tzinfo  
+                        tzinfo=now.tzinfo
                     )
                     upcoming_events.append({'type': 'open', 'time': event_time})
 
@@ -420,7 +425,6 @@ def clean_query(query):
     # lowercase the query for uniformity
     query = query.lower()
     # remove common phrases
-    # dont roast the way im doing this; if it works, it works
     common_phrases = [
         r'\blocation of\b',
         r'\bfind\b',
@@ -435,24 +439,29 @@ def clean_query(query):
         r'\bhow far is\b',
         r'\bis there a\b',
         r'\bnear\b',
+        r'\bnearest\b',
         r'\bthe\b',
         r'\baddress of\b',
         r'\blocation\b',
         r'\bof\b',
         r'\bin\b',
+        r'\bto\b',
+        r'\bprinceton\b',
+        r'\buniversity\b',
         r'\bplease\b',
         r'\bcan you\b',
         r'\bcould you\b',
         r'\btell me\b',
-        r'[?]'
+        r'\?',
     ]
-    # remove common phrases using regex
     for phrase in common_phrases:
-        query = re.sub(phrase, '', query)
+        pattern = re.compile(phrase, flags=re.IGNORECASE)
+        query = pattern.sub('', query)
     # remove any extra whitespace
-    query = query.strip()
-    # return cleaned query
+    query = ' '.join(query.split())
+    # return the cleaned query to be used in api calls
     return query
 
 if __name__ == "__main__":
     print(retrieve_princeton_courses("baby"))
+
