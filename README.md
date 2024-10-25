@@ -1,7 +1,5 @@
 # Today
 
-I love this project!
-
 ## Folder Structure
 ```
 .github/workflows - contains yaml files defining cron jobs
