@@ -6,6 +6,7 @@ from prompts import user_query, tool_and_rewrite
 from models import Tool, Tools
 # import time
 import json
+from enum import Enum
 
 # def get_days_ago(past_time: int):
 #     current_time = time.time()
@@ -97,6 +98,17 @@ def choose_tool_and_rewrite(tools, memory, query_text):
 
 
 # =========== TOOLS =========== #
+
+class Tool(Enum):
+    CRAWL = 'crawl'  # added missing tool
+    EMAILS = 'emails'
+    ALL_EMAILS = 'all_emails'
+    EATING_CLUBS = 'eating_clubs'
+    WIDGET_DATA = 'widget_data'
+    LOCATION = 'location'
+    COURSES = 'courses'
+    NEARBY_PLACES = 'nearby_places'
+    CATCHALL = 'catchall'
 
 tools: Tools = [
     {
@@ -193,6 +205,12 @@ tools: Tools = [
         class effectively, you must provide reference a course code (e.g.
         "COS217") or keywords for the name (e.g. "natural algorithms") in
         the query rewriting stage.***"""
+    },
+    {
+        "name": Tool.NEARBY_PLACES,
+        "description": """This tool accesses the Google Places API to find nearby places based on the user's query.
+        It can search for places within a specified radius and provide details such as name, address, types, and ratings.
+        Useful for answering questions about nearby locations, services, or points of interest."""
     },
     {
         "name": Tool.CATCHALL,
