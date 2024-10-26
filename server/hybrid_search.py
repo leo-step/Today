@@ -6,14 +6,14 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
 
     current_time = int(time.time())
 
-    # build  flter condition
+    # build filter condition
     filter_condition = {}
     if source:
         filter_condition["source"] = source
     if expiry:
         filter_condition["expiry"] = { "$gt": current_time }
 
-    ### vector search pipeline
+    ### Vector Search Pipeline
     vector_pipeline = [
         {
             "$vectorSearch": {
@@ -41,18 +41,16 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
         }
     ]
 
-    # apply filter to vector search
     if filter_condition:
         vector_pipeline.insert(1, { "$match": filter_condition })
 
-    # apply sorting
     if sort:
         vector_pipeline.append({ "$sort": dict(sort) })
 
     vector_results = collection.aggregate(vector_pipeline)
     vector_docs = list(vector_results)
 
-    ### keyword search pipeline
+    ### Keyword Search Pipeline
     keyword_pipeline = [
         {
             "$search": {
@@ -80,11 +78,10 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
         }
     ]
 
-    # apply filter to keyword search
     if filter_condition:
         keyword_pipeline.insert(1, { "$match": filter_condition })
 
-    # apply sorting
+    # apply sorting if specified
     if sort:
         keyword_pipeline.append({ "$sort": dict(sort) })
     else:
@@ -111,37 +108,37 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
     # fuse results using weighted reciprocal rank
     fused_documents = weighted_reciprocal_rank(doc_lists)
 
-    # return top results
+    # return top results up to max_results
     return fused_documents[:max_results]
 
 def weighted_reciprocal_rank(doc_lists):
     """
-    perform weighted reciprocal rank fusion on multiple rank lists
+    Perform weighted Reciprocal Rank Fusion on multiple rank lists.
     """
-    c = 60  # constant from the rrf paper
+    c = 60  # constant from the RRF paper
     weights = [1] * len(doc_lists)  # equal weights for all lists
 
-    # create a union of all unique documents
+    # create a union of all unique docs
     all_documents = set()
     for doc_list in doc_lists:
         for doc in doc_list:
             all_documents.add(doc["text"])
 
-    # initialize rrf score dictionary
+    # initialize RRF score dictionary
     rrf_score_dic = {doc: 0.0 for doc in all_documents}
 
-    # calculate rrf scores
+    # calc RRF scores
     for doc_list, weight in zip(doc_lists, weights):
         for rank, doc in enumerate(doc_list, start=1):
             rrf_score = weight * (1 / (c + rank))
             rrf_score_dic[doc["text"]] += rrf_score
 
-    # sort documents by rrf scores
+    # sort docs by RRF scores
     sorted_documents = sorted(
         rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
     )
 
-    # map sorted content back to document objects
+    # map sorted content back to doc objects
     page_content_to_doc_map = {
         doc["text"]: doc for doc_list in doc_lists for doc in doc_list
     }
