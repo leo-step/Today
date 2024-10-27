@@ -244,141 +244,158 @@ def retrieve_any(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
-def hybrid_search(collection, query, source=None, time_filter=None, max_results=5, sort=None, exact_match=False):
-    current_time = int(time.time())
-    embedding = get_embedding(query)
+def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=5):
+    query_vector = get_embedding(query)
 
-    # text search pipeline w/ exact match option
-    text_pipeline = [
-        {
-            "$search": {
-                "index": "default",
-                "compound": {
-                    "should": [
-                        {
-                            "text": {
-                                "query": query,
-                                "path": ["text", "metadata.subject"],
-                                "fuzzy": {} if not exact_match else None
-                            }
-                        },
-                        {
-                            "phrase": {
-                                "query": query,
-                                "path": ["text", "metadata.subject"],
-                                "score": { "boost": { "value": 2 } }
-                            }
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "$addFields": {
-                "score": {"$meta": "searchScore"},
-                "age": {"$subtract": [current_time, "$metadata.time"]}
-            }
-        }
-    ]
-
-    # vector search pipeline
     vector_pipeline = [
         {
-            "$search": {
-                "index": "default",
-                "knnBeta": {
-                    "vector": embedding,
+            "$vectorSearch":
+                {
+                    "queryVector": query_vector,
                     "path": "embedding",
-                    "k": max_results * 2
-                }
-            }
+                    "numCandidates": 50,
+                    "limit": 5,
+                    "index": "vector_index"
+                },
         },
         {
-            "$addFields": {
-                "score": {"$meta": "searchScore"},
-                "age": {"$subtract": [current_time, "$metadata.time"]}
-            }
+            "$project": 
+                {
+                    "_id": 1,
+                    "text": 1,
+                    "links": 1,
+                    "time": 1,
+                    "score":{"$meta":"vectorSearchScore"}
+                }
         }
     ]
 
-    # apply filters to both pipelines
-    match_filter = {}
-    if source:
-        match_filter["metadata.source"] = source
-    if time_filter:
-        match_filter.update(time_filter)
-    
-    if match_filter:
-        vector_pipeline.insert(1, {"$match": match_filter})
-        text_pipeline.insert(1, {"$match": match_filter})
+    current_time = int(time.time())
 
-    # project fields for both pipelines
-    projection = {
-        "$project": {
-            "_id": 1,
-            "text": 1,
-            "links": 1,
-            "metadata": 1,
-            "score": 1,
-            "age": 1
+    if source and expiry:
+        vector_pipeline[0]["$vectorSearch"]["filter"] = {
+            "$and": [
+                {
+                    "source": {
+                        "$eq": source
+                    }
+                },
+                {
+                    "expiry": {
+                        "$gt": current_time
+                    }
+                }
+            ]
         }
-    }
-    vector_pipeline.append(projection)
-    text_pipeline.append(projection)
-
-    # add time decay to scores
-    time_decay = {
-        "$addFields": {
-            "score": {
-                "$multiply": [
-                    "$score",
-                    {"$exp": {"$multiply": [-0.0000001, "$age"]}}
-                ]
+    elif source:
+        vector_pipeline[0]["$vectorSearch"]["filter"] = {
+            "source": {
+                "$eq": source
             }
         }
-    }
-    vector_pipeline.append(time_decay)
-    text_pipeline.append(time_decay)
 
-    # execute both pipelines
-    vector_results = list(collection.aggregate(vector_pipeline))
-    text_results = list(collection.aggregate(text_pipeline))
-
-    # combine results and remove duplicates
-    seen_ids = set()
-    all_results = []
+    vector_results = collection.aggregate(vector_pipeline)
+    x = list(vector_results)
     
-    # process and deduplicate results; prioritizing text matches
-    for doc in text_results + vector_results:  # text results come first
-        doc_id = str(doc["_id"])
-        if doc_id not in seen_ids:
-            seen_ids.add(doc_id)
-            processed_doc = {
-                "_id": doc_id,
-                "text": doc["text"],
-                "links": doc.get("links", []),
-                "metadata": doc.get("metadata", {}),
-                "score": doc.get("score", 0),
-                "age": doc.get("age", 0)
+    keyword_pipeline = [
+        {
+            "$search": {
+                "index": "full-text-search",
+                "text": {
+                    "query": query,
+                    "path": "text"
+                }
             }
+        },
+        { "$addFields" : { "score": { "$meta": "searchScore" } } },
+        { "$limit": 5 }
+    ]
 
-            # Add time context
-            age_days = doc["age"] / (24 * 3600)
-            if age_days > 30:
-                processed_doc["time_context"] = f"[WARNING] This information is from {int(age_days)} days ago and may be outdated."
-            elif age_days > 7:
-                processed_doc["time_context"] = f"[NOTE] This information is from {int(age_days)} days ago."
-            elif age_days > 1:
-                processed_doc["time_context"] = f"[RECENT] This information is from {int(age_days)} days ago."
-            else:
-                processed_doc["time_context"] = "[CURRENT] This information is from today."
+    if source and expiry: 
+        keyword_pipeline.insert(1, {
+            "$match": {
+                    "source": source,
+                    "expiry": { "$gt": current_time }
+                }
+            })
+    elif source:
+        keyword_pipeline.insert(1, {
+            "$match": {
+                "source": source
+            }
+        })
 
-            all_results.append(processed_doc)
-
-    # sort by score
-    all_results.sort(key=lambda x: x["score"], reverse=True)
+    keyword_results = collection.aggregate(keyword_pipeline)
+    y = list(keyword_results)
     
-    return all_results[:max_results]
+    doc_lists = [x,y]
+
+    for i in range(len(doc_lists)):
+        doc_lists[i] = [
+            {"_id":str(doc["_id"]), "text":doc["text"], 
+             "links":doc["links"], "time":doc["time"], 
+             "score": doc["score"]}
+            for doc in doc_lists[i]
+        ]
+    
+    fused_documents = weighted_reciprocal_rank(doc_lists)
+
+    return fused_documents[:max_results]
+
+
+def weighted_reciprocal_rank(doc_lists):
+    """
+    This is a modified version of the fuction in the langchain repo
+    https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/retrievers/ensemble.py
+    
+    Perform weighted Reciprocal Rank Fusion on multiple rank lists.
+    You can find more details about RRF here:
+    https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
+
+    Args:
+        doc_lists: A list of rank lists, where each rank list contains unique items.
+
+    Returns:
+        list: The final aggregated list of items sorted by their weighted RRF
+                scores in descending order.
+    """
+    c=60 #c comes from the paper
+    weights=[1]*len(doc_lists) #you can apply weights if you like, here they are all the same, ie 1
+    
+    if len(doc_lists) != len(weights):
+        raise ValueError(
+            "Number of rank lists must be equal to the number of weights."
+        )
+
+    # Create a union of all unique documents in the input doc_lists
+    all_documents = set()
+    for doc_list in doc_lists:
+        for doc in doc_list:
+            all_documents.add(doc["text"])
+
+    # Initialize the RRF score dictionary for each document
+    rrf_score_dic = {doc: 0.0 for doc in all_documents}
+
+    # Calculate RRF scores for each document
+    for doc_list, weight in zip(doc_lists, weights):
+        for rank, doc in enumerate(doc_list, start=1):
+            rrf_score = weight * (1 / (rank + c))
+            rrf_score_dic[doc["text"]] += rrf_score
+
+    # Sort documents by their RRF scores in descending order
+    sorted_documents = sorted(
+        rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
+    )
+
+    # Map the sorted page_content back to the original document objects
+    page_content_to_doc_map = {
+        doc["text"]: doc for doc_list in doc_lists for doc in doc_list
+    }
+    sorted_docs = [
+        page_content_to_doc_map[page_content] for page_content in sorted_documents
+    ]
+
+    return sorted_docs
 
 def retrieve_nearby_places(query_text):
     api_key = os.getenv('GOOGLE_MAPS_API_KEY')
