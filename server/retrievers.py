@@ -26,56 +26,33 @@ def retrieve_emails(query_text):
     collection = db_client["crawl"]
     current_time = int(time.time())
     
-    # get current date info
-    current_date = datetime.datetime.fromtimestamp(current_time)
-    tomorrow_date = current_date + datetime.timedelta(days=1)
-    
-    # date patterns based on query context
-    date_patterns = []
-    if "tomorrow" in query_text.lower() or "tmrw" in query_text.lower():
-        # common date formats for tomorrow
-        date_patterns.extend([
-            tomorrow_date.strftime("%B %d"),      # October 28
-            tomorrow_date.strftime("%b %d"),      # Oct 28
-            tomorrow_date.strftime("%m/%d"),      # 10/28
-            tomorrow_date.strftime("%m-%d"),      # 10-28
-            f"Monday, {tomorrow_date.strftime('%B %d')}",  # Monday, October 28
-            f"Monday,{tomorrow_date.strftime('%B %d')}",   # Monday,October 28
-            "Monday",  # Just "Monday"
-            tomorrow_date.strftime("%A"),         # full day name
-        ])
-    
-    print(f"[DEBUG] Date patterns: {date_patterns}")
-    
-    # extract search terms
+    # extract important search terms
+    # ignore time related words bc that's not relevant for email search
+    # emails get filterd by time after all possible results are retrieved
     search_info = openai_json_response([{
         "role": "system",
         "content": """Extract ONLY the specific items, topics, or subjects being asked about. Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
         Return a JSON with:
-        - 'terms': array of ONLY the specific items/topics being searched for. Use ["*"] for general queries about events/activities.
+        - 'terms': array of ONLY the specific items/topics being searched for
+        
         Examples:
-        "is there any free pizza available right now?" -> {"terms": ["free pizza", "pizza", "freefood"]}
-        "what events are there tomorrow?" -> {"terms": ["*"]}
-        "what's happening today?" -> {"terms": ["*"]}
-        "are there any events right now?" -> {"terms": ["*"]}
-        "what events are happening?" -> {"terms": ["*"]}
-        "any events this week?" -> {"terms": ["*"]}
+        "is there any free pizza available right now?" -> {"terms": ["free pizza", "pizza"]}
         "are there any israel/palestine related events right now? or soon?" -> {"terms": ["israel", "palestine"]}
         "what events are there about israel or palestine?" -> {"terms": ["israel", "palestine"]}
-        "was there free fruit yesterday?" -> {"terms": ["fruit", "free fruit", "freefood"]}
+        "was there free fruit yesterday?" -> {"terms": ["fruit", "free fruit"]}
         "when is the next narcan training session today?" -> {"terms": ["narcan", "narcan training"]}
         "any fruit related events happening now?" -> {"terms": ["fruit"]}
         "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives"]}
         "is there anything about israel going on right now?" -> {"terms": ["israel"]}
-        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["free food", "kanji lobby", "freefood"]}
+        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["free food", "kanji lobby"]}
         "are there any events about climate change tomorrow?" -> {"terms": ["climate change"]}
         "what's happening with SJP this week?" -> {"terms": ["sjp"]}
-        "any fruit bowls available today?" -> {"terms": ["fruit bowl", "fruit", "freefood"]}
+        "any fruit bowls available today?" -> {"terms": ["fruit bowl", "fruit"]}
         "when is the next a cappella performance?" -> {"terms": ["a cappella"]}
         "are there any dance shows this weekend?" -> {"terms": ["dance"]}
         "is there volleyball practice tonight?" -> {"terms": ["volleyball"]}
         "any meditation sessions happening soon?" -> {"terms": ["meditation"]}
-        "where can I find free coffee right now?" -> {"terms": ["free coffee", "coffee", "freefood"]}
+        "where can I find free coffee right now?" -> {"terms": ["free coffee", "coffee"]}
         "is the chess club meeting today?" -> {"terms": ["chess club", "chess"]}
         "any robotics workshops this week?" -> {"terms": ["robotics"]}
         "when's the next movie screening?" -> {"terms": ["movie screening", "movie"]}
@@ -93,22 +70,14 @@ def retrieve_emails(query_text):
     search_terms = search_info["terms"]
     print(f"[DEBUG] Search terms: {search_terms}")
     
-    # build search conditions for date patterns
+    # build search conditions for each term
     search_conditions = []
-    for pattern in date_patterns:
-        # ensure pattern is escaped and valid
-        flexible_pattern = re.escape(pattern).replace("\\ ", ".*")  # escaping pattern before replacing space
-        pattern_conditions = {
-            "$or": [
-                {"subject": {"$regex": flexible_pattern, "$options": "i"}},
-                {"text": {"$regex": flexible_pattern, "$options": "i"}}
-            ]
-        }
-        search_conditions.append(pattern_conditions)
-
-    # build term conditions similarly with escape and validation
     for term in search_terms:
-        term_pattern = re.escape(term).replace("\\ ", ".*")  # escaping term before replacing space
+        # create pattern that matches term
+        term_pattern = f".*{re.escape(term)}.*"
+        
+        # search in both subject and body
+        # regex is a pain
         term_conditions = {
             "$or": [
                 {"subject": {"$regex": term_pattern, "$options": "i"}},
@@ -117,42 +86,55 @@ def retrieve_emails(query_text):
         }
         search_conditions.append(term_conditions)
     
-    # build base query with both date patterns and terms
+    # combine search conditions
     base_query = {
         "$and": [
             {"source": "email"},
-            {"$or": search_conditions} if search_conditions else {}
+            {"$or": search_conditions}
         ]
     }
     
-    # get matching documents
+    # first try exact matches
     exact_matches = list(collection.find(base_query))
-    print(f"[DEBUG] Found {len(exact_matches)} matching documents")
     
-    # fallback to regex on text if no results are found (for partial matching)
+    # if no results, try fuzzy searching
+    # this code is not original,,, but it works so whatever
     if not exact_matches:
-        fallback_conditions = [{"text": {"$regex": term, "$options": "i"}} for term in search_terms]
-        base_query["$and"].append({"$or": fallback_conditions})
+        print("[DEBUG] No exact matches, trying fuzzy search")
+        fuzzy_conditions = []
+        for term in search_terms:
+            words = term.split()
+            word_conditions = []
+            for word in words:
+                word_pattern = f".*{re.escape(word)}.*"
+                word_conditions.append({
+                    "$or": [
+                        {"subject": {"$regex": word_pattern, "$options": "i"}},
+                        {"text": {"$regex": word_pattern, "$options": "i"}}
+                    ]
+                })
+            fuzzy_conditions.append({"$and": word_conditions})
+        
+        base_query["$or"] = fuzzy_conditions
         exact_matches = list(collection.find(base_query))
-        print(f"[DEBUG] Fallback search found {len(exact_matches)} documents")
+    
+    print(f"[DEBUG] Found {len(exact_matches)} matching documents")
     
     # process and score results
     processed_results = []
     for doc in exact_matches:
         score = 0
-        for pattern in date_patterns:
-            if re.search(re.escape(pattern), doc.get("subject", ""), re.IGNORECASE):
-                score += 10
-            if re.search(re.escape(pattern), doc.get("text", ""), re.IGNORECASE):
-                score += 5
         for term in search_terms:
-            if re.search(re.escape(term), doc.get("subject", ""), re.IGNORECASE):
-                score += 8
-            if re.search(re.escape(term), doc.get("text", ""), re.IGNORECASE):
-                score += 4
+            # higher score for subject matches
+            if re.search(term, doc.get("subject", ""), re.IGNORECASE):
+                score += 10
+            # higher score for body matches
+            if re.search(term, doc.get("text", ""), re.IGNORECASE):
+                score += 5
         
         if score > 0:
             age_hours = (current_time - doc.get("time", 0)) / 3600
+            
             processed_doc = {
                 "_id": doc["_id"],
                 "text": doc["text"],
@@ -167,10 +149,10 @@ def retrieve_emails(query_text):
             }
             processed_results.append(processed_doc)
     
-    # sort by score, then by recency
+    # sort by score first then recency
     processed_results.sort(key=lambda x: (x["score"], -x["metadata"]["time"]), reverse=True)
     
-    # filter based on time context from original query
+    # now filter based on time context from original query
     is_current = any(word in query_text.lower() for word in [
         "now", "current", "today", "happening", "right now"
     ])
@@ -178,21 +160,26 @@ def retrieve_emails(query_text):
         "yesterday", "past", "previous", "before", "earlier", "last"
     ])
     
-    # apply additional filters based on time context
+    # the following filters are arbitrarily chose, but these work pretty well
+    # in my testing; feel free to change as necessary
+
     if is_current:
+        # for current queries only show events from last 12hours
         processed_results = [
             doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 12 * 3600  # last 12 hours
+            if (current_time - doc["metadata"]["time"]) < 12 * 3600
         ]
     elif include_past:
+        # for past queries show everything from last 14 days
         processed_results = [
             doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 14 * 24 * 3600  # last 14 days
+            if (current_time - doc["metadata"]["time"]) < 14 * 24 * 3600
         ]
     else:
+        # default to last week
         processed_results = [
             doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 7 * 24 * 3600  # last 7 days
+            if (current_time - doc["metadata"]["time"]) < 24 * 3600 * 7
         ]
     
     return processed_results[:10]
@@ -375,7 +362,7 @@ def hybrid_search(collection, query, source=None, time_filter=None, max_results=
                 "age": doc.get("age", 0)
             }
 
-            # add time context
+            # Add time context
             age_days = doc["age"] / (24 * 3600)
             if age_days > 30:
                 processed_doc["time_context"] = f"[WARNING] This information is from {int(age_days)} days ago and may be outdated."
@@ -611,3 +598,4 @@ def clean_query(query):
 
 if __name__ == "__main__":
     print(retrieve_princeton_courses("baby"))
+
