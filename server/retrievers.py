@@ -27,8 +27,6 @@ def retrieve_emails(query_text):
     current_time = int(time.time())
     
     # extract important search terms
-    # ignore time related words bc that's not relevant for email search
-    # emails get filterd by time after all possible results are retrieved
     search_info = openai_json_response([{
         "role": "system",
         "content": """Extract ONLY the specific items, topics, or subjects being asked about. Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
@@ -36,30 +34,31 @@ def retrieve_emails(query_text):
         - 'terms': array of ONLY the specific items/topics being searched for
         
         Examples:
-        "is there any free pizza available right now?" -> {"terms": ["free pizza", "pizza"]}
+        "What events are this week?" -> {"terms": ["*"]}
+        "is there any free pizza available right now?" -> {"terms": ["pizza", "freefood", "free pizza"]}
         "are there any israel/palestine related events right now? or soon?" -> {"terms": ["israel", "palestine"]}
         "what events are there about israel or palestine?" -> {"terms": ["israel", "palestine"]}
-        "was there free fruit yesterday?" -> {"terms": ["fruit", "free fruit"]}
-        "when is the next narcan training session today?" -> {"terms": ["narcan", "narcan training"]}
+        "was there free fruit yesterday?" -> {"terms": ["fruit", "freefood", "free fruit"]}
+        "when is the next narcan training session today?" -> {"terms": ["narcan", "training", "narcan training"]}
         "any fruit related events happening now?" -> {"terms": ["fruit"]}
         "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives"]}
         "is there anything about israel going on right now?" -> {"terms": ["israel"]}
-        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["free food", "kanji lobby"]}
-        "are there any events about climate change tomorrow?" -> {"terms": ["climate change"]}
+        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["food", "kanji lobby", "kanji"]}
+        "are there any events about climate change tomorrow?" -> {"terms": ["climate", "climate change"]}
         "what's happening with SJP this week?" -> {"terms": ["sjp"]}
-        "any fruit bowls available today?" -> {"terms": ["fruit bowl", "fruit"]}
-        "when is the next a cappella performance?" -> {"terms": ["a cappella"]}
+        "any fruit bowls available today?" -> {"terms": ["fruit", "fruit bowl", "freefood"]}
+        "when is the next a cappella performance?" -> {"terms": ["cappella", "performance"]}
         "are there any dance shows this weekend?" -> {"terms": ["dance"]}
         "is there volleyball practice tonight?" -> {"terms": ["volleyball"]}
         "any meditation sessions happening soon?" -> {"terms": ["meditation"]}
-        "where can I find free coffee right now?" -> {"terms": ["free coffee", "coffee"]}
-        "is the chess club meeting today?" -> {"terms": ["chess club", "chess"]}
+        "where can I find free coffee right now?" -> {"terms": ["coffee", "freefood", "free coffee"]}
+        "is the chess club meeting today?" -> {"terms": ["chess", "chess club"]}
         "any robotics workshops this week?" -> {"terms": ["robotics"]}
-        "when's the next movie screening?" -> {"terms": ["movie screening", "movie"]}
-        "are there any study groups for organic chemistry?" -> {"terms": ["organic chemistry"]}
-        "is anyone giving away free textbooks?" -> {"terms": ["free textbooks", "textbooks"]}
-        "what time is the math help session?" -> {"terms": ["math help"]}
-        "are there any filipino events on campus?" -> {"terms": ["filipino"]}
+        "when's the next movie screening?" -> {"terms": ["movie", "screening"]}
+        "are there any study groups for organic chemistry?" -> {"terms": ["chemistry", "organic"]}
+        "is anyone giving away free textbooks?" -> {"terms": ["textbook", "free textbook"]}
+        "what time is the math help session?" -> {"terms": ["math", "math help", "session"]}
+        "what are the latest filipino events?" -> {"terms": ["filipino", "phillipines"]}
         "are there any events about palestine happening today?" -> {"terms": ["palestine"]}
         "what fruit events were there yesterday?" -> {"terms": ["fruit"]}"""
     }, {
