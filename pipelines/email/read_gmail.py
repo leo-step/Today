@@ -267,7 +267,7 @@ def main():
 
     print(f"Total unique messages to add: {len(docs)}")
 
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimensions=256)
+    client = OpenAI()
 
     client = MongoClient(os.getenv("MONGO_CONN"))
     # Define collection and index name
@@ -277,7 +277,11 @@ def main():
 
     vector_store = MongoDBAtlasVectorSearch(
         atlas_collection,
-        embeddings
+        client.embeddings.create(
+            model="text-embedding-3-large",
+            dimensions=256,
+            input=text
+        ).data[0].embedding
     )
 
     if not is_dry_run:

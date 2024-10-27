@@ -8,6 +8,7 @@ import random
 import re
 import datetime
 from dateutil import tz
+import json
 
 def retrieve_widget_data():
     collection = db_client["widgets"]
@@ -15,30 +16,194 @@ def retrieve_widget_data():
 
 def retrieve_location_data(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text, "map")
+    return hybrid_search(collection, query_text, source="map")
 
 def retrieve_crawl(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text, "web")
+    return hybrid_search(collection, query_text, source="web")
 
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
-    # modified to sort by 'received_time' in descending order
-    return hybrid_search(
-        collection,
-        query_text,
-        "email",
-        expiry=True,
-        sort=[("metadata.received_time", -1)]
-    )
+    current_time = int(time.time())
+    
+    # get current date info
+    current_date = datetime.datetime.fromtimestamp(current_time)
+    tomorrow_date = current_date + datetime.timedelta(days=1)
+    
+    # date patterns based on query context
+    date_patterns = []
+    if "tomorrow" in query_text.lower() or "tmrw" in query_text.lower():
+        # common date formats for tomorrow
+        date_patterns.extend([
+            tomorrow_date.strftime("%B %d"),      # October 28
+            tomorrow_date.strftime("%b %d"),      # Oct 28
+            tomorrow_date.strftime("%m/%d"),      # 10/28
+            tomorrow_date.strftime("%m-%d"),      # 10-28
+            f"Monday, {tomorrow_date.strftime('%B %d')}",  # Monday, October 28
+            f"Monday,{tomorrow_date.strftime('%B %d')}",   # Monday,October 28
+            "Monday",  # Just "Monday"
+            tomorrow_date.strftime("%A"),         # full day name
+        ])
+    
+    print(f"[DEBUG] Date patterns: {date_patterns}")
+    
+    # extract search terms
+    search_info = openai_json_response([{
+        "role": "system",
+        "content": """Extract ONLY the specific items, topics, or subjects being asked about. Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
+        Return a JSON with:
+        - 'terms': array of ONLY the specific items/topics being searched for. Use ["*"] for general queries about events/activities.
+        Examples:
+        "is there any free pizza available right now?" -> {"terms": ["free pizza", "pizza", "freefood"]}
+        "what events are there tomorrow?" -> {"terms": ["*"]}
+        "what's happening today?" -> {"terms": ["*"]}
+        "are there any events right now?" -> {"terms": ["*"]}
+        "what events are happening?" -> {"terms": ["*"]}
+        "any events this week?" -> {"terms": ["*"]}
+        "are there any israel/palestine related events right now? or soon?" -> {"terms": ["israel", "palestine"]}
+        "what events are there about israel or palestine?" -> {"terms": ["israel", "palestine"]}
+        "was there free fruit yesterday?" -> {"terms": ["fruit", "free fruit", "freefood"]}
+        "when is the next narcan training session today?" -> {"terms": ["narcan", "narcan training"]}
+        "any fruit related events happening now?" -> {"terms": ["fruit"]}
+        "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives"]}
+        "is there anything about israel going on right now?" -> {"terms": ["israel"]}
+        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["free food", "kanji lobby", "freefood"]}
+        "are there any events about climate change tomorrow?" -> {"terms": ["climate change"]}
+        "what's happening with SJP this week?" -> {"terms": ["sjp"]}
+        "any fruit bowls available today?" -> {"terms": ["fruit bowl", "fruit", "freefood"]}
+        "when is the next a cappella performance?" -> {"terms": ["a cappella"]}
+        "are there any dance shows this weekend?" -> {"terms": ["dance"]}
+        "is there volleyball practice tonight?" -> {"terms": ["volleyball"]}
+        "any meditation sessions happening soon?" -> {"terms": ["meditation"]}
+        "where can I find free coffee right now?" -> {"terms": ["free coffee", "coffee", "freefood"]}
+        "is the chess club meeting today?" -> {"terms": ["chess club", "chess"]}
+        "any robotics workshops this week?" -> {"terms": ["robotics"]}
+        "when's the next movie screening?" -> {"terms": ["movie screening", "movie"]}
+        "are there any study groups for organic chemistry?" -> {"terms": ["organic chemistry"]}
+        "is anyone giving away free textbooks?" -> {"terms": ["free textbooks", "textbooks"]}
+        "what time is the math help session?" -> {"terms": ["math help"]}
+        "are there any filipino events on campus?" -> {"terms": ["filipino"]}
+        "are there any events about palestine happening today?" -> {"terms": ["palestine"]}
+        "what fruit events were there yesterday?" -> {"terms": ["fruit"]}"""
+    }, {
+        "role": "user",
+        "content": query_text
+    }])
+    
+    search_terms = search_info["terms"]
+    print(f"[DEBUG] Search terms: {search_terms}")
+    
+    # build search conditions for date patterns
+    search_conditions = []
+    for pattern in date_patterns:
+        # ensure pattern is escaped and valid
+        flexible_pattern = re.escape(pattern).replace("\\ ", ".*")  # escaping pattern before replacing space
+        pattern_conditions = {
+            "$or": [
+                {"subject": {"$regex": flexible_pattern, "$options": "i"}},
+                {"text": {"$regex": flexible_pattern, "$options": "i"}}
+            ]
+        }
+        search_conditions.append(pattern_conditions)
+
+    # build term conditions similarly with escape and validation
+    for term in search_terms:
+        term_pattern = re.escape(term).replace("\\ ", ".*")  # escaping term before replacing space
+        term_conditions = {
+            "$or": [
+                {"subject": {"$regex": term_pattern, "$options": "i"}},
+                {"text": {"$regex": term_pattern, "$options": "i"}}
+            ]
+        }
+        search_conditions.append(term_conditions)
+    
+    # build base query with both date patterns and terms
+    base_query = {
+        "$and": [
+            {"source": "email"},
+            {"$or": search_conditions} if search_conditions else {}
+        ]
+    }
+    
+    # get matching documents
+    exact_matches = list(collection.find(base_query))
+    print(f"[DEBUG] Found {len(exact_matches)} matching documents")
+    
+    # fallback to regex on text if no results are found (for partial matching)
+    if not exact_matches:
+        fallback_conditions = [{"text": {"$regex": term, "$options": "i"}} for term in search_terms]
+        base_query["$and"].append({"$or": fallback_conditions})
+        exact_matches = list(collection.find(base_query))
+        print(f"[DEBUG] Fallback search found {len(exact_matches)} documents")
+    
+    # process and score results
+    processed_results = []
+    for doc in exact_matches:
+        score = 0
+        for pattern in date_patterns:
+            if re.search(re.escape(pattern), doc.get("subject", ""), re.IGNORECASE):
+                score += 10
+            if re.search(re.escape(pattern), doc.get("text", ""), re.IGNORECASE):
+                score += 5
+        for term in search_terms:
+            if re.search(re.escape(term), doc.get("subject", ""), re.IGNORECASE):
+                score += 8
+            if re.search(re.escape(term), doc.get("text", ""), re.IGNORECASE):
+                score += 4
+        
+        if score > 0:
+            age_hours = (current_time - doc.get("time", 0)) / 3600
+            processed_doc = {
+                "_id": doc["_id"],
+                "text": doc["text"],
+                "subject": doc.get("subject", ""),
+                "links": doc.get("links", []),
+                "metadata": {
+                    "time": doc.get("time", 0),
+                    "source": doc.get("source", "email")
+                },
+                "score": score,
+                "time_context": f"[{int(age_hours)} hours ago]"
+            }
+            processed_results.append(processed_doc)
+    
+    # sort by score, then by recency
+    processed_results.sort(key=lambda x: (x["score"], -x["metadata"]["time"]), reverse=True)
+    
+    # filter based on time context from original query
+    is_current = any(word in query_text.lower() for word in [
+        "now", "current", "today", "happening", "right now"
+    ])
+    include_past = any(word in query_text.lower() for word in [
+        "yesterday", "past", "previous", "before", "earlier", "last"
+    ])
+    
+    # apply additional filters based on time context
+    if is_current:
+        processed_results = [
+            doc for doc in processed_results 
+            if (current_time - doc["metadata"]["time"]) < 12 * 3600  # last 12 hours
+        ]
+    elif include_past:
+        processed_results = [
+            doc for doc in processed_results 
+            if (current_time - doc["metadata"]["time"]) < 14 * 24 * 3600  # last 14 days
+        ]
+    else:
+        processed_results = [
+            doc for doc in processed_results 
+            if (current_time - doc["metadata"]["time"]) < 7 * 24 * 3600  # last 7 days
+        ]
+    
+    return processed_results[:10]
 
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text, "email")
+    return hybrid_search(collection, query_text, source="email")
 
 def retrieve_eating_clubs(query_text):
     collection = db_client["crawl"]
-    return hybrid_search(collection, query_text, "eatingclub", expiry=True)
+    return hybrid_search(collection, query_text, source="eatingclub", expiry=True)
 
 def retrieve_princeton_courses(query_text):
     response = openai_json_response([
@@ -92,159 +257,141 @@ def retrieve_any(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
-
-def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=5):
-    query_vector = get_embedding(query)
-
-    vector_pipeline = [
-        {
-            "$vectorSearch":
-                {
-                    "queryVector": query_vector,
-                    "path": "embedding",
-                    "numCandidates": 50,
-                    "limit": 5,
-                    "index": "vector_index"
-                },
-        },
-        {
-            "$project": 
-                {
-                    "_id": 1,
-                    "text": 1,
-                    "links": 1,
-                    "time": 1,
-                    "score":{"$meta":"vectorSearchScore"}
-                }
-        }
-    ]
-
+def hybrid_search(collection, query, source=None, time_filter=None, max_results=5, sort=None, exact_match=False):
     current_time = int(time.time())
+    embedding = get_embedding(query)
 
-    if source and expiry:
-        vector_pipeline[0]["$vectorSearch"]["filter"] = {
-            "$and": [
-                {
-                    "source": {
-                        "$eq": source
-                    }
-                },
-                {
-                    "expiry": {
-                        "$gt": current_time
-                    }
-                }
-            ]
-        }
-    elif source:
-        vector_pipeline[0]["$vectorSearch"]["filter"] = {
-            "source": {
-                "$eq": source
-            }
-        }
-
-    vector_results = collection.aggregate(vector_pipeline)
-    x = list(vector_results)
-    
-    keyword_pipeline = [
+    # text search pipeline w/ exact match option
+    text_pipeline = [
         {
             "$search": {
-                "index": "full-text-search",
-                "text": {
-                    "query": query,
-                    "path": "text"
+                "index": "default",
+                "compound": {
+                    "should": [
+                        {
+                            "text": {
+                                "query": query,
+                                "path": ["text", "metadata.subject"],
+                                "fuzzy": {} if not exact_match else None
+                            }
+                        },
+                        {
+                            "phrase": {
+                                "query": query,
+                                "path": ["text", "metadata.subject"],
+                                "score": { "boost": { "value": 2 } }
+                            }
+                        }
+                    ]
                 }
             }
         },
-        { "$addFields" : { "score": { "$meta": "searchScore" } } },
-        { "$limit": 5 }
-    ]
-
-    if source and expiry: 
-        keyword_pipeline.insert(1, {
-            "$match": {
-                    "source": source,
-                    "expiry": { "$gt": current_time }
-                }
-            })
-    elif source:
-        keyword_pipeline.insert(1, {
-            "$match": {
-                "source": source
+        {
+            "$addFields": {
+                "score": {"$meta": "searchScore"},
+                "age": {"$subtract": [current_time, "$metadata.time"]}
             }
-        })
-
-    keyword_results = collection.aggregate(keyword_pipeline)
-    y = list(keyword_results)
-    
-    doc_lists = [x,y]
-
-    for i in range(len(doc_lists)):
-        doc_lists[i] = [
-            {"_id":str(doc["_id"]), "text":doc["text"], 
-             "links":doc["links"], "time":doc["time"], 
-             "score": doc["score"]}
-            for doc in doc_lists[i]
-        ]
-    
-    fused_documents = weighted_reciprocal_rank(doc_lists)
-
-    return fused_documents[:max_results]
-
-
-def weighted_reciprocal_rank(doc_lists):
-    """
-    This is a modified version of the fuction in the langchain repo
-    https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/retrievers/ensemble.py
-    
-    Perform weighted Reciprocal Rank Fusion on multiple rank lists.
-    You can find more details about RRF here:
-    https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
-
-    Args:
-        doc_lists: A list of rank lists, where each rank list contains unique items.
-
-    Returns:
-        list: The final aggregated list of items sorted by their weighted RRF
-                scores in descending order.
-    """
-    c=60 #c comes from the paper
-    weights=[1]*len(doc_lists) #you can apply weights if you like, here they are all the same, ie 1
-    
-    if len(doc_lists) != len(weights):
-        raise ValueError(
-            "Number of rank lists must be equal to the number of weights."
-        )
-
-    # Create a union of all unique documents in the input doc_lists
-    all_documents = set()
-    for doc_list in doc_lists:
-        for doc in doc_list:
-            all_documents.add(doc["text"])
-
-    # Initialize the RRF score dictionary for each document
-    rrf_score_dic = {doc: 0.0 for doc in all_documents}
-
-    # Calculate RRF scores for each document
-    for doc_list, weight in zip(doc_lists, weights):
-        for rank, doc in enumerate(doc_list, start=1):
-            rrf_score = weight * (1 / (rank + c))
-            rrf_score_dic[doc["text"]] += rrf_score
-
-    # Sort documents by their RRF scores in descending order
-    sorted_documents = sorted(
-        rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
-    )
-
-    # Map the sorted page_content back to the original document objects
-    page_content_to_doc_map = {
-        doc["text"]: doc for doc_list in doc_lists for doc in doc_list
-    }
-    sorted_docs = [
-        page_content_to_doc_map[page_content] for page_content in sorted_documents
+        }
     ]
 
-    return sorted_docs
+    # vector search pipeline
+    vector_pipeline = [
+        {
+            "$search": {
+                "index": "default",
+                "knnBeta": {
+                    "vector": embedding,
+                    "path": "embedding",
+                    "k": max_results * 2
+                }
+            }
+        },
+        {
+            "$addFields": {
+                "score": {"$meta": "searchScore"},
+                "age": {"$subtract": [current_time, "$metadata.time"]}
+            }
+        }
+    ]
+
+    # apply filters to both pipelines
+    match_filter = {}
+    if source:
+        match_filter["metadata.source"] = source
+    if time_filter:
+        match_filter.update(time_filter)
+    
+    if match_filter:
+        vector_pipeline.insert(1, {"$match": match_filter})
+        text_pipeline.insert(1, {"$match": match_filter})
+
+    # project fields for both pipelines
+    projection = {
+        "$project": {
+            "_id": 1,
+            "text": 1,
+            "links": 1,
+            "metadata": 1,
+            "score": 1,
+            "age": 1
+        }
+    }
+    vector_pipeline.append(projection)
+    text_pipeline.append(projection)
+
+    # add time decay to scores
+    time_decay = {
+        "$addFields": {
+            "score": {
+                "$multiply": [
+                    "$score",
+                    {"$exp": {"$multiply": [-0.0000001, "$age"]}}
+                ]
+            }
+        }
+    }
+    vector_pipeline.append(time_decay)
+    text_pipeline.append(time_decay)
+
+    # execute both pipelines
+    vector_results = list(collection.aggregate(vector_pipeline))
+    text_results = list(collection.aggregate(text_pipeline))
+
+    # combine results and remove duplicates
+    seen_ids = set()
+    all_results = []
+    
+    # process and deduplicate results; prioritizing text matches
+    for doc in text_results + vector_results:  # text results come first
+        doc_id = str(doc["_id"])
+        if doc_id not in seen_ids:
+            seen_ids.add(doc_id)
+            processed_doc = {
+                "_id": doc_id,
+                "text": doc["text"],
+                "links": doc.get("links", []),
+                "metadata": doc.get("metadata", {}),
+                "score": doc.get("score", 0),
+                "age": doc.get("age", 0)
+            }
+
+            # add time context
+            age_days = doc["age"] / (24 * 3600)
+            if age_days > 30:
+                processed_doc["time_context"] = f"[WARNING] This information is from {int(age_days)} days ago and may be outdated."
+            elif age_days > 7:
+                processed_doc["time_context"] = f"[NOTE] This information is from {int(age_days)} days ago."
+            elif age_days > 1:
+                processed_doc["time_context"] = f"[RECENT] This information is from {int(age_days)} days ago."
+            else:
+                processed_doc["time_context"] = "[CURRENT] This information is from today."
+
+            all_results.append(processed_doc)
+
+    # sort by score
+    all_results.sort(key=lambda x: x["score"], reverse=True)
+    
+    return all_results[:max_results]
 
 def retrieve_nearby_places(query_text):
     api_key = os.getenv('GOOGLE_MAPS_API_KEY')
@@ -464,4 +611,3 @@ def clean_query(query):
 
 if __name__ == "__main__":
     print(retrieve_princeton_courses("baby"))
-
