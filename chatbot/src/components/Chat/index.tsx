@@ -292,6 +292,7 @@ export const Chat = ({ ...props }: ChatProps) => {
           </Text>
         </Stack>
       </Stack>
+      <div className="extrapad"></div>
     </Stack>
   );
 };
