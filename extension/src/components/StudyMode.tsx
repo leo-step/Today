@@ -13,6 +13,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [showSpotify, setShowSpotify] = useState(true);
 
   const popupRef = useRef<HTMLDivElement>(null);
+  const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleToggle = () => {
     const newMode = !isStudyMode;
@@ -21,8 +22,10 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   };
 
   const toggleSettingsPopup = () => {
+    // Close the popup if it’s already open, otherwise open it
     setShowSettings((prev) => !prev);
   };
+
   const toggleSpotify = () => {
     setShowSpotify((prev) => !prev); // Toggle Spotify visibility
   };
@@ -36,7 +39,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+      if (
+        showSettings &&
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node) &&
+        settingsButtonRef.current &&
+        !settingsButtonRef.current.contains(event.target as Node)
+      ) {
         setShowSettings(false);
       }
     };
@@ -64,7 +73,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
               <FontAwesomeIcon icon={faMusic} size="2x" />
             </button>
             {/* Settings Icon */}
-            <button onClick={toggleSettingsPopup} className="study-mode-button">
+            <button ref={settingsButtonRef} onClick={toggleSettingsPopup} className="study-mode-button">
               <FontAwesomeIcon icon={faGear} size="2x" />
             </button>
 
