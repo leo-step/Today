@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookOpen, faHouse, faGear , faMusic} from "@fortawesome/free-solid-svg-icons";
+import { faBookOpen, faHouse, faGear , faMusic , faExpand} from "@fortawesome/free-solid-svg-icons";
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -11,9 +11,19 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [showSettings, setShowSettings] = useState(false);
   const [overlayColor, setOverlayColor] = useState("#FFDAB9"); // Default pastel orange
   const [showSpotify, setShowSpotify] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+    setIsFullScreen(!isFullScreen);
+  };
 
   const handleToggle = () => {
     const newMode = !isStudyMode;
@@ -68,6 +78,10 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       <div style={{ position: "relative", zIndex: 1 }}>
         {isStudyMode && (
           <>
+            {/* Full screen button */}
+            <button onClick={toggleFullScreen} className="study-mode-button">
+                <FontAwesomeIcon icon={faExpand} size="2x" />
+            </button>
             {/* Toggle Button for Spotify Widget */}
             <button onClick={toggleSpotify} className="study-mode-button">
               <FontAwesomeIcon icon={faMusic} size="2x" />
