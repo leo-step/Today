@@ -140,7 +140,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
                   />
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#b2ac88" }} // Pastel green
+                    style={{ backgroundColor: "#C1CFA1" }} // Pastel green
                     onClick={(event) => handleColorChange("#C1CFA1", event)}
                   />
                   <button
