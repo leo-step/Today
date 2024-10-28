@@ -44,26 +44,25 @@ def retrieve_emails(query_text):
         "was there free fruit yesterday?" -> {"terms": ["fruit", "freefood", "free fruit"]}
         "when is the next narcan training session today?" -> {"terms": ["narcan", "training", "narcan training"]}
         "any fruit related events happening now?" -> {"terms": ["fruit"]}
-        "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives"]}
+        "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives", "freefood"]}
         "is there anything about israel going on right now?" -> {"terms": ["israel"]}
         "was there any free food yesterday in the kanji lobby?" -> {"terms": ["food", "kanji lobby", "kanji"]}
         "are there any events about climate change tomorrow?" -> {"terms": ["climate", "climate change"]}
         "what's happening with SJP this week?" -> {"terms": ["sjp"]}
         "any fruit bowls available today?" -> {"terms": ["fruit", "fruit bowl", "freefood"]}
         "when is the next a cappella performance?" -> {"terms": ["cappella", "performance"]}
-        "are there any dance shows this weekend?" -> {"terms": ["dance"]}
-        "is there volleyball practice tonight?" -> {"terms": ["volleyball"]}
+        "are there any dance shows this weekend?" -> {"terms": ["dance", "show"]}
+        "is there volleyball practice tonight?" -> {"terms": ["volleyball", "practice"]}
         "any meditation sessions happening soon?" -> {"terms": ["meditation"]}
         "where can I find free coffee right now?" -> {"terms": ["coffee", "freefood", "free coffee"]}
         "is the chess club meeting today?" -> {"terms": ["chess", "chess club"]}
-        "any robotics workshops this week?" -> {"terms": ["robotics"]}
+        "any robotics workshops this week?" -> {"terms": ["robotics", "workshop"]}
         "when's the next movie screening?" -> {"terms": ["movie", "screening"]}
         "are there any study groups for organic chemistry?" -> {"terms": ["chemistry", "organic"]}
         "is anyone giving away free textbooks?" -> {"terms": ["textbook", "free textbook"]}
         "what time is the math help session?" -> {"terms": ["math", "math help", "session"]}
         "what are the latest filipino events?" -> {"terms": ["filipino", "phillipines"]}
         "are there any events about palestine happening today?" -> {"terms": ["palestine"]}
-        "what fruit events were there yesterday?" -> {"terms": ["fruit"]}
         Whenever a user has a query that is related to free food, you should always return "freefood" without a space between the words.    
         """
     }, {
