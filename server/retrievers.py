@@ -46,7 +46,7 @@ def retrieve_emails(query_text):
         "any fruit related events happening now?" -> {"terms": ["fruit"]}
         "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives", "freefood"]}
         "is there anything about israel going on right now?" -> {"terms": ["israel"]}
-        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["food", "kanji lobby", "kanji"]}
+        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["food", "kanji lobby", "kanji", "freefood"]}
         "are there any events about climate change tomorrow?" -> {"terms": ["climate", "climate change"]}
         "what's happening with SJP this week?" -> {"terms": ["sjp"]}
         "any fruit bowls available today?" -> {"terms": ["fruit", "fruit bowl", "freefood"]}
@@ -74,7 +74,7 @@ def retrieve_emails(query_text):
     print(f"[DEBUG] Search terms: {search_terms}")
 
     
-    # if no search terms, return all emails from last month
+    # if no search terms, return all emails from the last week
     if not search_terms:
         base_query = {
             "$and": [
@@ -192,7 +192,7 @@ def retrieve_emails(query_text):
     
     # now filter based on time context from original query
     is_current = any(word in query_text.lower() for word in [
-        "now", "current", "today", "happening", "soon", "right now", "latest", "free food", "freefood", "recent"
+        "now", "current", "today", "happening", "soon", "right now", "free food", "freefood", "recently"
     ])
     include_past = any(word in query_text.lower() for word in [
         "yesterday", "past", "previous", "before", "earlier", "last", ""
