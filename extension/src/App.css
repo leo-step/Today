@@ -486,6 +486,10 @@ body {
   border-radius: 50%;
   cursor: pointer;
 }
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
 
 
 .settings-bar {
