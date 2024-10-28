@@ -552,7 +552,6 @@ body {
   z-index: 10;
   width: 300px;
   height: 152px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .moving-duck {
@@ -562,4 +561,12 @@ body {
   width: 50px; /* Adjust size as needed */
   animation: moveBackAndForth 5s linear infinite;
   z-index: 9999; /* Ensures the duck is on top of all other elements */
+}
+
+.calc-widget{
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+
 }

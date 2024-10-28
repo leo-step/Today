@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookOpen, faHouse, faGear , faMusic , faExpand} from "@fortawesome/free-solid-svg-icons";
+import { faBookOpen, faHouse, faGear , faMusic , faExpand, faCalculator} from "@fortawesome/free-solid-svg-icons";
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -14,6 +14,8 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [duckPosition, setDuckPosition] = useState(0);
   const [movingRight, setMovingRight] = useState(true);
+  const [showCalculator, setShowCalculator] = useState(false);
+
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
@@ -26,6 +28,10 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     }
     setIsFullScreen(!isFullScreen);
   };
+
+  const toggleCalculator = () => {
+    setShowCalculator((prev) => !prev);
+  }
 
   const handleToggle = () => {
     const newMode = !isStudyMode;
@@ -103,6 +109,9 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
         {isStudyMode && (
           <>
             {/* Full screen button */}
+            <button onClick={toggleCalculator} className="study-mode-button">
+                <FontAwesomeIcon icon={faCalculator} size="2x" />
+            </button>
             <button onClick={toggleFullScreen} className="study-mode-button">
                 <FontAwesomeIcon icon={faExpand} size="2x" />
             </button>
@@ -126,8 +135,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
                   />
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#FFB6C1" }} // Pastel Pink
-                    onClick={(event) => handleColorChange("#FFB6C1", event)}
+                    style={{ backgroundColor: "#ffd1dc" }} // Pastel Pink
+                    onClick={(event) => handleColorChange("#ffd1dc", event)}
+                  />
+                  <button
+                    className="color-btn"
+                    style={{ backgroundColor: "#b2ac88" }} // Pastel green
+                    onClick={(event) => handleColorChange("#C1CFA1", event)}
                   />
                   <button
                     className="color-btn"
@@ -166,6 +180,11 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     </div>
       )}
       </div>
+      {isStudyMode && (
+      <div className="calc-widget" style={{ display: showCalculator ? "block" : "none" }}>
+      <iframe src="https://www.desmos.com/scientific" name="myiFrame" scrolling="no"height="400px" width="600px"></iframe>
+      </div>
+      )}
       
       {isStudyMode && (
          <div
