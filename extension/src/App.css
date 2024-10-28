@@ -563,10 +563,37 @@ body {
   z-index: 9999; /* Ensures the duck is on top of all other elements */
 }
 
-.calc-widget{
+/* Container to keep the widget centered even with shorter heights */
+.calc-container {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
+/* Calculator widget */
+.calc-widget {
+  display: none;
+  width: 400px;
+  height: 323px;
+  max-height: 90vh; /* Ensure it doesn't exceed viewport height */
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calc-widget.show {
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .calc-widget {
+    width: 90%;
+    height: 250px;
+  }
 }

@@ -184,8 +184,16 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
       </div>
       {isStudyMode && (
-      <div className="calc-widget" style={{ display: showCalculator ? "block" : "none" }}>
-      <iframe src="https://www.desmos.com/scientific" name="myiFrame" scrolling="no"height="400px" width="600px"></iframe>
+      <div className="calc-container">
+        <div className={`calc-widget ${showCalculator ? "show" : ""}`}>
+          <iframe
+            src="https://www.desmos.com/scientific"
+            name="calcIFrame"
+            width="100%"
+            height="100%"
+            style={{ border: "none" }}
+          ></iframe>
+        </div>
       </div>
       )}
       
