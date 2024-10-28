@@ -29,12 +29,15 @@ def retrieve_emails(query_text):
     # extract important search terms
     search_info = openai_json_response([{
         "role": "system",
-        "content": """Extract ONLY the specific items, topics, or subjects being asked about. Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
+        "content": """Extract ONLY the specific items, topics, or subjects being asked about. 
+        Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
+        Never include terms like 'princeton', 'campus', 'today', 'tomorrow', 'yesterday', 'last', 'next', 'this', 'that', 'the', etc,
+        as it can be assumed that all the emails retrieved will be related to Princeton University, and therefore those terms are irrelevant.
+        **NEVER** make up any information or events, as it would be misleading students.
         Return a JSON with:
         - 'terms': array of ONLY the specific items/topics being searched for
-        
+
         Examples:
-        "What events are this week?" -> {"terms": ["*"]}
         "is there any free pizza available right now?" -> {"terms": ["pizza", "freefood", "free pizza"]}
         "are there any israel/palestine related events right now? or soon?" -> {"terms": ["israel", "palestine"]}
         "what events are there about israel or palestine?" -> {"terms": ["israel", "palestine"]}
@@ -68,6 +71,41 @@ def retrieve_emails(query_text):
     
     search_terms = search_info["terms"]
     print(f"[DEBUG] Search terms: {search_terms}")
+
+    
+    # if no search terms, return all emails from last 2w
+    if not search_terms:
+        base_query = {
+            "$and": [
+                {"source": "email"},
+                {"time": {"$gt": current_time - (14 * 24 * 3600)}}  # change as needed
+            ]
+        }
+        
+        results = list(collection.find(base_query))
+        processed_results = []
+        
+        for doc in results:
+            age_hours = (current_time - doc.get("time", 0)) / 3600
+            
+            processed_doc = {
+                "_id": doc["_id"],
+                "text": doc["text"],
+                "subject": doc.get("subject", ""),
+                "links": doc.get("links", []),
+                "metadata": {
+                    "time": doc.get("time", 0),
+                    "source": doc.get("source", "email")
+                },
+                "score": 1,  # default score
+                "time_context": f"[{int(age_hours)} hours ago]"
+            }
+            processed_results.append(processed_doc)
+        
+        # sort by recency
+        processed_results.sort(key=lambda x: -x["metadata"]["time"])
+        return processed_results[:10]
+    
     
     # build search conditions for each term
     search_conditions = []
