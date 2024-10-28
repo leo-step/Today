@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookOpen, faHouse, faGear } from "@fortawesome/free-solid-svg-icons";
+import { faBookOpen, faHouse, faGear , faMusic} from "@fortawesome/free-solid-svg-icons";
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -10,6 +10,8 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [overlayColor, setOverlayColor] = useState("#FFDAB9"); // Default pastel orange
+  const [showSpotify, setShowSpotify] = useState(true);
+
   const popupRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {
@@ -21,12 +23,16 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const toggleSettingsPopup = () => {
     setShowSettings((prev) => !prev);
   };
+  const toggleSpotify = () => {
+    setShowSpotify((prev) => !prev); // Toggle Spotify visibility
+  };
 
   const handleColorChange = (color: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setOverlayColor(color);
-    setShowSettings(false);
+    // setShowSettings(false);
   };
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -53,6 +59,10 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       <div style={{ position: "relative", zIndex: 1 }}>
         {isStudyMode && (
           <>
+            {/* Toggle Button for Spotify Widget */}
+            <button onClick={toggleSpotify} className="study-mode-button">
+              <FontAwesomeIcon icon={faMusic} size="2x" />
+            </button>
             {/* Settings Icon */}
             <button onClick={toggleSettingsPopup} className="study-mode-button">
               <FontAwesomeIcon icon={faGear} size="2x" />
@@ -92,7 +102,24 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
         <button onClick={handleToggle} className="study-mode-button">
           <FontAwesomeIcon icon={isStudyMode ? faHouse : faBookOpen} size="2x" />
         </button>
+        {/* Spotify Lofi Music Widget */}
+      {isStudyMode && (
+      <div className="spotify-widget" style={{ display: showSpotify ? "block" : "none" }}>
+      <iframe
+        style={{ borderRadius: "12px" }}
+        src="https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0"
+        width="100%"
+        height="152"
+        frameBorder="0"
+        allowFullScreen={true}
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+        title="Spotify Lofi Playlist"
+      ></iframe>
+    </div>
+      )}
       </div>
+      
     </>
   );
 }

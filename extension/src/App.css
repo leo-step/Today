@@ -473,6 +473,7 @@ body {
   margin-bottom: 10px;
 }
 
+
 .color-options {
   display: flex;
   gap: 8px;
@@ -486,13 +487,6 @@ body {
   cursor: pointer;
 }
 
-
-.study-mode-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-right: 10px;
-}
 
 .settings-bar {
   position: fixed;
@@ -544,5 +538,16 @@ body {
 }
 
 .overlay-visible {
-  opacity: 1; /* Visible when active */
+  opacity: 1; 
 }
+
+.spotify-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+  width: 300px;
+  height: 152px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
