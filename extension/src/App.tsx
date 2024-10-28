@@ -24,62 +24,36 @@ function App() {
   const mixpanel = useMixpanel()
 
   const [showWidgets, setShowWidgets] = useState(true); // Show widgets initially
-  // const [timer] = useState(25); // Timer duration in minutes
-  // const [key, setKey] = useState(0); // Key to force re-render timer
-  // const [animate, setAnimate] = useState(false); // Control animation
 
   useEffect(() => {
     const state = storage.getLocalStorageObject()
     mixpanel.trackEvent(EventTypes.PAGE_LOAD, state)
   }, [])
 
-  const toggleWidgets = (show: boolean) => {
-    setShowWidgets(show);
-
-    // if (!show) {
-    //   // When entering study mode, reset the timer and start animation
-    //   setAnimate(true);
-    //   setKey(prevKey => prevKey + 1); // Reset timer
-    // } else {
-    //   // When exiting study mode, stop the timer
-    //   setAnimate(false);
-    // }
+  const toggleWidgets = () => {
+    setShowWidgets(prevShowWidgets => !prevShowWidgets);
   };
-
-  // const stopAnimate = () => {
-  //   setAnimate(false);
-  //   setShowWidgets(true); // Re-enable the widgets when timer completes
-  // };
 
   return (
     <Container fluid className="m-0">
       <div className="App">
-        <Row className="header">
+        {/* Top-right StudyMode Button */}
+        <div className="study-mode-top-right">
           <StudyMode toggleWidgets={toggleWidgets} />
-        </Row>
-        
+        </div>
+
         {/* Conditionally render widgets based on the 'showWidgets' state */}
         {showWidgets && (
-        <Row className="name-row">
-          <Col>
-            <h1 className="centered greeting">
-              Good {time.timeOfDay} <Name />
-            </h1>
-            <h1 className="centered date">{time.dateString}</h1>
-          </Col>
-        </Row>
+          <Row className="name-row">
+            <Col>
+              <h1 className="centered greeting">
+                Good {time.timeOfDay} <Name />
+              </h1>
+              <h1 className="centered date">{time.dateString}</h1>
+            </Col>
+          </Row>
         )}
-        {/* Conditionally render widgets based on the 'showWidgets' state */}
-        {!showWidgets && (
-        <Row className="name-row">
-          <Col>
-            <h1 className="centered greeting">
-              Today
-            </h1>
-            <h1 className="centered date">Pomodoro | Long | Short </h1>
-          </Col>
-        </Row>
-        )}
+        
         {showWidgets && (
           <Row className="gx-5">
             <Col>
@@ -97,14 +71,6 @@ function App() {
               <Carousel />
             </Col>
           </Row>
-        )}
-
-
-
-        {/* Render CountdownCircleTimer when widgets are hidden */}
-        {!showWidgets && (
-          
-          <h1 className="centered date">Timer goes here</h1>
         )}
       </div>
     </Container>

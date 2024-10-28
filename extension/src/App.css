@@ -430,3 +430,119 @@ body {
   background-color: #212529;
   /* width: 500px;
   margin-left: 100px; */
+
+
+.study-mode-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10; /* Ensures it stays on top of other content */
+}
+
+.study-mode-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ef853b;
+  margin-right: 10px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.study-mode-button:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+.settings-popup {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: white;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.settings-popup h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 25px;
+  height: 25px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+
+.study-mode-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.settings-bar {
+  position: fixed;
+  top: 0;
+  right: -300px; /* Start off-screen */
+  width: 250px;
+  height: 100%;
+  background: #ffffff;
+  padding: 15px;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  transition: right 0.3s ease;
+  z-index: 1000;
+}
+
+.settings-bar.open {
+  right: 0; /* Slide in when open */
+}
+
+.settings-bar h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 25px;
+  height: 25px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Overlay background with fade effect */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  opacity: 0; /* Hidden by default */
+  transition: opacity 0.5s ease; /* Smooth transition */
+}
+
+.overlay-visible {
+  opacity: 1; /* Visible when active */
+}
