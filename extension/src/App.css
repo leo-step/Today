@@ -555,3 +555,11 @@ body {
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
 }
 
+.moving-duck {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 50px; /* Adjust size as needed */
+  animation: moveBackAndForth 5s linear infinite;
+  z-index: 9999; /* Ensures the duck is on top of all other elements */
+}

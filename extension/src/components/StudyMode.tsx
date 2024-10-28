@@ -12,6 +12,8 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [overlayColor, setOverlayColor] = useState("#FFDAB9"); // Default pastel orange
   const [showSpotify, setShowSpotify] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [duckPosition, setDuckPosition] = useState(0);
+  const [movingRight, setMovingRight] = useState(true);
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
@@ -43,10 +45,32 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const handleColorChange = (color: string, event: React.MouseEvent) => {
     event.stopPropagation();
     setOverlayColor(color);
-    // setShowSettings(false);
   };
 
 
+  useEffect(() => {
+    if (isStudyMode) {
+      const screenWidth = window.innerWidth;
+      const duckWidth = 50; // Set the width of the duck in pixels
+      const interval = setInterval(() => {
+        setDuckPosition((prev) => {
+          const movementSpeed = 0.6;  // HOW FAST THE DUCK GOES
+          let newPosition = movingRight ? prev + movementSpeed : prev - movementSpeed;
+  
+          if (newPosition >= screenWidth - duckWidth) {
+            setMovingRight(false);
+          } else if (newPosition <= 0) {
+            setMovingRight(true);
+          }
+
+          return newPosition;
+        });
+      }, 20);
+
+      return () => clearInterval(interval);
+    }
+  }, [isStudyMode, movingRight]);
+  
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -143,6 +167,20 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
       </div>
       
+      {isStudyMode && (
+         <div
+         className="moving-duck"
+         style={{
+           position: "fixed",
+           bottom: 0,
+           left: `${duckPosition}px`,
+           transform: movingRight ? "scaleX(1)" : "scaleX(-1)",
+           transition: "left 0.02s linear",
+         }}
+       >
+         <img src="https://cdn.discordapp.com/attachments/1278115008504533115/1300285590956282018/duck.gif?ex=672048d3&is=671ef753&hm=0c2045524d34f8017e68c9d9d27f119292720c81e407792269df43c4c775ca5f&" alt="Moving Duck" width="50" />
+       </div>
+      )}
     </>
   );
 }
