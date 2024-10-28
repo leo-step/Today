@@ -4,7 +4,7 @@ import SneakyLinksTable from "./components/SneakyLinks";
 import DHallTable from "./components/DiningHalls";
 import Name from "./components/Name";
 import StudyMode from "./components/StudyMode";
-import React, { useEffect, useState } from "react";
+import React, { useEffect , useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useTime } from "./context/TimeContext";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -13,9 +13,6 @@ import { EventTypes, useMixpanel } from "./context/MixpanelContext";
 import { useStorage } from "./context/StorageContext";
 import "react-sliding-pane/dist/react-sliding-pane.css";
 import "./App.css";
-
-// import { CountdownCircleTimer } from "react-countdown-circle-timer";
-
 
 
 function App() {
@@ -42,8 +39,8 @@ function App() {
           <StudyMode toggleWidgets={toggleWidgets} />
         </div>
 
-        {/* Conditionally render widgets based on the 'showWidgets' state */}
-        {showWidgets && (
+          {showWidgets && (
+        
           <Row className="name-row">
             <Col>
               <h1 className="centered greeting">
@@ -52,9 +49,10 @@ function App() {
               <h1 className="centered date">{time.dateString}</h1>
             </Col>
           </Row>
-        )}
         
-        {showWidgets && (
+        )}
+
+            {showWidgets && (
           <Row className="gx-5">
             <Col>
               <DHallTable />
@@ -71,7 +69,8 @@ function App() {
               <Carousel />
             </Col>
           </Row>
-        )}
+            )}
+      
       </div>
     </Container>
   );

@@ -37,6 +37,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     const newMode = !isStudyMode;
     setIsStudyMode(newMode);
     toggleWidgets(newMode);
+    setShowSettings(false); // Reset settings popup on toggle
   };
 
   const toggleSettingsPopup = () => {
@@ -49,7 +50,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   };
 
   const handleColorChange = (color: string, event: React.MouseEvent) => {
-    event.stopPropagation();
+    // event.stopPropagation();
     setOverlayColor(color);
   };
 
@@ -102,7 +103,9 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   return (
     <>
       {/* Overlay with smooth transition */}
-      <div className={`overlay ${isStudyMode ? "overlay-visible" : ""}`} style={{ backgroundColor: overlayColor }}></div>
+      {isStudyMode && (
+        <div className={`overlay ${isStudyMode ? "overlay-visible" : ""}`} style={{ backgroundColor: overlayColor }}></div>
+      )}
 
       {/* Main content with widgets */}
       <div style={{ position: "relative", zIndex: 1 }}>
