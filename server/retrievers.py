@@ -63,7 +63,9 @@ def retrieve_emails(query_text):
         "what time is the math help session?" -> {"terms": ["math", "math help", "session"]}
         "what are the latest filipino events?" -> {"terms": ["filipino", "phillipines"]}
         "are there any events about palestine happening today?" -> {"terms": ["palestine"]}
-        "what fruit events were there yesterday?" -> {"terms": ["fruit"]}"""
+        "what fruit events were there yesterday?" -> {"terms": ["fruit"]}
+        Whenever a user has a query that is related to free food, you should always return "freefood" without a space between the words.    
+        """
     }, {
         "role": "user",
         "content": query_text
@@ -73,12 +75,12 @@ def retrieve_emails(query_text):
     print(f"[DEBUG] Search terms: {search_terms}")
 
     
-    # if no search terms, return all emails from last 2w
+    # if no search terms, return all emails from last month
     if not search_terms:
         base_query = {
             "$and": [
                 {"source": "email"},
-                {"time": {"$gt": current_time - (14 * 24 * 3600)}}  # change as needed
+                {"time": {"$gt": current_time - (7 * 24 * 3600)}}  # change as needed
             ]
         }
         
@@ -191,32 +193,31 @@ def retrieve_emails(query_text):
     
     # now filter based on time context from original query
     is_current = any(word in query_text.lower() for word in [
-        "now", "current", "today", "happening", "right now"
+        "now", "current", "today", "happening", "soon", "right now", "latest", "free food", "freefood", "recent"
     ])
     include_past = any(word in query_text.lower() for word in [
-        "yesterday", "past", "previous", "before", "earlier", "last"
+        "yesterday", "past", "previous", "before", "earlier", "last", ""
     ])
     
     # the following filters are arbitrarily chose, but these work pretty well
     # in my testing; feel free to change as necessary
-
     if is_current:
-        # for current queries only show events from last 12hours
+        # for current queries only show events from last 12h
         processed_results = [
             doc for doc in processed_results 
             if (current_time - doc["metadata"]["time"]) < 12 * 3600
         ]
     elif include_past:
-        # for past queries show everything from last 14 days
+        # for past queries show everything from last 7 days
         processed_results = [
             doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 14 * 24 * 3600
+            if (current_time - doc["metadata"]["time"]) < 7 * 24 * 3600
         ]
     else:
-        # default to last week
+        # default to last 2w
         processed_results = [
             doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 24 * 3600 * 7
+            if (current_time - doc["metadata"]["time"]) < 24 * 3600 * 14
         ]
     
     return processed_results[:10]
@@ -281,7 +282,7 @@ def retrieve_any(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
-def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=5):
+def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
     query_vector = get_embedding(query)
 
     vector_pipeline = [
@@ -291,7 +292,7 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
                     "queryVector": query_vector,
                     "path": "embedding",
                     "numCandidates": 50,
-                    "limit": 5,
+                    "limit": 10,
                     "index": "vector_index"
                 },
         },
@@ -652,4 +653,3 @@ def clean_query(query):
 
 if __name__ == "__main__":
     print(retrieve_princeton_courses("baby"))
-
