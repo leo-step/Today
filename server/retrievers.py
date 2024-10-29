@@ -10,6 +10,42 @@ import datetime
 from dateutil import tz
 import json
 
+def setup_mongodb_indices():
+    collection = db_client["crawl"]
+    
+    # index for time and source
+    collection.create_index([
+        ("source", 1),
+        ("time", -1)
+    ], name="source_time_idx")
+    
+    # text index for subject and text fields
+    collection.create_index([
+        ("subject", "text"),
+        ("text", "text")
+    ], name="email_text_idx")
+    
+    # REMOVED THE BOTTOM INDICES TO SAVE SPACE
+    # collection.create_index([
+    #     ("expiry", 1)
+    # ], name="expiry_idx")
+    
+    # collection.create_index([
+    #     ("subject", 1),
+    #     ("text", 1)
+    # ], name="fuzzy_search_idx")
+    
+    # collection.create_index([
+    #     ("source", 1),
+    #     ("time", -1),
+    #     ("subject", 1),
+    #     ("text", 1)
+    # ], name="email_search_compound_idx")
+
+    print("MongoDB indices created successfully")
+    
+setup_mongodb_indices()
+
 def retrieve_widget_data():
     collection = db_client["widgets"]
     return collection.find_one({"_id": "data"})
@@ -105,7 +141,7 @@ def retrieve_emails(query_text):
         
         # sort by recency
         processed_results.sort(key=lambda x: -x["metadata"]["time"])
-        return processed_results[:10]
+        return processed_results[:25] # increasing limit / find balance between more accurate results and speed
     
     
     # build search conditions for each term
@@ -219,7 +255,7 @@ def retrieve_emails(query_text):
             if (current_time - doc["metadata"]["time"]) < 24 * 3600 * 14
         ]
     
-    return processed_results[:10]
+    return processed_results[:15]
 
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
