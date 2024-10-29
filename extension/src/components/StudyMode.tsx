@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookOpen, faHouse, faGear , faMusic , faExpand, faCalculator} from "@fortawesome/free-solid-svg-icons";
+import background1 from "../images/study/catandbook.jpeg"
+import background2 from "../images/study/catseat.jpeg"
+import background3 from "../images/study/flowerfield.jpeg"
+import background4 from "../images/study/forestfield.jpeg"
+import background5 from "../images/study/layinginsun.jpeg"
+
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -9,7 +15,7 @@ interface StudyModeProps {
 function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [overlayColor, setOverlayColor] = useState("#FFDAB9"); // Default pastel orange
+  const [overlayBG, setOverlayBG] = useState(background1); // Default pastel orange
   const [showSpotify, setShowSpotify] = useState(true);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [duckPosition, setDuckPosition] = useState(0);
@@ -19,6 +25,19 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  useEffect(() => {
+    if (isStudyMode) {
+      const img = new Image();
+      img.src = overlayBG;
+      img.onload = () => setIsImageLoaded(true);
+    } else {
+      setIsImageLoaded(false);
+    }
+  }, [isStudyMode, overlayBG]);
+
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -49,10 +68,9 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     setShowSpotify((prev) => !prev); // Toggle Spotify visibility
   };
 
-  const handleColorChange = (color: string, event: React.MouseEvent) => {
-    // event.stopPropagation();
-    setOverlayColor(color);
-  };
+  const handleBackgroundChange = (background: string) => {
+    setOverlayBG(background);
+  }
 
 
   useEffect(() => {
@@ -102,9 +120,24 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
 
   return (
     <>
-      {/* Overlay with smooth transition */}
       {isStudyMode && (
-        <div className={`overlay ${isStudyMode ? "overlay-visible" : ""}`} style={{ backgroundColor: overlayColor }}></div>
+        <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          backgroundImage: `url(${overlayBG})`,
+          backgroundColor: isImageLoaded ? "transparent" : "#f0f0f0", // Placeholder color
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          transition: "opacity 0.5s ease",
+          opacity: isImageLoaded ? 1 : 0,
+          zIndex: 0,
+          pointerEvents: "none",
+        }}
+      ></div>
       )}
 
       {/* Main content with widgets */}
@@ -134,27 +167,27 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
                   <button
                     className="color-btn"
                     style={{ backgroundColor: "#AEC6CF" }} // Pastel Blue
-                    onClick={(event) => handleColorChange("#AEC6CF", event)}
+                    onClick={(event) => handleBackgroundChange(background1)}
                   />
                   <button
                     className="color-btn"
                     style={{ backgroundColor: "#ffd1dc" }} // Pastel Pink
-                    onClick={(event) => handleColorChange("#ffd1dc", event)}
+                    onClick={(event) => handleBackgroundChange(background2)}
                   />
                   <button
                     className="color-btn"
                     style={{ backgroundColor: "#C1CFA1" }} // Pastel green
-                    onClick={(event) => handleColorChange("#C1CFA1", event)}
+                    onClick={(event) => handleBackgroundChange(background3)}
                   />
                   <button
                     className="color-btn"
                     style={{ backgroundColor: "#FFDAB9" }} // Pastel Orange
-                    onClick={(event) => handleColorChange("#FFDAB9", event)}
+                    onClick={(event) => handleBackgroundChange(background4)}
                   />
                   <button
                     className="color-btn"
                     style={{ backgroundColor: "#D3D3D3" }} // Soft Black
-                    onClick={(event) => handleColorChange("#D3D3D3", event)}
+                    onClick={(event) => handleBackgroundChange(background5)}
                   />
                 </div>
               </div>
