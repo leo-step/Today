@@ -86,11 +86,11 @@ def process_email_doc(doc, current_time, score=1):
 def get_time_filter(time_context, current_time):
     """Determine time filter based on GPT-determined time context"""
     if time_context == "current":
-        return lambda doc: (current_time - doc["metadata"]["time"]) < 12 * SECONDS_PER_HOUR
+        return lambda doc: (current_time - (doc.get("metadata", {}).get("time", 0))) < 12 * SECONDS_PER_HOUR
     elif time_context == "past":
-        return lambda doc: (current_time - doc["metadata"]["time"]) < 7 * HOURS_PER_DAY * SECONDS_PER_HOUR
+        return lambda doc: (current_time - (doc.get("metadata", {}).get("time", 0))) < 7 * HOURS_PER_DAY * SECONDS_PER_HOUR
     else:  # default
-        return lambda doc: (current_time - doc["metadata"]["time"]) < 14 * HOURS_PER_DAY * SECONDS_PER_HOUR
+        return lambda doc: (current_time - (doc.get("metadata", {}).get("time", 0))) < 14 * HOURS_PER_DAY * SECONDS_PER_HOUR
 
 def score_document(doc, search_terms):
     """Score a document based on search term matches"""
