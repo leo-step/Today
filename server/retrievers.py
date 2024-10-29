@@ -2,13 +2,21 @@ from utils import get_embedding, openai_json_response, delete_dict_key_recursive
 from clients import db_client
 import time
 import requests
-from prompts import get_courses_search_query, user_query
+from prompts import get_courses_search_query, user_query, extract_email_search_terms, email_search_query
 import os
 import random
 import re
 import datetime
 from dateutil import tz
 import json
+
+# time constants
+HOURS_PER_DAY = 24
+SECONDS_PER_HOUR = 3600
+
+# search scoring weights
+SUBJECT_MATCH_SCORE = 10
+BODY_MATCH_SCORE = 5
 
 def setup_mongodb_indices():
     collection = db_client["crawl"]
@@ -58,135 +66,98 @@ def retrieve_crawl(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "web")
 
+def process_email_doc(doc, current_time, score=1):
+    """Process a single email document into the standard format"""
+    age_hours = (current_time - doc.get("time", 0)) / SECONDS_PER_HOUR
+    
+    return {
+        "_id": doc["_id"],
+        "text": doc["text"],
+        "subject": doc.get("subject", ""),
+        "links": doc.get("links", []),
+        "metadata": {
+            "time": doc.get("time", 0),
+            "source": doc.get("source", "email")
+        },
+        "score": score,
+        "time_context": f"[{int(age_hours)} hours ago]"
+    }
+
+def get_time_filter(time_context, current_time):
+    """Determine time filter based on GPT-determined time context"""
+    if time_context == "current":
+        return lambda doc: (current_time - doc["metadata"]["time"]) < 12 * SECONDS_PER_HOUR
+    elif time_context == "past":
+        return lambda doc: (current_time - doc["metadata"]["time"]) < 7 * HOURS_PER_DAY * SECONDS_PER_HOUR
+    else:  # default
+        return lambda doc: (current_time - doc["metadata"]["time"]) < 14 * HOURS_PER_DAY * SECONDS_PER_HOUR
+
+def score_document(doc, search_terms):
+    """Score a document based on search term matches"""
+    score = 0
+    for term in search_terms:
+        if re.search(term, doc.get("subject", ""), re.IGNORECASE):
+            score += SUBJECT_MATCH_SCORE # higher score for subject match
+        if re.search(term, doc.get("text", ""), re.IGNORECASE):
+            score += BODY_MATCH_SCORE # higher score for body match
+    return score
+
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
     current_time = int(time.time())
     
-    # extract important search terms
-    search_info = openai_json_response([{
-        "role": "system",
-        "content": """Extract ONLY the specific items, topics, or subjects being asked about. 
-        Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
-        Never include terms like 'princeton', 'campus', 'today', 'tomorrow', 'yesterday', 'last', 'next', 'this', 'that', 'the', etc,
-        as it can be assumed that all the emails retrieved will be related to Princeton University, and therefore those terms are irrelevant.
-        **NEVER** make up any information or events, as it would be misleading students.
-        Return a JSON with:
-        - 'terms': array of ONLY the specific items/topics being searched for
-
-        Examples:
-        "is there any free pizza available right now?" -> {"terms": ["pizza", "freefood", "free pizza"]}
-        "are there any israel/palestine related events right now? or soon?" -> {"terms": ["israel", "palestine"]}
-        "what events are there about israel or palestine?" -> {"terms": ["israel", "palestine"]}
-        "was there free fruit yesterday?" -> {"terms": ["fruit", "freefood", "free fruit"]}
-        "when is the next narcan training session today?" -> {"terms": ["narcan", "training", "narcan training"]}
-        "any fruit related events happening now?" -> {"terms": ["fruit"]}
-        "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives", "freefood"]}
-        "is there anything about israel going on right now?" -> {"terms": ["israel"]}
-        "was there any free food yesterday in the kanji lobby?" -> {"terms": ["food", "kanji lobby", "kanji", "freefood"]}
-        "are there any events about climate change tomorrow?" -> {"terms": ["climate", "climate change"]}
-        "what's happening with SJP this week?" -> {"terms": ["sjp"]}
-        "any fruit bowls available today?" -> {"terms": ["fruit", "fruit bowl", "freefood"]}
-        "when is the next a cappella performance?" -> {"terms": ["cappella", "performance"]}
-        "are there any dance shows this weekend?" -> {"terms": ["dance", "show"]}
-        "is there volleyball practice tonight?" -> {"terms": ["volleyball", "practice"]}
-        "any meditation sessions happening soon?" -> {"terms": ["meditation"]}
-        "where can I find free coffee right now?" -> {"terms": ["coffee", "freefood", "free coffee"]}
-        "is the chess club meeting today?" -> {"terms": ["chess", "chess club"]}
-        "any robotics workshops this week?" -> {"terms": ["robotics", "workshop"]}
-        "when's the next movie screening?" -> {"terms": ["movie", "screening"]}
-        "are there any study groups for organic chemistry?" -> {"terms": ["chemistry", "organic"]}
-        "is anyone giving away free textbooks?" -> {"terms": ["textbook", "free textbook"]}
-        "what time is the math help session?" -> {"terms": ["math", "math help", "session"]}
-        "what are the latest filipino events?" -> {"terms": ["filipino", "phillipines"]}
-        "are there any events about palestine happening today?" -> {"terms": ["palestine"]}
-        Whenever a user has a query that is related to free food, you should always return "freefood" without a space between the words.    
-        """
-    }, {
-        "role": "user",
-        "content": query_text
-    }])
+    # extract search terms and time context using prompt
+    search_info = openai_json_response([
+        extract_email_search_terms(),
+        email_search_query(query_text)
+    ])
     
     search_terms = search_info["terms"]
+    time_context = search_info.get("time_context", "default")
     print(f"[DEBUG] Search terms: {search_terms}")
+    print(f"[DEBUG] Time context: {time_context}")
 
-    
-    # if no search terms, return all emails from the last week
+    # return recent emails if no search terms
     if not search_terms:
         base_query = {
             "$and": [
                 {"source": "email"},
-                {"time": {"$gt": current_time - (7 * 24 * 3600)}}  # change as needed
+                {"time": {"$gt": current_time - (7 * HOURS_PER_DAY * SECONDS_PER_HOUR)}}
             ]
         }
-        
         results = list(collection.find(base_query))
-        processed_results = []
-        
-        for doc in results:
-            age_hours = (current_time - doc.get("time", 0)) / 3600
-            
-            processed_doc = {
-                "_id": doc["_id"],
-                "text": doc["text"],
-                "subject": doc.get("subject", ""),
-                "links": doc.get("links", []),
-                "metadata": {
-                    "time": doc.get("time", 0),
-                    "source": doc.get("source", "email")
-                },
-                "score": 1,  # default score
-                "time_context": f"[{int(age_hours)} hours ago]"
-            }
-            processed_results.append(processed_doc)
-        
-        # sort by recency
+        processed_results = [process_email_doc(doc, current_time) for doc in results]
         processed_results.sort(key=lambda x: -x["metadata"]["time"])
-        return processed_results[:25] # increasing limit / find balance between more accurate results and speed
-    
-    
-    # build search conditions for each term
-    search_conditions = []
-    for term in search_terms:
-        # create pattern that matches term
-        term_pattern = f".*{re.escape(term)}.*"
-        
-        # search in both subject and body
-        # regex is a pain
-        term_conditions = {
-            "$or": [
-                {"subject": {"$regex": term_pattern, "$options": "i"}},
-                {"text": {"$regex": term_pattern, "$options": "i"}}
-            ]
-        }
-        search_conditions.append(term_conditions)
-    
-    # combine search conditions
+        return processed_results[:25]
+
+    # build search query using single regex with OR
+    combined_pattern = "|".join(re.escape(term) for term in search_terms)
     base_query = {
         "$and": [
             {"source": "email"},
-            {"$or": search_conditions}
+            {
+                "$or": [
+                    {"subject": {"$regex": f".*({combined_pattern}).*", "$options": "i"}},
+                    {"text": {"$regex": f".*({combined_pattern}).*", "$options": "i"}}
+                ]
+            }
         ]
     }
     
-    # first try exact matches
+    # try exact matches
     exact_matches = list(collection.find(base_query))
     
-    # if no results, try fuzzy searching
-    # this code is not original,,, but it works so whatever
+    # try fuzzy search if no exact matches
     if not exact_matches:
         print("[DEBUG] No exact matches, trying fuzzy search")
         fuzzy_conditions = []
         for term in search_terms:
-            words = term.split()
-            word_conditions = []
-            for word in words:
-                word_pattern = f".*{re.escape(word)}.*"
-                word_conditions.append({
-                    "$or": [
-                        {"subject": {"$regex": word_pattern, "$options": "i"}},
-                        {"text": {"$regex": word_pattern, "$options": "i"}}
-                    ]
-                })
+            word_conditions = [{
+                "$or": [
+                    {"subject": {"$regex": f".*{re.escape(word)}.*", "$options": "i"}},
+                    {"text": {"$regex": f".*{re.escape(word)}.*", "$options": "i"}}
+                ]
+            } for word in term.split()]
             fuzzy_conditions.append({"$and": word_conditions})
         
         base_query["$or"] = fuzzy_conditions
@@ -197,63 +168,16 @@ def retrieve_emails(query_text):
     # process and score results
     processed_results = []
     for doc in exact_matches:
-        score = 0
-        for term in search_terms:
-            # higher score for subject matches
-            if re.search(term, doc.get("subject", ""), re.IGNORECASE):
-                score += 10
-            # higher score for body matches
-            if re.search(term, doc.get("text", ""), re.IGNORECASE):
-                score += 5
-        
+        score = score_document(doc, search_terms)
         if score > 0:
-            age_hours = (current_time - doc.get("time", 0)) / 3600
-            
-            processed_doc = {
-                "_id": doc["_id"],
-                "text": doc["text"],
-                "subject": doc.get("subject", ""),
-                "links": doc.get("links", []),
-                "metadata": {
-                    "time": doc.get("time", 0),
-                    "source": doc.get("source", "email")
-                },
-                "score": score,
-                "time_context": f"[{int(age_hours)} hours ago]"
-            }
-            processed_results.append(processed_doc)
+            processed_results.append(process_email_doc(doc, current_time, score))
     
-    # sort by score first then recency
+    # sort by score and recency
     processed_results.sort(key=lambda x: (x["score"], -x["metadata"]["time"]), reverse=True)
     
-    # now filter based on time context from original query
-    is_current = any(word in query_text.lower() for word in [
-        "now", "current", "today", "happening", "soon", "right now", "free food", "freefood", "recently"
-    ])
-    include_past = any(word in query_text.lower() for word in [
-        "yesterday", "past", "previous", "before", "earlier", "last", ""
-    ])
-    
-    # the following filters are arbitrarily chose, but these work pretty well
-    # in my testing; feel free to change as necessary
-    if is_current:
-        # for current queries only show events from last 12h
-        processed_results = [
-            doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 12 * 3600
-        ]
-    elif include_past:
-        # for past queries show everything from last 7 days
-        processed_results = [
-            doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 7 * 24 * 3600
-        ]
-    else:
-        # default to last 2w
-        processed_results = [
-            doc for doc in processed_results 
-            if (current_time - doc["metadata"]["time"]) < 24 * 3600 * 14
-        ]
+    # get timeframe from gpt
+    time_filter = get_time_filter(time_context, current_time)
+    processed_results = list(filter(time_filter, processed_results))
     
     return processed_results[:15]
 
