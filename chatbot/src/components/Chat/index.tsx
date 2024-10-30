@@ -12,7 +12,7 @@ import { useSearchParams } from "react-router-dom";
 
 //Components
 import { Input } from "@/components/Input";
-import { FiSend, FiUser } from "react-icons/fi";
+import { FiSend, Fi, FiRefreshCcw } from "react-icons/fi";
 import { Avatar, IconButton, Spinner, Stack, Text } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -31,7 +31,7 @@ interface ChatSchema {
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { selectedChat, addMessage, editMessage, addChat, editChat } =
+  const { selectedChat, addMessage, editMessage, addChat, editChat, clearAll } =
     useChat();
   const selectedId = selectedChat?.id,
     selectedRole = selectedChat?.role;
@@ -268,6 +268,14 @@ export const Chat = ({ ...props }: ChatProps) => {
           <Input
             autoFocus={true}
             variant="filled"
+            inputLeftAddon={
+              <IconButton
+                aria-label="new_convo_button"
+                icon={<FiRefreshCcw />}
+                backgroundColor="transparent"
+                onClick={clearAll} 
+              />
+            }
             inputRightAddon={
               <IconButton
                 aria-label="send_button"
