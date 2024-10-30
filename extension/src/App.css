@@ -473,17 +473,16 @@ body {
   margin-bottom: 10px;
 }
 
-
 .color-options {
   display: flex;
   gap: 8px;
 }
 
 .color-btn {
-  width: 25px;
-  height: 25px;
+  width: 30px;
+  height: 30px;
   border: none;
-  border-radius: 50%;
+  border-radius: 100%;
   cursor: pointer;
 }
 .color-btn:hover {

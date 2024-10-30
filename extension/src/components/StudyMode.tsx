@@ -7,7 +7,7 @@ import background2 from "../images/study/catseat.jpeg"
 import background3 from "../images/study/flowerfield.jpeg"
 import background4 from "../images/study/forestfield.jpeg"
 import background5 from "../images/study/layinginsun.jpeg"
-
+import duckgif from "../images/walkingduck.gif"
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -32,15 +32,21 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
    // List of background images
-   const backgrounds = [background1, background2, background3, background4, background5];
+   const backgrounds = [
+    [background1, "#5f5b69"],
+    [background2, "#b2293d"],
+    [background3, "#fee594"],
+    [background4, "#8dae35"],
+    [background5, "#e6c2a0"]
+  ];
 
    // Preload all images once on component mount
-   useEffect(() => {
-     backgrounds.forEach((background) => {
-       const img = new Image();
-       img.src = background;
-     });
-   }, []);
+  useEffect(() => {
+    backgrounds.forEach((background) => {
+      const img = new Image();
+      img.src = background[0];
+    });
+  },[]);
 
 
   useEffect(() => {
@@ -192,32 +198,14 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
             {/* Popup for background color selection */}
             {showSettings && (
               <div ref={popupRef} className="settings-popup">
-                <div className="color-options">
-                  <button
-                    className="color-btn"
-                    style={{ backgroundColor: "#5f5b69" }} // cat and book
-                    onClick={(event) => handleBackgroundChange(background1)}
-                  />
-                  <button
-                    className="color-btn"
-                    style={{ backgroundColor: "#b2293d" }} // cat reading newspaper
-                    onClick={(event) => handleBackgroundChange(background2)}
-                  />
-                  <button
-                    className="color-btn"
-                    style={{ backgroundColor: "#fee594" }} // flower field
-                    onClick={(event) => handleBackgroundChange(background3)}
-                  />
-                  <button
-                    className="color-btn"
-                    style={{ backgroundColor: "#8dae35" }} // forest field
-                    onClick={(event) => handleBackgroundChange(background4)}
-                  />
-                  <button
-                    className="color-btn"
-                    style={{ backgroundColor: "#e6c2a0" }} // laying in field
-                    onClick={(event) => handleBackgroundChange(background5)}
-                  />
+                <div className ="color-options">
+                {backgrounds.map(([bg, color]) => (
+                   <button
+                     className="color-btn"
+                     style={{ backgroundColor: color }}
+                     onClick={(event) => handleBackgroundChange(bg)}
+                   />
+                 ))}
                 </div>
               </div>
             )}
@@ -270,7 +258,8 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
            transition: "left 0.02s linear",
          }}
        >
-         <img src="https://cdn.discordapp.com/attachments/1278115008504533115/1300285590956282018/duck.gif?ex=672048d3&is=671ef753&hm=0c2045524d34f8017e68c9d9d27f119292720c81e407792269df43c4c775ca5f&" alt="Moving Duck" width="50" />
+         <img src={duckgif} alt="Moving Duck" width="50" />
+
        </div>
       )}
 
