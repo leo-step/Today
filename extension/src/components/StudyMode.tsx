@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookOpen, faHouse, faGear , faMusic , faExpand, faCalculator} from "@fortawesome/free-solid-svg-icons";
+import { faBookOpen, faHouse, faGear , faMusic , faExpand, faCalculator , faKiwiBird } from "@fortawesome/free-solid-svg-icons";
 import background1 from "../images/study/catandbook.jpeg"
 import background2 from "../images/study/catseat.jpeg"
 import background3 from "../images/study/flowerfield.jpeg"
@@ -21,12 +21,26 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [duckPosition, setDuckPosition] = useState(0);
   const [movingRight, setMovingRight] = useState(true);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [showDuck, setShowDuck] = useState(false);
+
 
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
 
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+   // List of background images
+   const backgrounds = [background1, background2, background3, background4, background5];
+
+   // Preload all images once on component mount
+   useEffect(() => {
+     backgrounds.forEach((background) => {
+       const img = new Image();
+       img.src = background;
+     });
+   }, []);
+
 
   useEffect(() => {
     if (isStudyMode) {
@@ -37,6 +51,11 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       setIsImageLoaded(false);
     }
   }, [isStudyMode, overlayBG]);
+
+
+  const toggleDuck = () => {
+    setShowDuck((prev) => !prev);
+  };
 
 
   const toggleFullScreen = () => {
@@ -69,8 +88,14 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   };
 
   const handleBackgroundChange = (background: string) => {
-    setOverlayBG(background);
-  }
+    setIsImageLoaded(false); // Set loading state
+    const img = new Image();
+    img.src = background;
+    img.onload = () => {
+      setOverlayBG(background); // Update background once loaded
+      setIsImageLoaded(true); // Reset loading state
+    };
+  };
 
 
   useEffect(() => {
@@ -144,7 +169,9 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       <div style={{ position: "relative", zIndex: 1 }}>
         {isStudyMode && (
           <>
-            {/* Full screen button */}
+            <button onClick={toggleDuck} className="study-mode-button">
+                <FontAwesomeIcon icon={faKiwiBird} size="2x" />
+            </button>
             <button onClick={toggleCalculator} className="study-mode-button">
                 <FontAwesomeIcon icon={faCalculator} size="2x" />
             </button>
@@ -166,27 +193,27 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
                 <div className="color-options">
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#AEC6CF" }} // Pastel Blue
+                    style={{ backgroundColor: "#5f5b69" }} // cat and book
                     onClick={(event) => handleBackgroundChange(background1)}
                   />
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#ffd1dc" }} // Pastel Pink
+                    style={{ backgroundColor: "#b2293d" }} // cat reading newspaper
                     onClick={(event) => handleBackgroundChange(background2)}
                   />
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#C1CFA1" }} // Pastel green
+                    style={{ backgroundColor: "#fee594" }} // flower field
                     onClick={(event) => handleBackgroundChange(background3)}
                   />
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#FFDAB9" }} // Pastel Orange
+                    style={{ backgroundColor: "#8dae35" }} // forest field
                     onClick={(event) => handleBackgroundChange(background4)}
                   />
                   <button
                     className="color-btn"
-                    style={{ backgroundColor: "#D3D3D3" }} // Soft Black
+                    style={{ backgroundColor: "#e6c2a0" }} // laying in field
                     onClick={(event) => handleBackgroundChange(background5)}
                   />
                 </div>
@@ -230,7 +257,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       </div>
       )}
       
-      {isStudyMode && (
+      {(isStudyMode && showDuck) && (
          <div
          className="moving-duck"
          style={{
@@ -244,6 +271,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
          <img src="https://cdn.discordapp.com/attachments/1278115008504533115/1300285590956282018/duck.gif?ex=672048d3&is=671ef753&hm=0c2045524d34f8017e68c9d9d27f119292720c81e407792269df43c4c775ca5f&" alt="Moving Duck" width="50" />
        </div>
       )}
+
     </>
   );
 }
