@@ -18,6 +18,10 @@ SECONDS_PER_HOUR = 3600
 SUBJECT_MATCH_SCORE = 10
 BODY_MATCH_SCORE = 5
 
+# constants for embedding
+PROCESSED_RESULTS_GENERIC = 25
+PROCESSED_RESULTS_SPECIFIC = 15
+
 def setup_mongodb_indices():
     collection = db_client["crawl"]
     
@@ -127,8 +131,8 @@ def retrieve_emails(query_text):
         }
         results = list(collection.find(base_query))
         processed_results = [process_email_doc(doc, current_time) for doc in results]
-        processed_results.sort(key=lambda x: -x["metadata"]["time"])
-        return processed_results[:25]
+        processed_results.sort(key=lambda x: -(x.get("metadata", {}).get("time", 0)))
+        return processed_results[:PROCESSED_RESULTS_GENERIC]
 
     # build search query using single regex with OR
     combined_pattern = "|".join(re.escape(term) for term in search_terms)
@@ -173,13 +177,13 @@ def retrieve_emails(query_text):
             processed_results.append(process_email_doc(doc, current_time, score))
     
     # sort by score and recency
-    processed_results.sort(key=lambda x: (x["score"], -x["metadata"]["time"]), reverse=True)
+    processed_results.sort(key=lambda x: (x.get("score", 0), -x.get("metadata", {}).get("time", 0)), reverse=True)
     
     # get timeframe from gpt
     time_filter = get_time_filter(time_context, current_time)
     processed_results = list(filter(time_filter, processed_results))
     
-    return processed_results[:15]
+    return processed_results[:PROCESSED_RESULTS_SPECIFIC]
 
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
@@ -250,7 +254,7 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
                 {
                     "queryVector": query_vector,
                     "path": "embedding",
-                    "numCandidates": 50,
+                    "numCandidates": 100,
                     "limit": 10,
                     "index": "vector_index"
                 },
