@@ -152,3 +152,51 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
 
     return prompt
 
+@system_prompt
+def extract_email_search_terms():
+    return """Extract ONLY the specific items, topics, or subjects being asked about. 
+    Ignore all helper words, time words, and generic terms like 'events', 'things', 'activities', 'announcements', etc.
+    Never include terms like 'princeton', 'campus', 'today', 'tomorrow', 'yesterday', 'last', 'next', 'this', 'that', 'the', etc,
+    as it can be assumed that all the emails retrieved will be related to Princeton University, and therefore those terms are irrelevant.
+    **NEVER** make up any information or events, as it would be misleading students.
+    Return a JSON with:
+    - 'terms': array of ONLY the specific items/topics being searched for
+    - 'time_context': string, either "current" (for immediate/today events), "past" (for previous events), or "default" (for general timeframe)
+
+    Examples:
+    "is there any free pizza available right now?" -> {"terms": ["pizza", "freefood", "free pizza"], "time_context": "current"}
+    "are there any israel/palestine related events right now? or soon?" -> {"terms": ["israel", "palestine"], "time_context": "current"}
+    "what events are there about israel or palestine?" -> {"terms": ["israel", "palestine"], "time_context": "default"}
+    "was there free fruit yesterday?" -> {"terms": ["fruit", "freefood", "free fruit"], "time_context": "past"}
+    "when is the next narcan training session today?" -> {"terms": ["narcan", "training", "narcan training"], "time_context": "current"}
+    "any fruit related events happening now?" -> {"terms": ["fruit"], "time_context": "current"}
+    "were there any tacos and olives on campus?" -> {"terms": ["tacos", "olives", "freefood"], "time_context": "past"}
+    "is there anything about israel going on right now?" -> {"terms": ["israel"], "time_context": "current"}
+    "was there any free food yesterday in the kanji lobby?" -> {"terms": ["food", "kanji lobby", "kanji", "freefood"], "time_context": "past"}
+    "are there any events about climate change tomorrow?" -> {"terms": ["climate", "climate change"], "time_context": "current"}
+    "what's happening with SJP this week?" -> {"terms": ["sjp"], "time_context": "current"}
+    "any fruit bowls available today?" -> {"terms": ["fruit", "fruit bowl", "freefood"], "time_context": "current"}
+    "when is the next a cappella performance?" -> {"terms": ["cappella", "performance"], "time_context": "default"}
+    "are there any dance shows this weekend?" -> {"terms": ["dance", "show"], "time_context": "current"}
+    "is there volleyball practice tonight?" -> {"terms": ["volleyball", "practice"], "time_context": "current"}
+    "any meditation sessions happening soon?" -> {"terms": ["meditation"], "time_context": "current"}
+    "where can I find free coffee right now?" -> {"terms": ["coffee", "freefood", "free coffee"], "time_context": "current"}
+    "is the chess club meeting today?" -> {"terms": ["chess", "chess club"], "time_context": "current"}
+    "any robotics workshops this week?" -> {"terms": ["robotics", "workshop"], "time_context": "current"}
+    "when's the next movie screening?" -> {"terms": ["movie", "screening"], "time_context": "default"}
+    "are there any study groups for organic chemistry?" -> {"terms": ["chemistry", "organic"], "time_context": "default"}
+    "is anyone giving away free textbooks?" -> {"terms": ["textbook", "free textbook"], "time_context": "default"}
+    "what time is the math help session?" -> {"terms": ["math", "math help", "session"], "time_context": "default"}
+    "what are the latest filipino events?" -> {"terms": ["filipino", "phillipines"], "time_context": "current"}
+    "are there any events about palestine happening today?" -> {"terms": ["palestine"], "time_context": "current"}
+    Whenever a user has a query that is related to free food, you should always return "freefood" without a space between the words.
+    
+    For time_context:
+    - Use "current" when query mentions immediate availability, today's events, or near future
+    - Use "past" when query explicitly asks about previous events
+    - Use "default" when no clear time frame is specified"""
+
+@user_prompt
+def email_search_query(query_text: str):
+    return query_text
+

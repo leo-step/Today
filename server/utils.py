@@ -6,6 +6,7 @@ import os
 import json
 from datetime import datetime
 from pytz import timezone
+import re
 
 load_dotenv()
 
@@ -103,3 +104,27 @@ def delete_dict_key_recursively(data, del_key):
     elif isinstance(data, list):
         data = [delete_dict_key_recursively(item, del_key) for item in data]
     return data
+
+def build_regex_pattern(term):
+    """Build case-insensitive regex pattern with word boundaries"""
+    return f".*{re.escape(term)}.*"
+
+def create_field_search_condition(field, pattern):
+    """Create MongoDB regex search condition for a field"""
+    return {field: {"$regex": pattern, "$options": "i"}}
+
+def build_search_query(terms, fields=None):
+    """Build MongoDB OR query for multiple terms across specified fields"""
+    if fields is None:
+        fields = ["subject", "text"]
+    
+    conditions = []
+    for term in terms:
+        pattern = build_regex_pattern(term)
+        field_conditions = [
+            create_field_search_condition(field, pattern)
+            for field in fields
+        ]
+        conditions.append({"$or": field_conditions})
+    
+    return {"$and": conditions} if conditions else {}

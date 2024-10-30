@@ -2,12 +2,61 @@ from utils import get_embedding, openai_json_response, delete_dict_key_recursive
 from clients import db_client
 import time
 import requests
-from prompts import get_courses_search_query, user_query
+from prompts import get_courses_search_query, user_query, extract_email_search_terms, email_search_query
 import os
 import random
 import re
 import datetime
 from dateutil import tz
+import json
+
+# time constants
+HOURS_PER_DAY = 24
+SECONDS_PER_HOUR = 3600
+
+# search scoring weights
+SUBJECT_MATCH_SCORE = 10
+BODY_MATCH_SCORE = 5
+
+# constants for embedding
+PROCESSED_RESULTS_GENERIC = 25
+PROCESSED_RESULTS_SPECIFIC = 15
+
+def setup_mongodb_indices():
+    collection = db_client["crawl"]
+    
+    # index for time and source
+    collection.create_index([
+        ("source", 1),
+        ("time", -1)
+    ], name="source_time_idx")
+    
+    # text index for subject and text fields
+    collection.create_index([
+        ("subject", "text"),
+        ("text", "text")
+    ], name="email_text_idx")
+    
+    # REMOVED THE BOTTOM INDICES TO SAVE SPACE
+    # collection.create_index([
+    #     ("expiry", 1)
+    # ], name="expiry_idx")
+    
+    # collection.create_index([
+    #     ("subject", 1),
+    #     ("text", 1)
+    # ], name="fuzzy_search_idx")
+    
+    # collection.create_index([
+    #     ("source", 1),
+    #     ("time", -1),
+    #     ("subject", 1),
+    #     ("text", 1)
+    # ], name="email_search_compound_idx")
+
+    print("MongoDB indices created successfully")
+    
+setup_mongodb_indices()
 
 def retrieve_widget_data():
     collection = db_client["widgets"]
@@ -21,16 +70,120 @@ def retrieve_crawl(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "web")
 
+def process_email_doc(doc, current_time, score=1):
+    """Process a single email document into the standard format"""
+    age_hours = (current_time - doc.get("time", 0)) / SECONDS_PER_HOUR
+    
+    return {
+        "_id": doc["_id"],
+        "text": doc["text"],
+        "subject": doc.get("subject", ""),
+        "links": doc.get("links", []),
+        "metadata": {
+            "time": doc.get("time", 0),
+            "source": doc.get("source", "email")
+        },
+        "score": score,
+        "time_context": f"[{int(age_hours)} hours ago]"
+    }
+
+def get_time_filter(time_context, current_time):
+    """Determine time filter based on GPT-determined time context"""
+    if time_context == "current":
+        return lambda doc: (current_time - (doc.get("metadata", {}).get("time", 0))) < 12 * SECONDS_PER_HOUR
+    elif time_context == "past":
+        return lambda doc: (current_time - (doc.get("metadata", {}).get("time", 0))) < 7 * HOURS_PER_DAY * SECONDS_PER_HOUR
+    else:  # default
+        return lambda doc: (current_time - (doc.get("metadata", {}).get("time", 0))) < 14 * HOURS_PER_DAY * SECONDS_PER_HOUR
+
+def score_document(doc, search_terms):
+    """Score a document based on search term matches"""
+    score = 0
+    for term in search_terms:
+        if re.search(term, doc.get("subject", ""), re.IGNORECASE):
+            score += SUBJECT_MATCH_SCORE # higher score for subject match
+        if re.search(term, doc.get("text", ""), re.IGNORECASE):
+            score += BODY_MATCH_SCORE # higher score for body match
+    return score
+
 def retrieve_emails(query_text):
     collection = db_client["crawl"]
-    # modified to sort by 'received_time' in descending order
-    return hybrid_search(
-        collection,
-        query_text,
-        "email",
-        expiry=True,
-        sort=[("metadata.received_time", -1)]
-    )
+    current_time = int(time.time())
+    
+    # extract search terms and time context using prompt
+    search_info = openai_json_response([
+        extract_email_search_terms(),
+        email_search_query(query_text)
+    ])
+    
+    search_terms = search_info["terms"]
+    time_context = search_info.get("time_context", "default")
+    print(f"[DEBUG] Search terms: {search_terms}")
+    print(f"[DEBUG] Time context: {time_context}")
+
+    # return recent emails if no search terms
+    if not search_terms:
+        base_query = {
+            "$and": [
+                {"source": "email"},
+                {"time": {"$gt": current_time - (7 * HOURS_PER_DAY * SECONDS_PER_HOUR)}}
+            ]
+        }
+        results = list(collection.find(base_query))
+        processed_results = [process_email_doc(doc, current_time) for doc in results]
+        processed_results.sort(key=lambda x: -(x.get("metadata", {}).get("time", 0)))
+        return processed_results[:PROCESSED_RESULTS_GENERIC]
+
+    # build search query using single regex with OR
+    combined_pattern = "|".join(re.escape(term) for term in search_terms)
+    base_query = {
+        "$and": [
+            {"source": "email"},
+            {
+                "$or": [
+                    {"subject": {"$regex": f".*({combined_pattern}).*", "$options": "i"}},
+                    {"text": {"$regex": f".*({combined_pattern}).*", "$options": "i"}}
+                ]
+            }
+        ]
+    }
+    
+    # try exact matches
+    exact_matches = list(collection.find(base_query))
+    
+    # try fuzzy search if no exact matches
+    if not exact_matches:
+        print("[DEBUG] No exact matches, trying fuzzy search")
+        fuzzy_conditions = []
+        for term in search_terms:
+            word_conditions = [{
+                "$or": [
+                    {"subject": {"$regex": f".*{re.escape(word)}.*", "$options": "i"}},
+                    {"text": {"$regex": f".*{re.escape(word)}.*", "$options": "i"}}
+                ]
+            } for word in term.split()]
+            fuzzy_conditions.append({"$and": word_conditions})
+        
+        base_query["$or"] = fuzzy_conditions
+        exact_matches = list(collection.find(base_query))
+    
+    print(f"[DEBUG] Found {len(exact_matches)} matching documents")
+    
+    # process and score results
+    processed_results = []
+    for doc in exact_matches:
+        score = score_document(doc, search_terms)
+        if score > 0:
+            processed_results.append(process_email_doc(doc, current_time, score))
+    
+    # sort by score and recency
+    processed_results.sort(key=lambda x: (x.get("score", 0), -x.get("metadata", {}).get("time", 0)), reverse=True)
+    
+    # get timeframe from gpt
+    time_filter = get_time_filter(time_context, current_time)
+    processed_results = list(filter(time_filter, processed_results))
+    
+    return processed_results[:PROCESSED_RESULTS_SPECIFIC]
 
 def retrieve_any_emails(query_text):
     collection = db_client["crawl"]
@@ -92,8 +245,7 @@ def retrieve_any(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text)
 
-
-def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=5):
+def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
     query_vector = get_embedding(query)
 
     vector_pipeline = [
@@ -102,8 +254,8 @@ def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_r
                 {
                     "queryVector": query_vector,
                     "path": "embedding",
-                    "numCandidates": 50,
-                    "limit": 5,
+                    "numCandidates": 100,
+                    "limit": 10,
                     "index": "vector_index"
                 },
         },
@@ -464,4 +616,3 @@ def clean_query(query):
 
 if __name__ == "__main__":
     print(retrieve_princeton_courses("baby"))
-
