@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import StudyModeTimer from "./StudyModeTimer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBookOpen, faHouse, faGear , faMusic , faExpand, faCalculator , faKiwiBird } from "@fortawesome/free-solid-svg-icons";
 import background1 from "../images/study/catandbook.jpeg"
@@ -186,6 +187,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
             <button ref={settingsButtonRef} onClick={toggleSettingsPopup} className="study-mode-button">
               <FontAwesomeIcon icon={faGear} size="2x" />
             </button>
+            <StudyModeTimer />
 
             {/* Popup for background color selection */}
             {showSettings && (
