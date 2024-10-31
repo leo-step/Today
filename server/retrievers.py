@@ -1,8 +1,8 @@
-from utils import get_embedding, openai_json_response, delete_dict_key_recursively
+from utils import get_embedding, openai_json_response, delete_dict_key_recursively, system_prompt, build_search_query
 from clients import db_client
+from prompts import extract_email_search_terms, email_search_query
 import time
 import requests
-from prompts import get_courses_search_query, user_query, extract_email_search_terms, email_search_query
 import os
 import random
 import re
@@ -22,6 +22,53 @@ BODY_MATCH_SCORE = 5
 PROCESSED_RESULTS_GENERIC = 25
 PROCESSED_RESULTS_SPECIFIC = 15
 
+@system_prompt
+def get_course_search_prompt():
+    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
+    extract the key search terms. Here are examples:
+    
+    Example 1 - Direct Course Code:
+    Input: "should I take COS217"
+    Output: "COS 217"
+
+    Example 2 - Course Comparison:
+    Input: "is COS217 harder than COS226"
+    Output: "COS 217"  # Will look up first course, then compare
+
+    Example 3 - Similar Course Query:
+    Input: "what courses are similar to MAT201"
+    Output: "MAT 201"  # Will find similar courses based on this
+
+    Example 4 - Department Search:
+    Input: "easy math classes"
+    Output: "MAT"  # Department code for broad search
+
+    Example 5 - Topic Search:
+    Input: "artificial intelligence courses"
+    Output: "artificial intelligence"
+
+    Example 6 - Workload Query:
+    Input: "what are the best no pset classes"
+    Output: "no problem sets"  # Will search descriptions and comments
+
+    Example 7 - Difficulty Query:
+    Input: "what's an easy science requirement"
+    Output: "science requirement easy"
+
+    ***IMPORTANT RULES:***
+    1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
+    2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
+    3. For topic searches: Use minimal keywords without words like "course" or "class"
+    4. For workload queries: Include terms like "no problem sets", "no psets", "light workload"
+    5. For difficulty queries: Include difficulty level (easy/hard) with requirements
+    6. Never add words like "undergraduate" or "Princeton"
+
+    Return a JSON where your output is a string under the key "search_query". For example:
+    {
+        "search_query": "COS 217"
+    }
+    """
+
 def setup_mongodb_indices():
     collection = db_client["crawl"]
     
@@ -37,23 +84,6 @@ def setup_mongodb_indices():
         ("text", "text")
     ], name="email_text_idx")
     
-    # REMOVED THE BOTTOM INDICES TO SAVE SPACE
-    # collection.create_index([
-    #     ("expiry", 1)
-    # ], name="expiry_idx")
-    
-    # collection.create_index([
-    #     ("subject", 1),
-    #     ("text", 1)
-    # ], name="fuzzy_search_idx")
-    
-    # collection.create_index([
-    #     ("source", 1),
-    #     ("time", -1),
-    #     ("subject", 1),
-    #     ("text", 1)
-    # ], name="email_search_compound_idx")
-
     print("MongoDB indices created successfully")
     
 setup_mongodb_indices()
@@ -69,6 +99,10 @@ def retrieve_location_data(query_text):
 def retrieve_crawl(query_text):
     collection = db_client["crawl"]
     return hybrid_search(collection, query_text, "web")
+
+def retrieve_any(query_text):
+    collection = db_client["crawl"]
+    return hybrid_search(collection, query_text)
 
 def process_email_doc(doc, current_time, score=1):
     """Process a single email document into the standard format"""
@@ -194,209 +228,167 @@ def retrieve_eating_clubs(query_text):
     return hybrid_search(collection, query_text, "eatingclub", expiry=True)
 
 def retrieve_princeton_courses(query_text):
-    response = openai_json_response([
-        get_courses_search_query(),
-        user_query(query_text)
-    ], model="gpt-4o")
-    search_query = response["search_query"]
-    replace_words = ["undergraduate", "Princeton", "class", "classes", "difficulty", "course", "courses"]
-    for word in replace_words:
-        search_query = search_query.replace(word, "")
-    search_query = search_query.strip()
-    print("[INFO] courses search query:", search_query)
+    """Enhanced course retrieval with semantic search"""
+    collection = db_client["courses"]
+    
+    # extract course codes if present
+    course_codes = re.findall(r'([A-Z]{3})\s*(\d{3}[A-Z]?)', query_text.upper())
+    
+    # check query type
+    is_comparison = len(course_codes) > 1
+    is_similarity = "similar" in query_text.lower() or "like" in query_text.lower()
+    is_difficulty = any(word in query_text.lower() for word in 
+        ["hard", "easy", "difficult", "challenging", "tough", "simple"])
+    is_workload = any(word in query_text.lower() for word in
+        ["pset", "problem set", "workload", "work", "assignment", "homework"])
 
-    semester = int(os.getenv("SEMESTER"))
-    headers = {
-        "Authorization": "Bearer " + os.getenv("COURSES_API_KEY")
-    }
     try:
-        for i in range(8):
-            print("[INFO] trying semester", semester)
-            response = requests.get(f"https://www.princetoncourses.com/api/search/{search_query}?semester={semester}&sort=rating&detectClashes=false", headers=headers)
-            try:
-                search_results = response.json()
-                if len(search_results) == 0:
-                    if semester % 10 == 2:
-                        semester -= 8
-                    else:
-                        semester -= 2
-                    continue
-                course_id = random.choice(search_results)["_id"]
-                response = requests.get(f"https://www.princetoncourses.com/api/course/{course_id}", headers=headers)
-                data = delete_dict_key_recursively(response.json(), "courses")
-                data = delete_dict_key_recursively(data, "course")
-                data = delete_dict_key_recursively(data, "_id")
-                link = f"https://www.princetoncourses.com/course/{course_id}"
-                other_search_results = []
-                for search_result in search_results:
-                    if search_result["_id"] == course_id:
-                        continue
-                    other_search_results.append("{} {}: {}".format(search_result["department"], 
-                                        search_result["catalogNumber"], search_result["title"]))
-                return data, other_search_results, link, i == 0
-            except Exception as e:
-                print("[ERROR] response 1 failed:", e)
-                return {}, [], None, True
-    except Exception as e:
-        print("[ERROR] response 2 failed:", e)
-    return {}, [], None, True
-
-def retrieve_any(query_text):
-    collection = db_client["crawl"]
-    return hybrid_search(collection, query_text)
-
-def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
-    query_vector = get_embedding(query)
-
-    vector_pipeline = [
-        {
-            "$vectorSearch":
+        if is_comparison:
+            # handle course comparison
+            dept1, num1 = course_codes[0]
+            dept2, num2 = course_codes[1]
+            
+            # get both courses with their evaluations
+            pipeline = [
                 {
-                    "queryVector": query_vector,
-                    "path": "embedding",
-                    "numCandidates": 100,
-                    "limit": 10,
-                    "index": "vector_index"
-                },
-        },
-        {
-            "$project": 
-                {
-                    "_id": 1,
-                    "text": 1,
-                    "links": 1,
-                    "time": 1,
-                    "score":{"$meta":"vectorSearchScore"}
-                }
-        }
-    ]
-
-    current_time = int(time.time())
-
-    if source and expiry:
-        vector_pipeline[0]["$vectorSearch"]["filter"] = {
-            "$and": [
-                {
-                    "source": {
-                        "$eq": source
-                    }
-                },
-                {
-                    "expiry": {
-                        "$gt": current_time
+                    "$match": {
+                        "$or": [
+                            {"department": dept1, "catalogNumber": num1},
+                            {"department": dept2, "catalogNumber": num2}
+                        ]
                     }
                 }
             ]
-        }
-    elif source:
-        vector_pipeline[0]["$vectorSearch"]["filter"] = {
-            "source": {
-                "$eq": source
+            
+            results = list(collection.aggregate(pipeline))
+            if len(results) != 2:
+                return {}, [], None, True
+            
+            # map results by department and catalog number
+            courses = {f"{c['department']}{c['catalogNumber']}": c for c in results}
+            course1 = courses.get(f"{dept1}{num1}")
+            course2 = courses.get(f"{dept2}{num2}")
+            
+            # return the first course with comparison data
+            course = course1
+            course["comparison"] = {
+                "other_course": f"{dept2} {num2}",
+                "this_course_score": course1.get("scores", {}).get("Quality of Course"),
+                "other_course_score": course2.get("scores", {}).get("Quality of Course")
             }
-        }
-
-    vector_results = collection.aggregate(vector_pipeline)
-    x = list(vector_results)
-    
-    keyword_pipeline = [
-        {
-            "$search": {
-                "index": "full-text-search",
-                "text": {
-                    "query": query,
-                    "path": "text"
+            
+            other_results = [f"{dept2} {num2}: {course2.get('title', '')}"]
+        
+        elif is_workload or is_difficulty:
+            # search for courses based on workload/difficulty
+            pipeline = [
+                {
+                    "$match": {
+                        "$or": [
+                            # Match course code if provided
+                            *({"department": dept, "catalogNumber": num} 
+                              for dept, num in course_codes),
+                            # Otherwise match description/comments
+                            {"text": {"$regex": "(no (problem )?sets?|light workload|minimal work|easy|manageable)", "$options": "i"}}
+                            if not course_codes else {}
+                        ]
+                    }
+                },
+                {
+                    "$addFields": {
+                        "quality_score": {"$ifNull": ["$scores.Quality of Course", 0]}
+                    }
+                },
+                {
+                    "$sort": {
+                        "quality_score": -1
+                    }
+                },
+                {
+                    "$limit": 10
                 }
-            }
-        },
-        { "$addFields" : { "score": { "$meta": "searchScore" } } },
-        { "$limit": 5 }
-    ]
-
-    if source and expiry: 
-        keyword_pipeline.insert(1, {
-            "$match": {
-                    "source": source,
-                    "expiry": { "$gt": current_time }
+            ]
+            
+            results = list(collection.aggregate(pipeline))
+            if not results:
+                return {}, [], None, True
+            
+            course = results[0]
+            other_results = [
+                f"{c['department']} {c['catalogNumber']}: {c['title']}"
+                for c in results[1:5]
+            ]
+            
+            # extract relevant comments
+            if "text" in course:
+                comments = []
+                for line in course["text"].split("\n"):
+                    if any(term in line.lower() for term in 
+                          ["problem set", "pset", "workload", "work", "assignment",
+                           "hard", "easy", "difficult", "challenging", "tough", "simple"]):
+                        comments.append(line.strip())
+                
+                if comments:
+                    course["difficulty_analysis"] = {
+                        "scores": {
+                            "Quality of Course": course.get("scores", {}).get("Quality of Course"),
+                            "Quality of Written Assignments": course.get("scores", {}).get("Quality of Written Assignments")
+                        },
+                        "relevant_comments": comments[:3]
+                    }
+        
+        else:
+            # stsandard course search
+            pipeline = [
+                {
+                    "$match": {
+                        "$or": [
+                            # Match course code if provided
+                            *({"department": dept, "catalogNumber": num} 
+                              for dept, num in course_codes),
+                            # Otherwise match title/description
+                            {"$text": {"$search": query_text}}
+                            if not course_codes else {}
+                        ]
+                    }
+                },
+                {
+                    "$addFields": {
+                        "quality_score": {"$ifNull": ["$scores.Quality of Course", 0]}
+                    }
+                },
+                {
+                    "$sort": {
+                        "quality_score": -1
+                    }
+                },
+                {
+                    "$limit": 10
                 }
-            })
-    elif source:
-        keyword_pipeline.insert(1, {
-            "$match": {
-                "source": source
-            }
-        })
+            ]
+            
+            results = list(collection.aggregate(pipeline))
+            if not results:
+                return {}, [], None, True
+            
+            course = results[0]
+            other_results = [
+                f"{c['department']} {c['catalogNumber']}: {c['title']}"
+                for c in results[1:5]
+            ]
 
-    keyword_results = collection.aggregate(keyword_pipeline)
-    y = list(keyword_results)
-    
-    doc_lists = [x,y]
+        # clean up course object
+        course = {k:v for k,v in course.items() if k not in ['_id', 'embedding']}
+        
+        # convert _id to string for URL
+        course_id = str(course.get('courseID', ''))
+        link = f"https://www.princetoncourses.com/course/{course_id}"
+        
+        return course, other_results, link, True
 
-    for i in range(len(doc_lists)):
-        doc_lists[i] = [
-            {"_id":str(doc["_id"]), "text":doc["text"], 
-             "links":doc["links"], "time":doc["time"], 
-             "score": doc["score"]}
-            for doc in doc_lists[i]
-        ]
-    
-    fused_documents = weighted_reciprocal_rank(doc_lists)
-
-    return fused_documents[:max_results]
-
-
-def weighted_reciprocal_rank(doc_lists):
-    """
-    This is a modified version of the fuction in the langchain repo
-    https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/retrievers/ensemble.py
-    
-    Perform weighted Reciprocal Rank Fusion on multiple rank lists.
-    You can find more details about RRF here:
-    https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
-
-    Args:
-        doc_lists: A list of rank lists, where each rank list contains unique items.
-
-    Returns:
-        list: The final aggregated list of items sorted by their weighted RRF
-                scores in descending order.
-    """
-    c=60 #c comes from the paper
-    weights=[1]*len(doc_lists) #you can apply weights if you like, here they are all the same, ie 1
-    
-    if len(doc_lists) != len(weights):
-        raise ValueError(
-            "Number of rank lists must be equal to the number of weights."
-        )
-
-    # Create a union of all unique documents in the input doc_lists
-    all_documents = set()
-    for doc_list in doc_lists:
-        for doc in doc_list:
-            all_documents.add(doc["text"])
-
-    # Initialize the RRF score dictionary for each document
-    rrf_score_dic = {doc: 0.0 for doc in all_documents}
-
-    # Calculate RRF scores for each document
-    for doc_list, weight in zip(doc_lists, weights):
-        for rank, doc in enumerate(doc_list, start=1):
-            rrf_score = weight * (1 / (rank + c))
-            rrf_score_dic[doc["text"]] += rrf_score
-
-    # Sort documents by their RRF scores in descending order
-    sorted_documents = sorted(
-        rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
-    )
-
-    # Map the sorted page_content back to the original document objects
-    page_content_to_doc_map = {
-        doc["text"]: doc for doc_list in doc_lists for doc in doc_list
-    }
-    sorted_docs = [
-        page_content_to_doc_map[page_content] for page_content in sorted_documents
-    ]
-
-    return sorted_docs
+    except Exception as e:
+        print("[ERROR] Course retrieval failed:", e)
+        return {}, [], None, True
 
 def retrieve_nearby_places(query_text):
     api_key = os.getenv('GOOGLE_MAPS_API_KEY')
@@ -419,7 +411,6 @@ def retrieve_nearby_places(query_text):
         'keyword': query_text,
         'key': api_key,
         'type': 'establishment',  # optional: limits results to businesses; it's worked pretty well in testing
-        # apparently there's 'fields' parameter for nearby search api; fields are predefined
     }
 
     response = requests.get(endpoint_url, params=params)
@@ -463,8 +454,6 @@ def retrieve_nearby_places(query_text):
 
     return places
 
-# google api lowkey is a mess; im prolly overcomplicating it,
-# but hardcoding location response formats is safer imo
 def get_place_details(place_id, api_key):
     # endpoint for place details
     details_url = 'https://maps.googleapis.com/maps/api/place/details/json'
@@ -573,46 +562,154 @@ def get_next_event(opening_hours):
 
     return None
 
-def clean_query(query):
-    # lowercase the query for uniformity
-    query = query.lower()
-    # remove common phrases
-    common_phrases = [
-        r'\blocation of\b',
-        r'\bfind\b',
-        r'\bin princeton\b',
-        r'\bnear me\b',
-        r'\bnearby\b',
-        r'\baround here\b',
-        r'\baround\b',
-        r'\bwhat is\b',
-        r'\bwhere is\b',
-        r'\bhow close is\b',
-        r'\bhow far is\b',
-        r'\bis there a\b',
-        r'\bnear\b',
-        r'\bnearest\b',
-        r'\bthe\b',
-        r'\baddress of\b',
-        r'\blocation\b',
-        r'\bof\b',
-        r'\bin\b',
-        r'\bto\b',
-        r'\bprinceton\b',
-        r'\buniversity\b',
-        r'\bplease\b',
-        r'\bcan you\b',
-        r'\bcould you\b',
-        r'\btell me\b',
-        r'\?',
-    ]
-    for phrase in common_phrases:
-        pattern = re.compile(phrase, flags=re.IGNORECASE)
-        query = pattern.sub('', query)
-    # remove any extra whitespace
-    query = ' '.join(query.split())
-    # return the cleaned query to be used in api calls
-    return query
+def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
+    query_vector = get_embedding(query)
 
-if __name__ == "__main__":
-    print(retrieve_princeton_courses("baby"))
+    vector_pipeline = [
+        {
+            "$vectorSearch":
+                {
+                    "queryVector": query_vector,
+                    "path": "embedding",
+                    "numCandidates": 100,
+                    "limit": 10,
+                    "index": "vector_index"
+                },
+        },
+        {
+            "$project": 
+                {
+                    "_id": 1,
+                    "text": 1,
+                    "links": 1,
+                    "time": 1,
+                    "score":{"$meta":"vectorSearchScore"}
+                }
+        }
+    ]
+
+    current_time = int(time.time())
+
+    if source and expiry:
+        vector_pipeline[0]["$vectorSearch"]["filter"] = {
+            "$and": [
+                {
+                    "source": {
+                        "$eq": source
+                    }
+                },
+                {
+                    "expiry": {
+                        "$gt": current_time
+                    }
+                }
+            ]
+        }
+    elif source:
+        vector_pipeline[0]["$vectorSearch"]["filter"] = {
+            "source": {
+                "$eq": source
+            }
+        }
+
+    vector_results = collection.aggregate(vector_pipeline)
+    x = list(vector_results)
+    
+    keyword_pipeline = [
+        {
+            "$search": {
+                "index": "full-text-search",
+                "text": {
+                    "query": query,
+                    "path": "text"
+                }
+            }
+        },
+        { "$addFields" : { "score": { "$meta": "searchScore" } } },
+        { "$limit": 5 }
+    ]
+
+    if source and expiry: 
+        keyword_pipeline.insert(1, {
+            "$match": {
+                    "source": source,
+                    "expiry": { "$gt": current_time }
+                }
+            })
+    elif source:
+        keyword_pipeline.insert(1, {
+            "$match": {
+                "source": source
+            }
+        })
+
+    keyword_results = collection.aggregate(keyword_pipeline)
+    y = list(keyword_results)
+    
+    doc_lists = [x,y]
+
+    for i in range(len(doc_lists)):
+        doc_lists[i] = [
+            {"_id":str(doc["_id"]), "text":doc["text"], 
+             "links":doc["links"], "time":doc["time"], 
+             "score": doc["score"]}
+            for doc in doc_lists[i]
+        ]
+    
+    fused_documents = weighted_reciprocal_rank(doc_lists)
+
+    return fused_documents[:max_results]
+
+def weighted_reciprocal_rank(doc_lists):
+    """
+    This is a modified version of the fuction in the langchain repo
+    https://github.com/langchain-ai/langchain/blob/master/libs/langchain/langchain/retrievers/ensemble.py
+    
+    Perform weighted Reciprocal Rank Fusion on multiple rank lists.
+    You can find more details about RRF here:
+    https://plg.uwaterloo.ca/~gvcormac/cormacksigir09-rrf.pdf
+
+    Args:
+        doc_lists: A list of rank lists, where each rank list contains unique items.
+
+    Returns:
+        list: The final aggregated list of items sorted by their weighted RRF
+                scores in descending order.
+    """
+    c=60 #c comes from the paper
+    weights=[1]*len(doc_lists) #you can apply weights if you like, here they are all the same, ie 1
+    
+    if len(doc_lists) != len(weights):
+        raise ValueError(
+            "Number of rank lists must be equal to the number of weights."
+        )
+
+    # Create a union of all unique documents in the input doc_lists
+    all_documents = set()
+    for doc_list in doc_lists:
+        for doc in doc_list:
+            all_documents.add(doc["text"])
+
+    # Initialize the RRF score dictionary for each document
+    rrf_score_dic = {doc: 0.0 for doc in all_documents}
+
+    # Calculate RRF scores for each document
+    for doc_list, weight in zip(doc_lists, weights):
+        for rank, doc in enumerate(doc_list, start=1):
+            rrf_score = weight * (1 / (rank + c))
+            rrf_score_dic[doc["text"]] += rrf_score
+
+    # Sort documents by their RRF scores in descending order
+    sorted_documents = sorted(
+        rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
+    )
+
+    # Map the sorted page_content back to the original document objects
+    page_content_to_doc_map = {
+        doc["text"]: doc for doc_list in doc_lists for doc in doc_list
+    }
+    sorted_docs = [
+        page_content_to_doc_map[page_content] for page_content in sorted_documents
+    ]
+
+    return sorted_docs

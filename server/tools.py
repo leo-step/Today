@@ -158,7 +158,7 @@ def invoke_tool(tool: str, tool_input: str) -> str:
         documents = retrieve_eating_clubs(tool_input)
         return format_documents(documents)
     elif tool == Tool.CATCHALL.value:
-        documents = retrieve_any(tool_input)
+        documents = retrieve_any_emails(tool_input)
         return format_documents(documents)
     elif tool == Tool.NEARBY_PLACES.value:
         # Clean the tool_input to extract the main keyword
@@ -290,13 +290,30 @@ tools: Tools = [
     },
     {
         "name": Tool.COURSES,
-        "description": """This tool accesses the Princeton Courses API and
-        is able to retrieve any information about a course, including its
-        reviews, description, rating, grading policy, etc. ***IMPORTANT:
-        This tool operates on keywords and course codes. To look up a 
-        class effectively, you must provide reference a course code (e.g.
-        "COS217") or keywords for the name (e.g. "natural algorithms") in
-        the query rewriting stage.***"""
+        "description": """This tool provides comprehensive course search and analysis:
+
+        1. Course Code Search:
+        - Direct lookup by course code (e.g., "MAT201", "COS226")
+        - Find similar courses in same department/level
+        - Compare courses by difficulty and content
+
+        2. Difficulty Analysis:
+        - Course quality scores and ratings
+        - Student feedback and comments
+        - Workload assessments
+        - Distribution requirements
+
+        3. Course Relationships:
+        - Find courses in same department
+        - Find courses with similar requirements
+        - Course prerequisites and relationships
+
+        ***IMPORTANT NOTES:***
+        - For specific courses, use exact course codes (e.g., "MAT201")
+        - For similar courses, use phrases like "similar to" or "like"
+        - For difficulty, use words like "easy", "hard", "challenging"
+        - Results include links to Princeton Courses for verification
+        """
     },
     {
         "name": Tool.NEARBY_PLACES,
