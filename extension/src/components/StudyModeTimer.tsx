@@ -47,12 +47,17 @@ const CountdownTimer = () => {
     };
 
     return (
-        <div>
-            <p>Countdown Timer:</p>
-            <p>{`${hours}h ${minutes}m ${seconds}s`}</p>
-            <button onClick={onClickReset}>Reset</button>
-            <button onClick={onStart}>Start</button>
-            <button onClick={onStop}>Stop</button>
+        <div style={{zIndex:2}}>
+            <div style={{fontSize:"150px", color:"white", fontFamily:"Oswald"}}>{`${hours}h ${minutes}m ${seconds}s`}</div>
+            <div style={{width:"100hv", display:"flex", justifyContent:"space-between"}}>
+                <button style={{alignSelf:"right", width:"125px", height:"75px", margin:"15px", fontSize:"40px", color:"white", fontFamily:"Oswald", backgroundColor:"#ffc067", borderRadius:"50px", borderColor:"orange"}}
+                onClick={onClickReset}>Reset</button>
+                <button style={{width:"125px", height:"75px", margin:"15px", fontSize:"40px", color:"white", fontFamily:"Oswald", backgroundColor:"#ffc067", borderRadius:"50px", borderColor:"orange"}}
+                onClick={onStart}>Start</button>
+                <button style={{width:"125px", height:"75px", margin:"15px", fontSize:"40px", color:"white", fontFamily:"Oswald", backgroundColor:"#ffc067", borderRadius:"50px", borderColor:"orange"}}
+                onClick={onStop}>Stop</button>
+            </div>  
+            
         </div>
     );
 };

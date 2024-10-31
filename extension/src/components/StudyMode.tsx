@@ -168,8 +168,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
           opacity: isImageLoaded ? 1 : 0,
           zIndex: 0,
           pointerEvents: "none",
+          alignContent:"center",
+          justifyItems:"center"
         }}
-      ></div>
+      >
+
+        <StudyModeTimer />
+      </div>
       )}
 
       {/* Main content with widgets */}
@@ -193,7 +198,6 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
             <button ref={settingsButtonRef} onClick={toggleSettingsPopup} className="study-mode-button">
               <FontAwesomeIcon icon={faGear} size="2x" />
             </button>
-            <StudyModeTimer />
 
             {/* Popup for background color selection */}
             {showSettings && (
@@ -211,7 +215,6 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
             )}
           </>
         )}
-
         {/* Main Study Mode Toggle Button */}
         <button onClick={handleToggle} className="study-mode-button">
           <FontAwesomeIcon icon={isStudyMode ? faHouse : faBookOpen} size="2x" />
@@ -259,10 +262,9 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
          }}
        >
          <img src={duckgif} alt="Moving Duck" width="50" />
-
        </div>
       )}
-
+      {/* {(isStudyMode) && ()} */}
     </>
   );
 }
