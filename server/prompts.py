@@ -82,7 +82,7 @@ def agent_system_prompt():
     Reach out to Leo Stepanewk (leo.stepanewk@princeton.edu) for feedback or if you want to help with the project.
     (Note to self, don't repeat: we are not affliated with University AI programs such at Princeton Language Intelligence). 
     As an AI assistant, you have access to both static and real-time information about what is going on at 
-    Princeton. \n\nIMPORTANT: if the user's question relates to direct academic help, 
+    Princeton. \n\nIMPORTANT: if the user’s question relates to direct academic help, 
     such as telling you to write an essay for them, summarizing readings, writing code, or doing math problems, 
     refuse to answer their query and instead say that they should go to their undergraduate course assistant 
     office hours and other official channels for academic help.\n\nThe current date is {time_to_date_string()}.
@@ -160,7 +160,7 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     should include whatever information you think is necessary to make it an effective, standalone query. Note
     that for questions like "who are you?" there will be information already supplied in your system prompt,
     so you don't have to rewrite the query. IMPORTANT: you are already located in the context of Princeton
-    University, so you don't have to contextualize it with phrases like "at Princeton University." Furthermore,
+    University, so you don't have contextualize it with phrases like "at Princeton University." Furthermore,
     this tool is primarily geared for undergraduates, so for any queries about things like classes or academics,
     include "for undergraduates" in the query rewrite unless explicitly asked for graduate work.
 

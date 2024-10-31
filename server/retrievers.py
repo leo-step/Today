@@ -1,6 +1,6 @@
 from utils import get_embedding, openai_json_response, delete_dict_key_recursively, system_prompt, build_search_query
 from clients import db_client
-from prompts import extract_email_search_terms, email_search_query
+from prompts import get_courses_search_query, user_query, extract_email_search_terms, email_search_query
 import time
 import requests
 import os
@@ -21,53 +21,6 @@ BODY_MATCH_SCORE = 5
 # constants for embedding
 PROCESSED_RESULTS_GENERIC = 25
 PROCESSED_RESULTS_SPECIFIC = 15
-
-@system_prompt
-def get_course_search_prompt():
-    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
-    extract the key search terms. Here are examples:
-    
-    Example 1 - Direct Course Code:
-    Input: "should I take COS217"
-    Output: "COS 217"
-
-    Example 2 - Course Comparison:
-    Input: "is COS217 harder than COS226"
-    Output: "COS 217"  # Will look up first course, then compare
-
-    Example 3 - Similar Course Query:
-    Input: "what courses are similar to MAT201"
-    Output: "MAT 201"  # Will find similar courses based on this
-
-    Example 4 - Department Search:
-    Input: "easy math classes"
-    Output: "MAT"  # Department code for broad search
-
-    Example 5 - Topic Search:
-    Input: "artificial intelligence courses"
-    Output: "artificial intelligence"
-
-    Example 6 - Workload Query:
-    Input: "what are the best no pset classes"
-    Output: "no problem sets"  # Will search descriptions and comments
-
-    Example 7 - Difficulty Query:
-    Input: "what's an easy science requirement"
-    Output: "science requirement easy"
-
-    ***IMPORTANT RULES:***
-    1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
-    2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
-    3. For topic searches: Use minimal keywords without words like "course" or "class"
-    4. For workload queries: Include terms like "no problem sets", "no psets", "light workload"
-    5. For difficulty queries: Include difficulty level (easy/hard) with requirements
-    6. Never add words like "undergraduate" or "Princeton"
-
-    Return a JSON where your output is a string under the key "search_query". For example:
-    {
-        "search_query": "COS 217"
-    }
-    """
 
 def setup_mongodb_indices():
     collection = db_client["crawl"]
@@ -402,6 +355,53 @@ def retrieve_princeton_courses(query_text):
     except Exception as e:
         print("[ERROR] Course retrieval failed:", e)
         return {}, [], None, True
+    
+@system_prompt
+def get_course_search_prompt():
+    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
+    extract the key search terms. Here are examples:
+    
+    Example 1 - Direct Course Code:
+    Input: "should I take COS217"
+    Output: "COS 217"
+
+    Example 2 - Course Comparison:
+    Input: "is COS217 harder than COS226"
+    Output: "COS 217"  # Will look up first course, then compare
+
+    Example 3 - Similar Course Query:
+    Input: "what courses are similar to MAT201"
+    Output: "MAT 201"  # Will find similar courses based on this
+
+    Example 4 - Department Search:
+    Input: "easy math classes"
+    Output: "MAT"  # Department code for broad search
+
+    Example 5 - Topic Search:
+    Input: "artificial intelligence courses"
+    Output: "artificial intelligence"
+
+    Example 6 - Workload Query:
+    Input: "what are the best no pset classes"
+    Output: "no problem sets"  # Will search descriptions and comments
+
+    Example 7 - Difficulty Query:
+    Input: "what's an easy science requirement"
+    Output: "science requirement easy"
+
+    ***IMPORTANT RULES:***
+    1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
+    2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
+    3. For topic searches: Use minimal keywords without words like "course" or "class"
+    4. For workload queries: Include terms like "no problem sets", "no psets", "light workload"
+    5. For difficulty queries: Include difficulty level (easy/hard) with requirements
+    6. Never add words like "undergraduate" or "Princeton"
+
+    Return a JSON where your output is a string under the key "search_query". For example:
+    {
+        "search_query": "COS 217"
+    }
+    """
 
 def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
     query_vector = get_embedding(query)
