@@ -228,159 +228,172 @@ def retrieve_eating_clubs(query_text):
     return hybrid_search(collection, query_text, "eatingclub", expiry=True)
 
 def retrieve_princeton_courses(query_text):
-    """Enhanced course retrieval with semantic search"""
+    """Enhanced course retrieval with better handling of requirements and workload"""
     collection = db_client["courses"]
     
-    # extract course codes if present
-    course_codes = re.findall(r'([A-Z]{3})\s*(\d{3}[A-Z]?)', query_text.upper())
-    
-    # check query type
-    is_comparison = len(course_codes) > 1
-    is_similarity = "similar" in query_text.lower() or "like" in query_text.lower()
-    is_difficulty = any(word in query_text.lower() for word in 
-        ["hard", "easy", "difficult", "challenging", "tough", "simple"])
-    is_workload = any(word in query_text.lower() for word in
-        ["pset", "problem set", "workload", "work", "assignment", "homework"])
-
     try:
-        if is_comparison:
-            # handle course comparison
-            dept1, num1 = course_codes[0]
-            dept2, num2 = course_codes[1]
-            
-            # get both courses with their evaluations
-            pipeline = [
+        # Get semantic understanding of query
+        response = openai_json_response([{
+            "role": "system",
+            "content": [{"type": "text", "text": """Extract search criteria from course queries. Return JSON with:
+                - distribution: array of distribution requirements mentioned (CD, EC, EM, LA, etc)
+                - workload: object with properties:
+                    - has_psets: boolean if query asks about problem sets
+                    - difficulty: string "easy"|"medium"|"hard" if mentioned
+                    - time_commitment: string "light"|"medium"|"heavy" if mentioned
+                - department: string of department code if specific department mentioned
+                - keywords: array of other important search terms
+                Example: "what courses fulfill a cd ec em or la requirement that have psets" ->
                 {
-                    "$match": {
-                        "$or": [
-                            {"department": dept1, "catalogNumber": num1},
-                            {"department": dept2, "catalogNumber": num2}
-                        ]
-                    }
+                    "distribution": ["CD", "EC", "EM", "LA"],
+                    "workload": {"has_psets": true, "difficulty": null, "time_commitment": null},
+                    "department": null,
+                    "keywords": []
                 }
-            ]
-            
-            results = list(collection.aggregate(pipeline))
-            if len(results) != 2:
-                return {}, [], None, True
-            
-            # map results by department and catalog number
-            courses = {f"{c['department']}{c['catalogNumber']}": c for c in results}
-            course1 = courses.get(f"{dept1}{num1}")
-            course2 = courses.get(f"{dept2}{num2}")
-            
-            # return the first course with comparison data
-            course = course1
-            course["comparison"] = {
-                "other_course": f"{dept2} {num2}",
-                "this_course_score": course1.get("scores", {}).get("Quality of Course"),
-                "other_course_score": course2.get("scores", {}).get("Quality of Course")
-            }
-            
-            other_results = [f"{dept2} {num2}: {course2.get('title', '')}"]
-        
-        elif is_workload or is_difficulty:
-            # search for courses based on workload/difficulty
-            pipeline = [
-                {
-                    "$match": {
-                        "$or": [
-                            # Match course code if provided
-                            *({"department": dept, "catalogNumber": num} 
-                              for dept, num in course_codes),
-                            # Otherwise match description/comments
-                            {"text": {"$regex": "(no (problem )?sets?|light workload|minimal work|easy|manageable)", "$options": "i"}}
-                            if not course_codes else {}
-                        ]
-                    }
-                },
-                {
-                    "$addFields": {
-                        "quality_score": {"$ifNull": ["$scores.Quality of Course", 0]}
-                    }
-                },
-                {
-                    "$sort": {
-                        "quality_score": -1
-                    }
-                },
-                {
-                    "$limit": 10
-                }
-            ]
-            
-            results = list(collection.aggregate(pipeline))
-            if not results:
-                return {}, [], None, True
-            
-            course = results[0]
-            other_results = [
-                f"{c['department']} {c['catalogNumber']}: {c['title']}"
-                for c in results[1:5]
-            ]
-            
-            # extract relevant comments
-            if "text" in course:
-                comments = []
-                for line in course["text"].split("\n"):
-                    if any(term in line.lower() for term in 
-                          ["problem set", "pset", "workload", "work", "assignment",
-                           "hard", "easy", "difficult", "challenging", "tough", "simple"]):
-                        comments.append(line.strip())
-                
-                if comments:
-                    course["difficulty_analysis"] = {
-                        "scores": {
-                            "Quality of Course": course.get("scores", {}).get("Quality of Course"),
-                            "Quality of Written Assignments": course.get("scores", {}).get("Quality of Written Assignments")
-                        },
-                        "relevant_comments": comments[:3]
-                    }
-        
-        else:
-            # stsandard course search
-            pipeline = [
-                {
-                    "$match": {
-                        "$or": [
-                            # Match course code if provided
-                            *({"department": dept, "catalogNumber": num} 
-                              for dept, num in course_codes),
-                            # Otherwise match title/description
-                            {"$text": {"$search": query_text}}
-                            if not course_codes else {}
-                        ]
-                    }
-                },
-                {
-                    "$addFields": {
-                        "quality_score": {"$ifNull": ["$scores.Quality of Course", 0]}
-                    }
-                },
-                {
-                    "$sort": {
-                        "quality_score": -1
-                    }
-                },
-                {
-                    "$limit": 10
-                }
-            ]
-            
-            results = list(collection.aggregate(pipeline))
-            if not results:
-                return {}, [], None, True
-            
-            course = results[0]
-            other_results = [
-                f"{c['department']} {c['catalogNumber']}: {c['title']}"
-                for c in results[1:5]
-            ]
+            """}]
+        }, {
+            "role": "user", 
+            "content": [{"type": "text", "text": query_text}]
+        }])
 
-        # clean up course object
-        course = {k:v for k,v in course.items() if k not in ['_id', 'embedding']}
+        distribution = response.get("distribution", [])
+        workload = response.get("workload", {})
+        department = response.get("department")
+        keywords = response.get("keywords", [])
+
+        print(f"[DEBUG] Search criteria: {json.dumps(response)}")
+
+        # Build base query
+        query_conditions = []
+
+        # Add distribution requirement filter if specified
+        if distribution:
+            query_conditions.append({
+                "distribution": {"$in": distribution}
+            })
+
+        # Add department filter if specified
+        if department:
+            query_conditions.append({
+                "department": department
+            })
+
+        # Add keyword search across relevant fields
+        if keywords:
+            keyword_conditions = []
+            for keyword in keywords:
+                keyword_conditions.append({
+                    "$or": [
+                        {"title": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}},
+                        {"description": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}},
+                        {"assignments": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}},
+                        {"text": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}}
+                    ]
+                })
+            if keyword_conditions:
+                query_conditions.append({"$or": keyword_conditions})
+
+        # Execute search
+        base_query = {"$and": query_conditions} if query_conditions else {}
+        results = list(collection.find(base_query))
+        print(f"[DEBUG] Found {len(results)} matching documents")
+
+        # Process and score results
+        processed_results = []
+        for doc in results:
+            score = 0
+            
+            # Base score from distribution match
+            if distribution and doc.get("distribution") in distribution:
+                score += 10
+
+            # Score based on workload match
+            if workload.get("has_psets"):
+                has_psets = any(term in str(doc.get("assignments", "")).lower() for term in 
+                              ["problem set", "pset", "homework", "assignment"])
+                if has_psets:
+                    score += 5
+
+            # Score based on difficulty match
+            if workload.get("difficulty"):
+                difficulty_terms = {
+                    "easy": ["easy", "straightforward", "basic", "introductory"],
+                    "medium": ["moderate", "intermediate", "average"],
+                    "hard": ["challenging", "difficult", "advanced", "heavy"]
+                }
+                target_terms = difficulty_terms.get(workload["difficulty"], [])
+                
+                # Check comments for difficulty mentions
+                if "evaluations" in doc and "comments" in doc["evaluations"]:
+                    comment_matches = sum(1 for comment in doc["evaluations"]["comments"] 
+                                       if any(term in str(comment).lower() for term in target_terms))
+                    score += comment_matches * 2
+
+            # Score based on time commitment match
+            if workload.get("time_commitment"):
+                commitment_terms = {
+                    "light": ["light", "minimal", "manageable"],
+                    "medium": ["moderate", "reasonable", "balanced"],
+                    "heavy": ["heavy", "intense", "time-consuming"]
+                }
+                target_terms = commitment_terms.get(workload["time_commitment"], [])
+                
+                # Check comments for time commitment mentions
+                if "evaluations" in doc and "comments" in doc["evaluations"]:
+                    comment_matches = sum(1 for comment in doc["evaluations"]["comments"] 
+                                       if any(term in str(comment).lower() for term in target_terms))
+                    score += comment_matches * 2
+
+            # Add course quality score
+            quality_score = doc.get('scores', {}).get('Quality of Course', 0)
+            if quality_score:
+                score += quality_score
+
+            if score > 0:
+                doc['score'] = score
+                processed_results.append(doc)
+
+        # Sort by score
+        processed_results.sort(key=lambda x: x.get('score', 0), reverse=True)
         
-        # convert _id to string for URL
+        if not processed_results:
+            return {}, [], None, True
+
+        # Get primary course
+        course = processed_results[0]
+        
+        # Extract relevant comments about workload/difficulty
+        if "evaluations" in course and "comments" in course["evaluations"]:
+            comments = []
+            for comment in course["evaluations"].get("comments", []):
+                if isinstance(comment, dict) and "comment" in comment:
+                    comment_text = comment["comment"]
+                    if any(term in comment_text.lower() for term in [
+                        "problem set", "pset", "homework", "assignment",
+                        "workload", "work", "difficult", "easy", "challenging",
+                        "time", "hours", "commitment"
+                    ]):
+                        comments.append(comment_text)
+            
+            if comments:
+                course["difficulty_analysis"] = {
+                    "scores": {
+                        "Quality of Course": course.get("scores", {}).get("Quality of Course"),
+                        "Quality of Written Assignments": course.get("scores", {}).get("Quality of Written Assignments")
+                    },
+                    "relevant_comments": comments[:3]
+                }
+
+        # Get related courses
+        other_results = [
+            f"{c['department']} {c['catalogNumber']}: {c['title']}"
+            for c in processed_results[1:5]
+        ]
+
+        # Clean up course object
+        course = {k:v for k,v in course.items() if k not in ['_id', 'embedding', 'score']}
+        
+        # Get course URL
         course_id = str(course.get('courseID', ''))
         link = f"https://www.princetoncourses.com/course/{course_id}"
         
@@ -389,178 +402,6 @@ def retrieve_princeton_courses(query_text):
     except Exception as e:
         print("[ERROR] Course retrieval failed:", e)
         return {}, [], None, True
-
-def retrieve_nearby_places(query_text):
-    api_key = os.getenv('GOOGLE_MAPS_API_KEY')
-    if not api_key:
-        raise ValueError("GOOGLE_MAPS_API_KEY not set in environment variables")
-
-    # exact coords of prospect house bc imo it's the most central point on campus
-    location = {
-        'latitude': 40.34711483385821,
-        'longitude': -74.65678397916251
-    }
-
-    # endpoint for nearby search
-    endpoint_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-
-    # prep parameters
-    params = {
-        'location': f"{location['latitude']},{location['longitude']}",
-        'radius': 7000,  # metres; increased radius to 7km
-        'keyword': query_text,
-        'key': api_key,
-        'type': 'establishment',  # optional: limits results to businesses; it's worked pretty well in testing
-    }
-
-    response = requests.get(endpoint_url, params=params)
-
-    try:
-        data = response.json()
-    except ValueError:
-        raise Exception(f"Error parsing JSON response: {response.text}")
-
-    if response.status_code != 200 or data.get('status') not in ['OK', 'ZERO_RESULTS']:
-        error_message = data.get('error_message', 'Unknown error')
-        raise Exception(f"Error fetching data from Google Places API: {error_message}")
-
-    places = []
-    results = data.get('results', [])
-    for result in results:
-        # only retrieve details for first result to stop excess usage
-        if len(places) >= 5:
-            break
-
-        # make a place details API call to get website/phone #
-        place_id = result.get('place_id')
-        details = {}
-        if place_id:
-            details = get_place_details(place_id, api_key)
-
-        place_info = {
-            'name': result.get('name', ''),
-            'address': result.get('vicinity', ''),
-            'types': result.get('types', []),
-            'rating': result.get('rating', 'N/A'),
-            'user_ratings_total': result.get('user_ratings_total', 0),
-            'opening_hours': details.get('opening_hours', {}).get('weekday_text', []),
-            'is_open_now': details.get('opening_hours', {}).get('open_now'),
-            'business_status': result.get('business_status', 'N/A'),
-            'website': details.get('website', 'N/A'),
-            'phone_number': details.get('formatted_phone_number', 'N/A'),
-            'next_event': details.get('next_event', None)
-        }
-        places.append(place_info)
-
-    return places
-
-def get_place_details(place_id, api_key):
-    # endpoint for place details
-    details_url = 'https://maps.googleapis.com/maps/api/place/details/json'
-
-    # prep parameters
-    params = {
-        'place_id': place_id,
-        'fields': 'website,formatted_phone_number,opening_hours',
-        'key': api_key
-    }
-
-    # make GET request
-    response = requests.get(details_url, params=params)
-
-    # check if response is JSON
-    try:
-        data = response.json()
-    except ValueError:
-        return {}
-
-    if response.status_code != 200 or data.get('status') != 'OK':
-        return {}
-
-    # extract desired fields
-    result = data.get('result', {})
-    details = {
-        'website': result.get('website', 'N/A'),
-        'formatted_phone_number': result.get('formatted_phone_number', 'N/A'),
-        'opening_hours': result.get('opening_hours', {})
-    }
-
-    # add logic to compute next open or close time
-    details['next_event'] = get_next_event(details['opening_hours'])
-
-    return details
-
-def get_next_event(opening_hours):
-    if not opening_hours:
-        return None
-
-    periods = opening_hours.get('periods', [])
-    if not periods:
-        return None
-
-    # get current time in EST
-    now = datetime.datetime.now(tz=tz.gettz('America/New_York'))
-    time_now = int(now.strftime('%H%M'))  # current time in HHMM format
-    current_day = now.weekday()
-
-    # Google API days: sunday is 0, monday is 1, ..., saturday is 6
-    google_day = (current_day + 1) % 7
-
-    upcoming_events = []
-
-    for day_offset in range(7):
-        day = (google_day + day_offset) % 7
-        event_date = now.date() + datetime.timedelta(days=day_offset)
-
-        for period in periods:
-            if period['open']['day'] == day:
-                open_time = int(period['open']['time'])
-                # check if 'close' exists in period
-                if 'close' in period:
-                    close_time = int(period['close']['time'])
-                else:
-                    # handle places that are open 24 hours
-                    close_time = open_time + 2400  # assumes place is open for 24 hours
-
-                # if store closes after midnight
-                if close_time < open_time:
-                    close_time += 2400  # adjust close time for next day
-
-                if day_offset == 0:
-                    # today
-                    if time_now < open_time:
-                        # store will open later today
-                        event_time = datetime.datetime.combine(
-                            event_date,
-                            datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
-                            tzinfo=now.tzinfo
-                        )
-                        upcoming_events.append({'type': 'open', 'time': event_time})
-                    elif time_now < close_time:
-                        # store is currently open and will close later today
-                        event_time = datetime.datetime.combine(
-                            event_date,
-                            datetime.datetime.strptime(str(close_time % 2400).zfill(4), '%H%M').time(),
-                            tzinfo=now.tzinfo
-                        )
-                        upcoming_events.append({'type': 'close', 'time': event_time})
-                else:
-                    # future days
-                    event_time = datetime.datetime.combine(
-                        event_date,
-                        datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
-                        tzinfo=now.tzinfo
-                    )
-                    upcoming_events.append({'type': 'open', 'time': event_time})
-
-    # sort events by time
-    upcoming_events.sort(key=lambda x: x['time'])
-
-    for event in upcoming_events:
-        if event['time'] > now:
-            return event
-
-    return None
 
 def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
     query_vector = get_embedding(query)
@@ -713,3 +554,222 @@ def weighted_reciprocal_rank(doc_lists):
     ]
 
     return sorted_docs
+
+def retrieve_nearby_places(query_text):
+    api_key = os.getenv('GOOGLE_MAPS_API_KEY')
+    if not api_key:
+        raise ValueError("GOOGLE_MAPS_API_KEY not set in environment variables")
+
+    # exact coords of prospect house bc imo it's the most central point on campus
+    location = {
+        'latitude': 40.34711483385821,
+        'longitude': -74.65678397916251
+    }
+
+    # endpoint for nearby search
+    endpoint_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
+
+    # prep parameters
+    params = {
+        'location': f"{location['latitude']},{location['longitude']}",
+        'radius': 7000,  # metres; increased radius to 7km
+        'keyword': query_text,
+        'key': api_key,
+        'type': 'establishment',  # optional: limits results to businesses; it's worked pretty well in testing
+        # apparently there's 'fields' parameter for nearby search api; fields are predefined
+    }
+
+    response = requests.get(endpoint_url, params=params)
+
+    try:
+        data = response.json()
+    except ValueError:
+        raise Exception(f"Error parsing JSON response: {response.text}")
+
+    if response.status_code != 200 or data.get('status') not in ['OK', 'ZERO_RESULTS']:
+        error_message = data.get('error_message', 'Unknown error')
+        raise Exception(f"Error fetching data from Google Places API: {error_message}")
+
+    places = []
+    results = data.get('results', [])
+    for result in results:
+        # only retrieve details for first result to stop excess usage
+        if len(places) >= 5:
+            break
+
+        # make a place details API call to get website/phone #
+        place_id = result.get('place_id')
+        details = {}
+        if place_id:
+            details = get_place_details(place_id, api_key)
+
+        place_info = {
+            'name': result.get('name', ''),
+            'address': result.get('vicinity', ''),
+            'types': result.get('types', []),
+            'rating': result.get('rating', 'N/A'),
+            'user_ratings_total': result.get('user_ratings_total', 0),
+            'opening_hours': details.get('opening_hours', {}).get('weekday_text', []),
+            'is_open_now': details.get('opening_hours', {}).get('open_now'),
+            'business_status': result.get('business_status', 'N/A'),
+            'website': details.get('website', 'N/A'),
+            'phone_number': details.get('formatted_phone_number', 'N/A'),
+            'next_event': details.get('next_event', None)
+        }
+        places.append(place_info)
+
+    return places
+
+# google api lowkey is a mess; im prolly overcomplicating it,
+# but hardcoding location response formats is safer imo
+def get_place_details(place_id, api_key):
+    # endpoint for place details
+    details_url = 'https://maps.googleapis.com/maps/api/place/details/json'
+
+    # prep parameters
+    params = {
+        'place_id': place_id,
+        'fields': 'website,formatted_phone_number,opening_hours',
+        'key': api_key
+    }
+
+    # make GET request
+    response = requests.get(details_url, params=params)
+
+    # check if response is JSON
+    try:
+        data = response.json()
+    except ValueError:
+        return {}
+
+    if response.status_code != 200 or data.get('status') != 'OK':
+        return {}
+
+    # extract desired fields
+    result = data.get('result', {})
+    details = {
+        'website': result.get('website', 'N/A'),
+        'formatted_phone_number': result.get('formatted_phone_number', 'N/A'),
+        'opening_hours': result.get('opening_hours', {})
+    }
+
+    # add logic to compute next open or close time
+    details['next_event'] = get_next_event(details['opening_hours'])
+
+    return details
+
+def get_next_event(opening_hours):
+    if not opening_hours:
+        return None
+
+    periods = opening_hours.get('periods', [])
+    if not periods:
+        return None
+
+    # get current time in EST
+    now = datetime.datetime.now(tz=tz.gettz('America/New_York'))
+    time_now = int(now.strftime('%H%M'))  # current time in HHMM format
+    current_day = now.weekday()
+
+    # Google API days: sunday is 0, monday is 1, ..., saturday is 6
+    google_day = (current_day + 1) % 7
+
+    upcoming_events = []
+
+    for day_offset in range(7):
+        day = (google_day + day_offset) % 7
+        event_date = now.date() + datetime.timedelta(days=day_offset)
+
+        for period in periods:
+            if period['open']['day'] == day:
+                open_time = int(period['open']['time'])
+                # check if 'close' exists in period
+                if 'close' in period:
+                    close_time = int(period['close']['time'])
+                else:
+                    # handle places that are open 24 hours
+                    close_time = open_time + 2400  # assumes place is open for 24 hours
+
+                # if store closes after midnight
+                if close_time < open_time:
+                    close_time += 2400  # adjust close time for next day
+
+                if day_offset == 0:
+                    # today
+                    if time_now < open_time:
+                        # store will open later today
+                        event_time = datetime.datetime.combine(
+                            event_date,
+                            datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
+                            tzinfo=now.tzinfo
+                        )
+                        upcoming_events.append({'type': 'open', 'time': event_time})
+                    elif time_now < close_time:
+                        # store is currently open and will close later today
+                        event_time = datetime.datetime.combine(
+                            event_date,
+                            datetime.datetime.strptime(str(close_time % 2400).zfill(4), '%H%M').time(),
+                            tzinfo=now.tzinfo
+                        )
+                        upcoming_events.append({'type': 'close', 'time': event_time})
+                else:
+                    # future days
+                    event_time = datetime.datetime.combine(
+                        event_date,
+                        datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
+                        tzinfo=now.tzinfo
+                    )
+                    upcoming_events.append({'type': 'open', 'time': event_time})
+
+    # sort events by time
+    upcoming_events.sort(key=lambda x: x['time'])
+
+    for event in upcoming_events:
+        if event['time'] > now:
+            return event
+
+    return None
+
+def clean_query(query):
+    # lowercase the query for uniformity
+    query = query.lower()
+    # remove common phrases
+    common_phrases = [
+        r'\blocation of\b',
+        r'\bfind\b',
+        r'\bin princeton\b',
+        r'\bnear me\b',
+        r'\bnearby\b',
+        r'\baround here\b',
+        r'\baround\b',
+        r'\bwhat is\b',
+        r'\bwhere is\b',
+        r'\bhow close is\b',
+        r'\bhow far is\b',
+        r'\bis there a\b',
+        r'\bnear\b',
+        r'\bnearest\b',
+        r'\bthe\b',
+        r'\baddress of\b',
+        r'\blocation\b',
+        r'\bof\b',
+        r'\bin\b',
+        r'\bto\b',
+        r'\bprinceton\b',
+        r'\buniversity\b',
+        r'\bplease\b',
+        r'\bcan you\b',
+        r'\bcould you\b',
+        r'\btell me\b',
+        r'\?',
+    ]
+    for phrase in common_phrases:
+        pattern = re.compile(phrase, flags=re.IGNORECASE)
+        query = pattern.sub('', query)
+    # remove any extra whitespace
+    query = ' '.join(query.split())
+    # return the cleaned query to be used in api calls
+    return query
+
+if __name__ == "__main__":
+    print(retrieve_princeton_courses("baby"))

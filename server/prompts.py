@@ -16,43 +16,62 @@ def user_query_with_context(context: str, query: str):
 
 @system_prompt
 def get_courses_search_query():
-    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
-    shorten it down into a course code or a couple concise keywords. Here are a couple examples:
-    
-    Example 1
-    Input: "class about artificial intelligence and education for undergraduates"
-    Output: "AI and education"
+    return """You will receive a piece of text related to looking up a college course at Princeton. Extract key information about:
+    1. Course codes (e.g., "COS 217")
+    2. Distribution requirements (CD, EC, EM, LA, etc.)
+    3. Workload preferences (problem sets, assignments, difficulty level)
+    4. Department interests (using department codes)
+    5. Topic keywords
 
-    Example 2
-    Input: "what semester is baby wants candy offered in"
-    Output: "Baby wants candy"
+    Here are examples:
 
-    Example 3
+    Example 1 - Course Code:
     Input: "should I take COS217"
-    Output: "COS 217"
-
-    Example 4
-    Input: "is cos597h hard?"
-    Output: "COS 597H"
-
-    Example 5
-    Input: "cool music course"
-    Output: "Music"
-
-    Example 6
-    Input: "computer science classes"
-    Output: "COS"
-
-    ***IMPORTANT: Never include extra descriptive words like "classes" or "undergraduate."
-    Also don't add words such as "difficulty". You must keep it very simple otherwise the 
-    search will not work. Basically only the course code and keywords. Also if the query
-    is general for a department, such as computer science classes or music classes, use
-    the department code such as COS or MUS.***
-
-    Return a JSON where your output is a string under the key "search_query". For example,
-    {
-        "search_query": "AI and education"
+    Output: {
+        "search_query": "COS 217",
+        "distribution": [],
+        "workload": {"has_psets": null, "difficulty": null},
+        "department": "COS",
+        "keywords": []
     }
+
+    Example 2 - Distribution Requirements:
+    Input: "what courses fulfill CD and EC requirements"
+    Output: {
+        "search_query": "CD EC distribution requirements",
+        "distribution": ["CD", "EC"],
+        "workload": {"has_psets": null, "difficulty": null},
+        "department": null,
+        "keywords": ["distribution"]
+    }
+
+    Example 3 - Workload Query:
+    Input: "easy math classes without problem sets"
+    Output: {
+        "search_query": "math no problem sets",
+        "distribution": [],
+        "workload": {"has_psets": false, "difficulty": "easy"},
+        "department": "MAT",
+        "keywords": []
+    }
+
+    Example 4 - Topic Search:
+    Input: "artificial intelligence courses"
+    Output: {
+        "search_query": "artificial intelligence",
+        "distribution": [],
+        "workload": {"has_psets": null, "difficulty": null},
+        "department": null,
+        "keywords": ["artificial intelligence", "AI"]
+    }
+
+    ***IMPORTANT RULES:***
+    1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
+    2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
+    3. For workload: Indicate if problem sets/difficulty are mentioned
+    4. For distribution requirements: Use standard codes (CD, EC, EM, LA, etc.)
+    5. Never include words like "undergraduate" or "Princeton"
+    6. Keep keywords minimal and relevant
     """
 
 @system_prompt
