@@ -18,6 +18,7 @@ export enum EventTypes {
   SHOW_CALC = "showCalc",
   SHOW_SPOTIFY = "showSpotify",
   SHOW_DUCK = "showDuck",
+  FULL_SCREEN = "fullScreen",
   CHANGED_STUDYBG = "changedStudyBG"
 }
 
