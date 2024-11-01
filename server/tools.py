@@ -122,9 +122,9 @@ def invoke_tool(tool: str, tool_input: str) -> str:
     if tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
         return format_documents(documents)
-    elif tool == Tool.ALL_EMAILS.value:
-        documents = retrieve_any_emails(tool_input)
-        return format_documents(documents)
+    # elif tool == Tool.ALL_EMAILS.value:
+    #     documents = retrieve_any_emails(tool_input)
+    #     return format_documents(documents)
     elif tool == Tool.WIDGET_DATA.value:
         widget_data = retrieve_widget_data()
         return json.dumps(widget_data)
@@ -194,7 +194,7 @@ def choose_tool_and_rewrite(tools, memory, query_text):
 class Tool(Enum):
     CRAWL = 'crawl'  # added missing tool
     EMAILS = 'emails'
-    ALL_EMAILS = 'all_emails'
+    # ALL_EMAILS = 'all_emails'
     EATING_CLUBS = 'eating_clubs'
     WIDGET_DATA = 'widget_data'
     LOCATION = 'location'
@@ -240,20 +240,20 @@ tools: Tools = [
             professors, and other general public university information.
         """
     },
-    {
-        "name": Tool.ALL_EMAILS,
-        "description": """This tool accesses all past Princeton listserv emails
-            emails. Useful when you need to answer question about club and campus
-            life events that may or may not have happened already. 
-            ***IMPORTANT: you must use this tool when prompted about club related 
-            things that can be general questions or questions about events that
-            happened in the past. Don't refer to this tool for current or future
-            events or club information.***
+    # {
+    #     "name": Tool.ALL_EMAILS,
+    #     "description": """This tool accesses all past Princeton listserv emails
+    #         emails. Useful when you need to answer question about club and campus
+    #         life events that may or may not have happened already. 
+    #         ***IMPORTANT: you must use this tool when prompted about club related 
+    #         things that can be general questions or questions about events that
+    #         happened in the past. Don't refer to this tool for current or future
+    #         events or club information.***
             
-            Not useful for answering questions about academic facts, classes,
-            professors, and other general public university information.
-        """
-    },
+    #         Not useful for answering questions about academic facts, classes,
+    #         professors, and other general public university information.
+    #     """
+    # },
     {
         "name": Tool.EATING_CLUBS,
         "description": f"""This tool accesses information about eating clubs, which 
@@ -267,7 +267,7 @@ tools: Tools = [
         to the word ***street*** should also always invoke this tool!***
         
         ***IMPORTANT: if the user is asking about eating club events that happened in
-        the past, you should use the {Tool.ALL_EMAILS} tool. This tool will only access
+        the past, you should use the {Tool.CATCHALL} tool. This tool will only access
         the upcoming events or general eating club information.***"""
     },
     {

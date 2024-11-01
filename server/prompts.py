@@ -15,63 +15,50 @@ def user_query_with_context(context: str, query: str):
     \n\nUser query: {query}"""
 
 @system_prompt
-def get_courses_search_query():
-    return """You will receive a piece of text related to looking up a college course at Princeton. Extract key information about:
-    1. Course codes (e.g., "COS 217")
-    2. Distribution requirements (CD, EC, EM, LA, etc.)
-    3. Workload preferences (problem sets, assignments, difficulty level)
-    4. Department interests (using department codes)
-    5. Topic keywords
-
-    Here are examples:
-
-    Example 1 - Course Code:
+def get_course_search_prompt():
+    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
+    extract the key search terms. Here are examples:
+    
+    Example 1 - Direct Course Code:
     Input: "should I take COS217"
-    Output: {
-        "search_query": "COS 217",
-        "distribution": [],
-        "workload": {"has_psets": null, "difficulty": null},
-        "department": "COS",
-        "keywords": []
-    }
+    Output: "COS 217"
 
-    Example 2 - Distribution Requirements:
-    Input: "what courses fulfill CD and EC requirements"
-    Output: {
-        "search_query": "CD EC distribution requirements",
-        "distribution": ["CD", "EC"],
-        "workload": {"has_psets": null, "difficulty": null},
-        "department": null,
-        "keywords": ["distribution"]
-    }
+    Example 2 - Course Comparison:
+    Input: "is COS217 harder than COS226"
+    Output: "COS 217"  # Will look up first course, then compare
 
-    Example 3 - Workload Query:
-    Input: "easy math classes without problem sets"
-    Output: {
-        "search_query": "math no problem sets",
-        "distribution": [],
-        "workload": {"has_psets": false, "difficulty": "easy"},
-        "department": "MAT",
-        "keywords": []
-    }
+    Example 3 - Similar Course Query:
+    Input: "what courses are similar to MAT201"
+    Output: "MAT 201"  # Will find similar courses based on this
 
-    Example 4 - Topic Search:
+    Example 4 - Department Search:
+    Input: "easy math classes"
+    Output: "MAT"  # Department code for broad search
+
+    Example 5 - Topic Search:
     Input: "artificial intelligence courses"
-    Output: {
-        "search_query": "artificial intelligence",
-        "distribution": [],
-        "workload": {"has_psets": null, "difficulty": null},
-        "department": null,
-        "keywords": ["artificial intelligence", "AI"]
-    }
+    Output: "artificial intelligence"
+
+    Example 6 - Workload Query:
+    Input: "what are the best no pset classes"
+    Output: "no problem sets"  # Will search descriptions and comments
+
+    Example 7 - Difficulty Query:
+    Input: "what's an easy science requirement"
+    Output: "science requirement easy"
 
     ***IMPORTANT RULES:***
     1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
     2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
-    3. For workload: Indicate if problem sets/difficulty are mentioned
-    4. For distribution requirements: Use standard codes (CD, EC, EM, LA, etc.)
-    5. Never include words like "undergraduate" or "Princeton"
-    6. Keep keywords minimal and relevant
+    3. For topic searches: Use minimal keywords without words like "course" or "class"
+    4. For workload queries: Include terms like "no problem sets", "no psets", "light workload"
+    5. For difficulty queries: Include difficulty level (easy/hard) with requirements
+    6. Never add words like "undergraduate" or "Princeton"
+
+    Return a JSON where your output is a string under the key "search_query". For example:
+    {
+        "search_query": "COS 217"
+    }
     """
 
 @system_prompt

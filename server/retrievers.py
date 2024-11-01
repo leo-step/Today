@@ -1,6 +1,6 @@
 from utils import get_embedding, openai_json_response, delete_dict_key_recursively, system_prompt, build_search_query
 from clients import db_client
-from prompts import get_courses_search_query, user_query, extract_email_search_terms, email_search_query
+from prompts import get_course_search_prompt, user_query, extract_email_search_terms, email_search_query
 import time
 import requests
 import os
@@ -181,227 +181,156 @@ def retrieve_eating_clubs(query_text):
     return hybrid_search(collection, query_text, "eatingclub", expiry=True)
 
 def retrieve_princeton_courses(query_text):
-    """Enhanced course retrieval with better handling of requirements and workload"""
+    """Robust course retrieval with multiple search strategies."""
     collection = db_client["courses"]
     
     try:
-        # Get semantic understanding of query
-        response = openai_json_response([{
-            "role": "system",
-            "content": [{"type": "text", "text": """Extract search criteria from course queries. Return JSON with:
-                - distribution: array of distribution requirements mentioned (CD, EC, EM, LA, etc)
-                - workload: object with properties:
-                    - has_psets: boolean if query asks about problem sets
-                    - difficulty: string "easy"|"medium"|"hard" if mentioned
-                    - time_commitment: string "light"|"medium"|"heavy" if mentioned
-                - department: string of department code if specific department mentioned
-                - keywords: array of other important search terms
-                Example: "what courses fulfill a cd ec em or la requirement that have psets" ->
-                {
-                    "distribution": ["CD", "EC", "EM", "LA"],
-                    "workload": {"has_psets": true, "difficulty": null, "time_commitment": null},
-                    "department": null,
-                    "keywords": []
-                }
-            """}]
-        }, {
-            "role": "user", 
-            "content": [{"type": "text", "text": query_text}]
-        }])
-
-        distribution = response.get("distribution", [])
-        workload = response.get("workload", {})
-        department = response.get("department")
-        keywords = response.get("keywords", [])
-
-        print(f"[DEBUG] Search criteria: {json.dumps(response)}")
-
-        # Build base query
-        query_conditions = []
-
-        # Add distribution requirement filter if specified
-        if distribution:
-            query_conditions.append({
-                "distribution": {"$in": distribution}
+        # first: direct course code lookup
+        course_match = re.search(r'([A-Za-z]{2,3})\s*(\d{3}[A-Za-z]*)', query_text)
+        if course_match:
+            dept, num = course_match.groups()
+            exact_course = collection.find_one({
+                "department": dept.upper(),
+                "catalogNumber": num
             })
+            if exact_course:
+                return exact_course, [], f"https://www.princetoncourses.com/course/{exact_course.get('courseID')}", True
 
-        # Add department filter if specified
-        if department:
-            query_conditions.append({
-                "department": department
-            })
-
-        # Add keyword search across relevant fields
-        if keywords:
-            keyword_conditions = []
-            for keyword in keywords:
-                keyword_conditions.append({
-                    "$or": [
-                        {"title": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}},
-                        {"description": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}},
-                        {"assignments": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}},
-                        {"text": {"$regex": f".*{re.escape(keyword)}.*", "$options": "i"}}
-                    ]
-                })
-            if keyword_conditions:
-                query_conditions.append({"$or": keyword_conditions})
-
-        # Execute search
-        base_query = {"$and": query_conditions} if query_conditions else {}
-        results = list(collection.find(base_query))
-        print(f"[DEBUG] Found {len(results)} matching documents")
-
-        # Process and score results
-        processed_results = []
-        for doc in results:
-            score = 0
-            
-            # Base score from distribution match
-            if distribution and doc.get("distribution") in distribution:
-                score += 10
-
-            # Score based on workload match
-            if workload.get("has_psets"):
-                has_psets = any(term in str(doc.get("assignments", "")).lower() for term in 
-                              ["problem set", "pset", "homework", "assignment"])
-                if has_psets:
-                    score += 5
-
-            # Score based on difficulty match
-            if workload.get("difficulty"):
-                difficulty_terms = {
-                    "easy": ["easy", "straightforward", "basic", "introductory"],
-                    "medium": ["moderate", "intermediate", "average"],
-                    "hard": ["challenging", "difficult", "advanced", "heavy"]
+        # second: full-text search pipeline does pipeline stuff
+        text_pipeline = [
+            {
+                "$search": {
+                    "index": "full-text-search",
+                    "compound": {
+                        "should": [
+                            {
+                                "text": {
+                                    "query": query_text,
+                                    "path": {
+                                        "wildcard": "*"
+                                    }
+                                }
+                            }
+                        ]
+                    }
                 }
-                target_terms = difficulty_terms.get(workload["difficulty"], [])
-                
-                # Check comments for difficulty mentions
-                if "evaluations" in doc and "comments" in doc["evaluations"]:
-                    comment_matches = sum(1 for comment in doc["evaluations"]["comments"] 
-                                       if any(term in str(comment).lower() for term in target_terms))
-                    score += comment_matches * 2
-
-            # Score based on time commitment match
-            if workload.get("time_commitment"):
-                commitment_terms = {
-                    "light": ["light", "minimal", "manageable"],
-                    "medium": ["moderate", "reasonable", "balanced"],
-                    "heavy": ["heavy", "intense", "time-consuming"]
+            },
+            {
+                "$addFields": {
+                    "searchScore": {
+                        "$meta": "searchScore"
+                    }
                 }
-                target_terms = commitment_terms.get(workload["time_commitment"], [])
-                
-                # Check comments for time commitment mentions
-                if "evaluations" in doc and "comments" in doc["evaluations"]:
-                    comment_matches = sum(1 for comment in doc["evaluations"]["comments"] 
-                                       if any(term in str(comment).lower() for term in target_terms))
-                    score += comment_matches * 2
-
-            # Add course quality score
-            quality_score = doc.get('scores', {}).get('Quality of Course', 0)
-            if quality_score:
-                score += quality_score
-
-            if score > 0:
-                doc['score'] = score
-                processed_results.append(doc)
-
-        # Sort by score
-        processed_results.sort(key=lambda x: x.get('score', 0), reverse=True)
-        
-        if not processed_results:
-            return {}, [], None, True
-
-        # Get primary course
-        course = processed_results[0]
-        
-        # Extract relevant comments about workload/difficulty
-        if "evaluations" in course and "comments" in course["evaluations"]:
-            comments = []
-            for comment in course["evaluations"].get("comments", []):
-                if isinstance(comment, dict) and "comment" in comment:
-                    comment_text = comment["comment"]
-                    if any(term in comment_text.lower() for term in [
-                        "problem set", "pset", "homework", "assignment",
-                        "workload", "work", "difficult", "easy", "challenging",
-                        "time", "hours", "commitment"
-                    ]):
-                        comments.append(comment_text)
-            
-            if comments:
-                course["difficulty_analysis"] = {
-                    "scores": {
-                        "Quality of Course": course.get("scores", {}).get("Quality of Course"),
-                        "Quality of Written Assignments": course.get("scores", {}).get("Quality of Written Assignments")
-                    },
-                    "relevant_comments": comments[:3]
-                }
-
-        # Get related courses
-        other_results = [
-            f"{c['department']} {c['catalogNumber']}: {c['title']}"
-            for c in processed_results[1:5]
+            },
+            {
+                "$limit": 20
+            }
         ]
 
-        # Clean up course object
-        course = {k:v for k,v in course.items() if k not in ['_id', 'embedding', 'score']}
+        # 3. Vector search pipeline
+        vector_pipeline = [
+            {
+                "$vectorSearch": {
+                    "queryVector": get_embedding(query_text),
+                    "path": "embedding",
+                    "numCandidates": 100,
+                    "limit": 20,
+                    "index": "vector_index"
+                }
+            },
+            {
+                "$addFields": {
+                    "vectorScore": {
+                        "$meta": "vectorSearchScore"
+                    }
+                }
+            }
+        ]
+
+        # run both searches
+        text_results = list(collection.aggregate(text_pipeline))
+        vector_results = list(collection.aggregate(vector_pipeline))
+
+        # combine results and remove depulicates
+        all_results = {}  # Use dict to deduplicate by _id
         
-        # Get course URL
-        course_id = str(course.get('courseID', ''))
+        for result in text_results + vector_results:
+            result_id = str(result['_id'])
+            if result_id not in all_results:
+                all_results[result_id] = result
+            else:
+                # if exists in both searches, combine scores
+                existing = all_results[result_id]
+                existing['combinedScore'] = (
+                    existing.get('searchScore', 0) + 
+                    existing.get('vectorScore', 0)
+                )
+
+        results = list(all_results.values())
+
+        # apply additional filters based on query
+        query_lower = query_text.lower()
+        
+        # distribution requirement filter
+        dist_requirements = []
+        if "ec" in query_lower:
+            dist_requirements.append("EC")
+        if "em" in query_lower:
+            dist_requirements.append("EM")
+        if "la" in query_lower:
+            dist_requirements.append("LA")
+            
+        if dist_requirements:
+            results = [r for r in results if r.get('distribution') in dist_requirements]
+
+        # problem set/assignment filter
+        if any(term in query_lower for term in ['pset', 'problem set', 'homework']):
+            results = [
+                r for r in results
+                if any(term in str(r.get('assignments', '')).lower() 
+                      for term in ['problem set', 'pset', 'homework', 'assignment'])
+                or any(term in str(r.get('evaluations', {}).get('comments', [])).lower()
+                      for term in ['problem set', 'pset', 'homework', 'assignment'])
+            ]
+
+        # quality/difficulty filter
+        if any(term in query_lower for term in ['good', 'best', 'quality', 'recommended']):
+            results.sort(
+                key=lambda x: float(x.get('scores', {}).get('Quality of Course', 0)), 
+                reverse=True
+            )
+
+        if not results:
+            return {}, [], None, True
+
+        # sort by combined relevance and quality
+        results.sort(
+            key=lambda x: (
+                x.get('combinedScore', 0),
+                float(x.get('scores', {}).get('Quality of Course', 0) or 0)
+            ),
+            reverse=True
+        )
+
+        # get course URL
+        course_id = str(results[0].get('courseID', ''))
         link = f"https://www.princetoncourses.com/course/{course_id}"
-        
-        return course, other_results, link, True
+
+        # get related courses
+        other_results = [
+            f"{c['department']} {c['catalogNumber']}: {c['title']}"
+            for c in results[1:5]
+        ]
+
+        # clean up main course object
+        main_course = {k:v for k,v in results[0].items() 
+                      if k not in ['_id', 'embedding', 'searchScore', 'vectorScore', 'combinedScore']}
+
+        return main_course, other_results, link, True
 
     except Exception as e:
         print("[ERROR] Course retrieval failed:", e)
         return {}, [], None, True
-    
-@system_prompt
-def get_course_search_prompt():
-    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
-    extract the key search terms. Here are examples:
-    
-    Example 1 - Direct Course Code:
-    Input: "should I take COS217"
-    Output: "COS 217"
-
-    Example 2 - Course Comparison:
-    Input: "is COS217 harder than COS226"
-    Output: "COS 217"  # Will look up first course, then compare
-
-    Example 3 - Similar Course Query:
-    Input: "what courses are similar to MAT201"
-    Output: "MAT 201"  # Will find similar courses based on this
-
-    Example 4 - Department Search:
-    Input: "easy math classes"
-    Output: "MAT"  # Department code for broad search
-
-    Example 5 - Topic Search:
-    Input: "artificial intelligence courses"
-    Output: "artificial intelligence"
-
-    Example 6 - Workload Query:
-    Input: "what are the best no pset classes"
-    Output: "no problem sets"  # Will search descriptions and comments
-
-    Example 7 - Difficulty Query:
-    Input: "what's an easy science requirement"
-    Output: "science requirement easy"
-
-    ***IMPORTANT RULES:***
-    1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
-    2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
-    3. For topic searches: Use minimal keywords without words like "course" or "class"
-    4. For workload queries: Include terms like "no problem sets", "no psets", "light workload"
-    5. For difficulty queries: Include difficulty level (easy/hard) with requirements
-    6. Never add words like "undergraduate" or "Princeton"
-
-    Return a JSON where your output is a string under the key "search_query". For example:
-    {
-        "search_query": "COS 217"
-    }
-    """
 
 def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
     query_vector = get_embedding(query)

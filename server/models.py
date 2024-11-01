@@ -19,7 +19,7 @@ class ChatQueryInput(BaseModel):
 class Tool(Enum):
     CRAWL = "crawl"
     EMAILS = "emails"
-    ALL_EMAILS = "allemails"
+    # ALL_EMAILS = "allemails"
     LOCATION = "location"
     COURSES = "courses"
     CATCHALL = "catchall"
