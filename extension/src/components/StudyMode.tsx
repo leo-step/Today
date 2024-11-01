@@ -8,6 +8,9 @@ import background3 from "../images/study/flowerfield.jpeg"
 import background4 from "../images/study/forestfield.jpeg"
 import background5 from "../images/study/layinginsun.jpeg"
 import duckgif from "../images/walkingduck.gif"
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
+// import { useStorage } from "../context/StorageContext";
+
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -23,16 +26,16 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [movingRight, setMovingRight] = useState(true);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showDuck, setShowDuck] = useState(false);
-
+  // const [playlistUrl, setPlaylistUrl] = useState("https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0");
 
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
-
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
-   // List of background images
-   const backgrounds = [
+
+  // List of background images
+  const backgrounds = [
     [background1, "#5f5b69"],
     [background2, "#b2293d"],
     [background3, "#fee594"],
@@ -40,7 +43,11 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     [background5, "#e6c2a0"]
   ];
 
-   // Preload all images once on component mount
+  // const storage = useStorage()
+  const mixpanel = useMixpanel()
+
+
+  // Preload all images once on component mount
   useEffect(() => {
     backgrounds.forEach((background) => {
       const img = new Image();
@@ -59,9 +66,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     }
   }, [isStudyMode, overlayBG]);
 
+  
 
   const toggleDuck = () => {
     setShowDuck((prev) => !prev);
+    if (showDuck) {
+      mixpanel.trackEvent(EventTypes.SHOW_DUCK, "duck")
+    }
   };
 
 
@@ -76,13 +87,17 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
 
   const toggleCalculator = () => {
     setShowCalculator((prev) => !prev);
+    if (showCalculator) {
+      mixpanel.trackEvent(EventTypes.SHOW_CALC, "calculator")
+    }
   }
+
 
   const handleToggle = () => {
     const newMode = !isStudyMode;
     setIsStudyMode(newMode);
     toggleWidgets(newMode);
-    setShowSettings(false); // Reset settings popup on toggle
+    setShowSettings(false);
   };
 
   const toggleSettingsPopup = () => {
@@ -91,8 +106,15 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   };
 
   const toggleSpotify = () => {
-    setShowSpotify((prev) => !prev); // Toggle Spotify visibility
+    setShowSpotify((prev) => !prev); 
+    if (showSpotify) {
+      mixpanel.trackEvent(EventTypes.SHOW_SPOTIFY, "spotify")
+    }
   };
+
+  // const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   setPlaylistUrl(event.target.value);
+  // };
 
   const handleBackgroundChange = (background: string) => {
     setIsImageLoaded(false); // Set loading state
@@ -102,6 +124,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       setOverlayBG(background); // Update background once loaded
       setIsImageLoaded(true); // Reset loading state
     };
+    mixpanel.trackEvent(EventTypes.CHANGED_STUDYBG, background)
   };
 
 
@@ -234,6 +257,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
       </div>
       {isStudyMode && (
+        
       <div className="calc-container">
         <div className={`calc-widget ${showCalculator ? "show" : ""}`}>
           <iframe

@@ -436,7 +436,7 @@ body {
   position: absolute;
   top: 20px;
   right: 20px;
-  z-index: 10; /* Ensures it stays on top of other content */
+  z-index: 0; /* needs to stay under tay */
 }
 
 .study-mode-button {
