@@ -1,13 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
 import StudyModeTimer from "./StudyModeTimer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBookOpen, faHouse, faGear , faMusic , faExpand, faCalculator , faKiwiBird } from "@fortawesome/free-solid-svg-icons";
+import { faGear , faMusic , faExpand, faCalculator , faKiwiBird } from "@fortawesome/free-solid-svg-icons"; // faBookOpen, faHouse,
 import background1 from "../images/study/catandbook.jpeg"
 import background2 from "../images/study/catseat.jpeg"
 import background3 from "../images/study/flowerfield.jpeg"
 import background4 from "../images/study/forestfield.jpeg"
 import background5 from "../images/study/layinginsun.jpeg"
 import duckgif from "../images/walkingduck.gif"
+import { EventTypes, useMixpanel } from "../context/MixpanelContext";
+// import { useStorage } from "../context/StorageContext";
+
+import Table from "react-bootstrap/Table";
+// import WidgetHeader from "./widget/WidgetHeader";
+
 
 interface StudyModeProps {
   toggleWidgets: (show: boolean) => void;
@@ -23,16 +29,16 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [movingRight, setMovingRight] = useState(true);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showDuck, setShowDuck] = useState(false);
-
+  // const [playlistUrl, setPlaylistUrl] = useState("https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0");
 
 
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
-
   const [isImageLoaded, setIsImageLoaded] = useState(false);
 
-   // List of background images
-   const backgrounds = [
+
+  // List of background images
+  const backgrounds = [
     [background1, "#5f5b69"],
     [background2, "#b2293d"],
     [background3, "#fee594"],
@@ -40,14 +46,17 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     [background5, "#e6c2a0"]
   ];
 
-   // Preload all images once on component mount
+  // const storage = useStorage()
+  const mixpanel = useMixpanel()
+
+
+  // Preload all images once on component mount
   useEffect(() => {
     backgrounds.forEach((background) => {
       const img = new Image();
       img.src = background[0];
     });
   },[]);
-
 
   useEffect(() => {
     if (isStudyMode) {
@@ -59,11 +68,12 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     }
   }, [isStudyMode, overlayBG]);
 
-
   const toggleDuck = () => {
     setShowDuck((prev) => !prev);
+    if (!showDuck) {
+      mixpanel.trackEvent(EventTypes.SHOW_DUCK, "duck")
+    }
   };
-
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -72,17 +82,24 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       document.exitFullscreen();
     }
     setIsFullScreen(!isFullScreen);
+    if (!isFullScreen) {
+      mixpanel.trackEvent(EventTypes.FULL_SCREEN, "full screen")
+    }
   };
 
   const toggleCalculator = () => {
     setShowCalculator((prev) => !prev);
+    if (!showCalculator) {
+      mixpanel.trackEvent(EventTypes.SHOW_CALC, "calculator")
+    }
   }
 
   const handleToggle = () => {
     const newMode = !isStudyMode;
     setIsStudyMode(newMode);
     toggleWidgets(newMode);
-    setShowSettings(false); // Reset settings popup on toggle
+    setShowSettings(false);
+    mixpanel.trackEvent(EventTypes.OPENED_STUDYMODE, "studymode")
   };
 
   const toggleSettingsPopup = () => {
@@ -91,7 +108,10 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   };
 
   const toggleSpotify = () => {
-    setShowSpotify((prev) => !prev); // Toggle Spotify visibility
+    setShowSpotify((prev) => !prev); 
+    if (!showSpotify) {
+      mixpanel.trackEvent(EventTypes.SHOW_SPOTIFY, "spotify")
+    }
   };
 
   const handleBackgroundChange = (background: string) => {
@@ -102,8 +122,8 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       setOverlayBG(background); // Update background once loaded
       setIsImageLoaded(true); // Reset loading state
     };
+    mixpanel.trackEvent(EventTypes.CHANGED_STUDYBG, background)
   };
-
 
   useEffect(() => {
     if (isStudyMode) {
@@ -215,10 +235,23 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
             )}
           </>
         )}
-        {/* Main Study Mode Toggle Button */}
+
+<div className="sneaky-links">
+
+      <Table variant="dark" borderless>
+        <tbody>
+          {/* Main Study Mode Toggle Button */}
         <button onClick={handleToggle} className="study-mode-button">
-          <FontAwesomeIcon icon={isStudyMode ? faHouse : faBookOpen} size="2x" />
+          {/* <FontAwesomeIcon icon={isStudyMode ? faHouse : faBookOpen} size="2x" /> */}
+          <h2>study mode</h2>
         </button>
+          
+        </tbody>
+      </Table>
+        </div>
+
+
+
         {/* Spotify Lofi Music Widget */}
       {isStudyMode && (
       <div className="spotify-widget" style={{ display: showSpotify ? "block" : "none" }}>
@@ -237,6 +270,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
       </div>
       {isStudyMode && (
+        
       <div className="calc-container">
         <div className={`calc-widget ${showCalculator ? "show" : ""}`}>
           <iframe
