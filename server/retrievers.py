@@ -286,7 +286,7 @@ def score_course_document(doc, search_info):
         # for tips queries focus on success strats in comments
         comments = doc.get("evaluations", {}).get("comments", [])
         for comment in comments:
-            comment_text = comment.get("comment", "").lower()
+            comment_text = comment.get("comment", "").s()
             if any(term in comment_text for term in ["tip", "advice", "recommend", "suggest", "help", "success"]):
                 score += COMMENT_MATCH_SCORE * 1.5  # Higher weight for tips
                 
@@ -329,135 +329,160 @@ def process_course_doc(doc, score=1):
     return processed
 
 def retrieve_princeton_courses(query_text):
-    """Enhanced course retrieval using search and scoring"""
+    """Robust course retrieval with multiple search strategies."""
     collection = db_client["courses"]
-
-    # extract search terms/context using prompt
-    search_info = openai_json_response([
-        extract_course_search_terms(),
-        user_query(query_text)
-    ])
-
-    terms = search_info.get("terms", [])
-    course_codes = search_info.get("course_codes", [])
-    query_type = search_info.get("query_type", "info")
-
-    print(f"[DEBUG] Search terms: {terms}")
-    print(f"[DEBUG] Course codes: {course_codes}")
-    print(f"[DEBUG] Query type: {query_type}")
-
-    # direct course code lookup if provided
-    if course_codes:
-        exact_matches = []
-        for code in course_codes:
-            # normalzie course code format (ORF307 -> ORF 307)
-            code = re.sub(r'([A-Za-z]+)(\d)', r'\1 \2', code)
-            match = re.search(r'([A-Za-z]+)\s*(\d{3}[A-Za-z]*)', code)
-            if match:
-                dept, num = match.groups()
-                dept = dept.upper()
-                num = num.strip()
-                
-                print(f"[DEBUG] Attempting to find course: {dept} {num}")
-                
-                # exact match first
-                query = {
-                    "department": dept,
-                    "catalogNumber": num
-                }
-                print(f"[DEBUG] MongoDB query: {query}")
-                course = collection.find_one(query)
-                
-                if course:
-                    print(f"[DEBUG] Found exact match: {course.get('department')} {course.get('catalogNumber')}")
-                    exact_matches.append(course)
-                else:
-                    print(f"[DEBUG] No exact match found, trying case-insensitive search")
-                    # case sens match (why not)
-                    course = collection.find_one({
-                        "department": {"$regex": f"^{dept}$", "$options": "i"},
-                        "catalogNumber": {"$regex": f"^{num}$", "$options": "i"}
-                    })
-                    if course:
-                        print(f"[DEBUG] Found case-insensitive match: {course.get('department')} {course.get('catalogNumber')}")
-                        exact_matches.append(course)
-                    else:
-                        print(f"[DEBUG] No matches found in database, trying princetoncourses.com")
-                        # fallback to getting course directly from princetoncourses
-                        course = get_course_from_princetoncourses(dept, num)
-                        if course:
-                            print(f"[DEBUG] Found course on princetoncourses.com: {dept} {num}")
-                            exact_matches.append(course)
-                        else:
-                            print(f"[DEBUG] No matches found anywhere for {dept} {num}")
-
-        if exact_matches:
-            processed_results = []
-            for doc in exact_matches:
-                score = score_course_document(doc, search_info)
-                processed_doc = process_course_doc(doc, score)
-                processed_results.append(processed_doc)
-
-            if processed_results:
-                # for comparison queries return multiple courses
-                if query_type == "comparison" and len(processed_results) > 1:
-                    return {
-                        "main_course": processed_results[0],
-                        "other_courses": processed_results[1:],
-                        "url": f"https://www.princetoncourses.com/course/{processed_results[0].get('courseID', '')}",
-                        "is_current": True
-                    }
-
-                # other queries: return one main course and others as suggestions
-                other_results = []
-                for course in processed_results[1:]:
-                    other_results.append({
-                        "department": course["department"],
-                        "catalogNumber": course["catalogNumber"],
-                        "title": course["title"]
-                    })
+    
+    try:
+        # first: direct course code lookup
+        course_match = re.search(r'([A-Za-z]{2,3})\s*(\d{3}[A-Za-z]*)', query_text)
+        if course_match:
+            dept, num = course_match.groups()
+            exact_course = collection.find_one({
+                "department": dept.upper(),
+                "catalogNumber": num
+            })
+            if exact_course:
                 return {
-                    "main_course": processed_results[0],
-                    "other_courses": other_results,
-                    "url": f"https://www.princetoncourses.com/course/{processed_results[0].get('courseID', '')}",
+                    "main_course": exact_course,
+                    "other_courses": [],
+                    "url": f"https://www.princetoncourses.com/course/{exact_course.get('courseID')}",
                     "is_current": True
                 }
-        else:
-            # if no matches found, try text search
-            print("[DEBUG] No exact matches found, trying text search")
-            text_query = {
-                "$text": {
-                    "$search": " ".join(course_codes)
+            else:
+                # Try to get course from princetoncourses.com as fallback
+                course_id = f"{dept.upper()}{num}"
+                url = f"https://www.princetoncourses.com/course/{course_id}"
+                try:
+                    response = requests.get(url)
+                    if response.ok:
+                        course_data = response.json()
+                        if course_data:
+                            fallback_course = {
+                                "_id": course_id,
+                                "department": dept.upper(),
+                                "catalogNumber": num,
+                                "title": course_data.get("title", ""),
+                                "description": course_data.get("description", ""),
+                                "assignments": course_data.get("assignments", []),
+                                "distribution": course_data.get("distribution", ""),
+                                "scores": course_data.get("scores", {}),
+                                "courseID": course_id,
+                                "evaluations": course_data.get("evaluations", {})
+                            }
+                            return {
+                                "main_course": fallback_course,
+                                "other_courses": [],
+                                "url": url,
+                                "is_current": True
+                            }
+                except:
+                    pass
+
+        # second: full-text search pipeline
+        text_pipeline = [
+            {
+                "$search": {
+                    "index": "full-text-search",
+                    "compound": {
+                        "should": [
+                            {
+                                "text": {
+                                    "query": query_text,
+                                    "path": {
+                                        "wildcard": "*"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "searchScore": {
+                        "$meta": "searchScore"
+                    }
+                }
+            },
+            {
+                "$limit": 20
+            }
+        ]
+
+        # third: vector search pipeline
+        vector_pipeline = [
+            {
+                "$vectorSearch": {
+                    "queryVector": get_embedding(query_text),
+                    "path": "embedding",
+                    "numCandidates": 100,
+                    "limit": 20,
+                    "index": "vector_index"
+                }
+            },
+            {
+                "$addFields": {
+                    "vectorScore": {
+                        "$meta": "vectorSearchScore"
+                    }
                 }
             }
-            matches = list(collection.find(text_query).limit(10))
-            if matches:
-                print(f"[DEBUG] Found {len(matches)} matches via text search")
-                processed_results = []
-                for doc in matches:
-                    score = score_course_document(doc, search_info)
-                    if score > 0:
-                        processed_doc = process_course_doc(doc, score)
-                        processed_results.append(processed_doc)
-                
-                if processed_results:
-                    main_course = processed_results[0]
-                    other_courses = []
-                    for course in processed_results[1:]:
-                        other_courses.append({
-                            "department": course["department"],
-                            "catalogNumber": course["catalogNumber"],
-                            "title": course["title"]
-                        })
-                    return {
-                        "main_course": main_course,
-                        "other_courses": other_courses,
-                        "url": f"https://www.princetoncourses.com/course/{main_course.get('courseID', '')}",
-                        "is_current": True
-                    }
+        ]
 
-            # if still no matches, return empty result
-            print("[DEBUG] No matches found at all")
+        # run both searches
+        text_results = list(collection.aggregate(text_pipeline))
+        vector_results = list(collection.aggregate(vector_pipeline))
+
+        # combine results and remove depulicates
+        all_results = {}  # use dict to deduplicate by _id
+        
+        for result in text_results + vector_results:
+            result_id = str(result['_id'])
+            if result_id not in all_results:
+                all_results[result_id] = result
+            else:
+                # if exists in both searches, combine scores
+                existing = all_results[result_id]
+                existing['combinedScore'] = (
+                    existing.get('searchScore', 0) + 
+                    existing.get('vectorScore', 0)
+                )
+
+        results = list(all_results.values())
+
+        # apply additional filters based on query
+        query_lower = query_text.lower()
+        
+        # distribution requirement filter
+        dist_requirements = []
+        if "ec" in query_lower:
+            dist_requirements.append("EC")
+        if "em" in query_lower:
+            dist_requirements.append("EM")
+        if "la" in query_lower:
+            dist_requirements.append("LA")
+            
+        if dist_requirements:
+            results = [r for r in results if r.get('distribution') in dist_requirements]
+
+        # problem set/assignment filter
+        if any(term in query_lower for term in ['pset', 'problem set', 'homework']):
+            results = [
+                r for r in results
+                if any(term in str(r.get('assignments', '')).lower() 
+                      for term in ['problem set', 'pset', 'homework', 'assignment'])
+                or any(term in str(r.get('evaluations', {}).get('comments', [])).lower()
+                      for term in ['problem set', 'pset', 'homework', 'assignment'])
+            ]
+
+        # quality/difficulty filter
+        if any(term in query_lower for term in ['good', 'best', 'quality', 'recommended']):
+            results.sort(
+                key=lambda x: float(x.get('scores', {}).get('Quality of Course', 0)), 
+                reverse=True
+            )
+
+        if not results:
             return {
                 "main_course": {},
                 "other_courses": [],
@@ -465,45 +490,45 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
-    # general search if no course codes provided
-    matches = list(collection.find({}))
-    print(f"[DEBUG] Found {len(matches)} total courses")
+        # sort by combined relevance and quality
+        results.sort(
+            key=lambda x: (
+                x.get('combinedScore', 0),
+                float(x.get('scores', {}).get('Quality of Course', 0) or 0)
+            ),
+            reverse=True
+        )
 
-    processed_results = []
-    for doc in matches:
-        score = score_course_document(doc, search_info)
-        if score > 0:
-            processed_doc = process_course_doc(doc, score)
-            processed_results.append(processed_doc)
+        # get course URL
+        course_id = str(results[0].get('courseID', ''))
+        link = f"https://www.princetoncourses.com/course/{course_id}"
 
-    processed_results.sort(key=lambda x: (
-        x["score"],
-        float(x.get("scores", {}).get("Quality of Course", 0) or 0)
-    ), reverse=True)
+        # get related courses - keep as dictionaries with required fields
+        other_results = [{
+            "department": c.get("department", ""),
+            "catalogNumber": c.get("catalogNumber", ""),
+            "title": c.get("title", "")
+        } for c in results[1:5]]
 
-    if not processed_results:
+        # clean up main course object
+        main_course = {k:v for k,v in results[0].items() 
+                      if k not in ['_id', 'embedding', 'searchScore', 'vectorScore', 'combinedScore']}
+
+        return {
+            "main_course": main_course,
+            "other_courses": other_results,
+            "url": link,
+            "is_current": True
+        }
+
+    except Exception as e:
+        print("[ERROR] Course retrieval failed:", e)
         return {
             "main_course": {},
             "other_courses": [],
             "url": None,
             "is_current": True
         }
-
-    main_course = processed_results[0]
-    other_courses = []
-    for course in processed_results[1:10]:
-        other_courses.append({
-            "department": course["department"],
-            "catalogNumber": course["catalogNumber"],
-            "title": course["title"]
-        })
-
-    return {
-        "main_course": main_course,
-        "other_courses": other_courses,
-        "url": f"https://www.princetoncourses.com/course/{main_course.get('courseID', '')}",
-        "is_current": True
-    }
 
 # this does not fucking work, my brain is not working and i can't
 # youd think i could just copypaste from the old function to use this a fallback
