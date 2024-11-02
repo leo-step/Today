@@ -302,7 +302,7 @@ def score_course_document(doc, search_info):
     # distribution requirements
     distribution = doc.get("distribution", "")
     terms_str = " ".join(terms).lower()
-    if any(dist in terms_str for dist in ["ec", "em", "la", "cd", "ha", "sa"]):
+    if any(dist in terms_str for dist in ["ec", "em", "la", "cd", "ha", "sa", "qcr", "sel", "sen"]):
         if distribution and distribution.lower() in terms_str:
             score += 15
             
@@ -505,6 +505,9 @@ def retrieve_princeton_courses(query_text):
         "is_current": True
     }
 
+# this does not fucking work, my brain is not working and i can't
+# youd think i could just copypaste from the old function to use this a fallback
+# but i *cannot* get it to work idk why but i going to bed before i cry
 def get_course_from_princetoncourses(dept, num):
     """Attempt to get course information directly from princetoncourses.com"""
     try:
