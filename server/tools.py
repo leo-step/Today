@@ -133,27 +133,39 @@ def invoke_tool(tool: str, tool_input: str) -> str:
         texts = [doc["text"] for doc in documents]
         return "\n\n".join(texts)
     elif tool == Tool.COURSES.value:
-        data, other_search_results, link, is_current_semester = retrieve_princeton_courses(tool_input)
-        if len(data.keys()) == 0:
+        result = retrieve_princeton_courses(tool_input)
+        if not result["main_course"]:
             return "Search results didn't return any courses."
-        if is_current_semester:
-            return f"""***IMPORTANT: you must return this link to the user if you use this information - {link}***
             
-            {json.dumps(data)}
+        if result["is_current"]:
+            # For comparison queries, include full details of other courses
+            if len(result["other_courses"]) > 0 and isinstance(result["other_courses"][0], dict):
+                return f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
+                
+                Main course:
+                {json.dumps(result["main_course"])}
 
-            Other related courses:
-            """ + '\n'.join(other_search_results)
+                Other relevant courses:
+                {json.dumps(result["other_courses"])}"""
+            else:
+                # For regular queries, just return main course and other course codes
+                return f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
+                
+                {json.dumps(result["main_course"])}
+
+                Other related courses:
+                """ + '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
         
         return f"""***[WARNING]: This class happened in a past semester.
         Please note that to the user so they are not confused. Also,
         everything you say should be in past tense!***
 
-        ***IMPORTANT: you must return this link to the user if you use this information - {link}***
+        ***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
 
-        {json.dumps(data)}
+        {json.dumps(result["main_course"])}
 
         Other related courses:
-        """ + '\n'.join(other_search_results)
+        """ + '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
     elif tool == Tool.EATING_CLUBS.value:
         documents = retrieve_eating_clubs(tool_input)
         return format_documents(documents)
@@ -290,29 +302,41 @@ tools: Tools = [
     },
     {
         "name": Tool.COURSES,
-        "description": """This tool provides comprehensive course search and analysis:
+        "description": """This tool provides comprehensive course information and analysis:
 
-        1. Course Code Search:
-        - Direct lookup by course code (e.g., "MAT201", "COS226")
-        - Find similar courses in same department/level
-        - Compare courses by difficulty and content
+        1. Course Information:
+        - Direct course code lookup (e.g., "MAT201", "COS226")
+        - Course descriptions, prerequisites, and requirements
+        - Distribution requirements and assignments
+        - Course evaluations and student feedback
 
-        2. Difficulty Analysis:
-        - Course quality scores and ratings
-        - Student feedback and comments
-        - Workload assessments
-        - Distribution requirements
+        2. Course Reviews & Opinions:
+        - Student evaluations and ratings
+        - Detailed student comments and feedback
+        - Overall course quality scores
+        - Historical course data and trends
 
-        3. Course Relationships:
-        - Find courses in same department
-        - Find courses with similar requirements
-        - Course prerequisites and relationships
+        3. Course Comparisons:
+        - Compare multiple courses by difficulty, workload, content
+        - Compare teaching styles and approaches
+        - Compare distribution requirements and prerequisites
+        - Analyze student experiences across courses
+
+        4. Course Selection Help:
+        - Find courses by specific criteria (e.g., "psets not papers")
+        - Get advice on course combinations
+        - Find courses that fulfill specific requirements
+        - Get tips for success in specific courses
 
         ***IMPORTANT NOTES:***
-        - For specific courses, use exact course codes (e.g., "MAT201")
-        - For similar courses, use phrases like "similar to" or "like"
-        - For difficulty, use words like "easy", "hard", "challenging"
+        - Can answer questions like:
+          * "What do people think about MAT201?"
+          * "Compare COS217 and COS226 difficulties"
+          * "Tips for success in COS217"
+          * "What's the workload like in COS217?"
+          * "What are good classes that have psets and not papers?"
         - Results include links to Princeton Courses for verification
+        - Provides comprehensive analysis using course evaluations, comments, and ratings
         """
     },
     {

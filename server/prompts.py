@@ -15,50 +15,156 @@ def user_query_with_context(context: str, query: str):
     \n\nUser query: {query}"""
 
 @system_prompt
-def get_course_search_prompt():
-    return """You will receive a piece of text related to looking up a college course at Princeton, and you need to 
-    extract the key search terms. Here are examples:
+def extract_course_search_terms():
+    return """Extract search terms and context from course-related queries. Return a JSON with:
+    - 'terms': array of specific search terms (course codes, topics, keywords)
+    - 'query_type': string indicating type of query:
+        - "opinion" (for queries about what people think/reviews)
+        - "comparison" (for comparing courses)
+        - "tips" (for advice/success strategies)
+        - "difficulty" (for workload/challenge level)
+        - "info" (for general course information)
+    - 'course_codes': array of specific course codes mentioned (e.g., ["COS217", "MAT201"])
+    - 'focus': array of specific aspects to focus on:
+        - For opinions: ["evaluations", "ratings", "comments"]
+        - For comparisons: ["difficulty", "workload", "content"]
+        - For tips: ["success", "preparation", "study"]
+        - For difficulty: ["assignments", "exams", "time"]
+        
+    Examples:
+    "what do people think about MAT201" -> {
+        "terms": ["MAT201", "opinion", "review", "feedback"],
+        "query_type": "opinion",
+        "course_codes": ["MAT201"],
+        "focus": ["evaluations", "ratings", "comments"]
+    }
     
-    Example 1 - Direct Course Code:
-    Input: "should I take COS217"
-    Output: "COS 217"
+    "should i take MAT201 or EGR156" -> {
+        "terms": ["MAT201", "EGR156", "compare"],
+        "query_type": "comparison",
+        "course_codes": ["MAT201", "EGR156"],
+        "focus": ["difficulty", "workload", "content"]
+    }
+    
+    "tips for success in COS217" -> {
+        "terms": ["COS217", "success", "tips", "advice"],
+        "query_type": "tips",
+        "course_codes": ["COS217"],
+        "focus": ["success", "preparation", "study"]
+    }
+    
+    "compare COS217 and COS226 difficulties" -> {
+        "terms": ["COS217", "COS226", "difficulty", "compare"],
+        "query_type": "comparison",
+        "course_codes": ["COS217", "COS226"],
+        "focus": ["difficulty", "workload"]
+    }
+    
+    "what's the workload like in COS217" -> {
+        "terms": ["COS217", "workload", "difficulty"],
+        "query_type": "difficulty",
+        "course_codes": ["COS217"],
+        "focus": ["assignments", "time"]
+    }
 
-    Example 2 - Course Comparison:
-    Input: "is COS217 harder than COS226"
-    Output: "COS 217"  # Will look up first course, then compare
+    "what are good classes that have psets and not papers" -> {
+        "terms": ["problem sets", "psets", "assignments", "no papers"],
+        "query_type": "info",
+        "course_codes": [],
+        "focus": ["assignments"]
+    }
 
-    Example 3 - Similar Course Query:
-    Input: "what courses are similar to MAT201"
-    Output: "MAT 201"  # Will find similar courses based on this
-
-    Example 4 - Department Search:
-    Input: "easy math classes"
-    Output: "MAT"  # Department code for broad search
-
-    Example 5 - Topic Search:
-    Input: "artificial intelligence courses"
-    Output: "artificial intelligence"
-
-    Example 6 - Workload Query:
-    Input: "what are the best no pset classes"
-    Output: "no problem sets"  # Will search descriptions and comments
-
-    Example 7 - Difficulty Query:
-    Input: "what's an easy science requirement"
-    Output: "science requirement easy"
+    "what's the hardest class based on reviews" -> {
+        "terms": ["hardest", "difficult", "challenging"],
+        "query_type": "difficulty",
+        "course_codes": [],
+        "focus": ["difficulty", "workload", "evaluations"]
+    }
 
     ***IMPORTANT RULES:***
-    1. For course codes: Always include space between department and number (e.g., "COS 217" not "COS217")
-    2. For department searches: Use official department codes (e.g., "MAT" for Mathematics)
-    3. For topic searches: Use minimal keywords without words like "course" or "class"
-    4. For workload queries: Include terms like "no problem sets", "no psets", "light workload"
-    5. For difficulty queries: Include difficulty level (easy/hard) with requirements
-    6. Never add words like "undergraduate" or "Princeton"
+    1. Always preserve exact course codes as given
+    2. For opinion queries, include terms that will help find student feedback
+    3. For comparison queries, include both courses and comparison aspects
+    4. For tips queries, include terms related to success strategies
+    5. For difficulty queries, include workload-related terms
+    6. Never modify or expand acronyms/codes unless explicitly given
+    7. Include all relevant terms that might help find useful information"""
 
-    Return a JSON where your output is a string under the key "search_query". For example:
-    {
-        "search_query": "COS 217"
+@system_prompt
+def get_course_search_prompt():
+    return """Extract specific search criteria from course-related queries. Return a JSON with:
+    - 'distribution': array of distribution requirement codes (e.g., ["EM", "EC", "LA", "CD"])
+    - 'assignments': object with preferences about assignments:
+        - 'wants': array of desired assignment types (e.g., ["problem sets", "psets", "homework"])
+        - 'avoids': array of unwanted assignment types (e.g., ["papers", "essays", "writing"])
+    - 'departments': object with department preferences:
+        - 'include': array of department codes to include
+        - 'exclude': array of department codes to exclude
+    - 'semester': string indicating semester preference ("fall", "spring", or null if not specified)
+    - 'search_terms': array of other relevant search terms (e.g., difficulty level, topics)
+    
+    Examples:
+
+    Input: "i want course recommendations for these distributions: EM, EC, LA, or CD. but i dont want classese that grade papers, instad i want psets"
+    Output: {
+        "distribution": ["EM", "EC", "LA", "CD"],
+        "assignments": {
+            "wants": ["problem sets", "psets"],
+            "avoids": ["papers", "essays", "writing"]
+        },
+        "departments": {
+            "include": [],
+            "exclude": []
+        },
+        "semester": null,
+        "search_terms": []
     }
+
+    Input: "okay, that's an alright suggestion, but i dont want to touch any types of music courses. also this course isn't offered in the spring semester, i need courses for the spring semester"
+    Output: {
+        "distribution": [],
+        "assignments": {
+            "wants": [],
+            "avoids": []
+        },
+        "departments": {
+            "include": [],
+            "exclude": ["MUS"]
+        },
+        "semester": "spring",
+        "search_terms": []
+    }
+
+    Input: "what are some easy COS classes?"
+    Output: {
+        "distribution": [],
+        "assignments": {
+            "wants": [],
+            "avoids": []
+        },
+        "departments": {
+            "include": ["COS"],
+            "exclude": []
+        },
+        "semester": null,
+        "search_terms": ["easy"]
+    }
+
+    ***IMPORTANT RULES:***
+    1. For distribution requirements, only include valid codes (e.g., EC, EM, LA, CD, QR, etc.)
+    2. For assignments, identify preferences about problem sets, papers, projects, etc.
+    3. For departments:
+       - Include department codes when specifically mentioned
+       - Add to exclude list when user wants to avoid certain departments
+    4. For semester:
+       - Return "fall" or "spring" only when explicitly mentioned
+       - Return null if no semester preference is specified
+    5. For search terms, include:
+       - Difficulty indicators (e.g., easy, hard)
+       - Specific topics or subjects
+       - Never include generic terms like "class", "course", "requirement"
+    6. Preserve exact department codes and acronyms as given
+    7. Handle both initial queries and follow-up modifications
     """
 
 @system_prompt
@@ -69,7 +175,7 @@ def agent_system_prompt():
     Reach out to Leo Stepanewk (leo.stepanewk@princeton.edu) for feedback or if you want to help with the project.
     (Note to self, don't repeat: we are not affliated with University AI programs such at Princeton Language Intelligence). 
     As an AI assistant, you have access to both static and real-time information about what is going on at 
-    Princeton. \n\nIMPORTANT: if the user’s question relates to direct academic help, 
+    Princeton. \n\nIMPORTANT: if the user's question relates to direct academic help, 
     such as telling you to write an essay for them, summarizing readings, writing code, or doing math problems, 
     refuse to answer their query and instead say that they should go to their undergraduate course assistant 
     office hours and other official channels for academic help.\n\nThe current date is {time_to_date_string()}.
