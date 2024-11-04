@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import StudyModeTimer from "./StudyModeTimer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGear , faMusic , faExpand, faCalculator , faKiwiBird } from "@fortawesome/free-solid-svg-icons"; // faBookOpen, faHouse,
+import { faGear , faMusic , faExpand, faCalculator , faKiwiBird , faHouse } from "@fortawesome/free-solid-svg-icons"; // faBookOpen, faHouse,
 import background1 from "../images/study/catandbook.jpeg"
 import background2 from "../images/study/catseat.jpeg"
 import background3 from "../images/study/flowerfield.jpeg"
@@ -11,8 +11,8 @@ import duckgif from "../images/walkingduck.gif"
 import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 // import { useStorage } from "../context/StorageContext";
 
-import Table from "react-bootstrap/Table";
 // import WidgetHeader from "./widget/WidgetHeader";
+import Button from 'react-bootstrap/Button';
 
 
 interface StudyModeProps {
@@ -236,19 +236,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
           </>
         )}
 
-<div className="sneaky-links">
-
-      <Table variant="dark" borderless>
-        <tbody>
           {/* Main Study Mode Toggle Button */}
-        <button onClick={handleToggle} className="study-mode-button">
+          <Button variant="outline-light" className="study-mode-toggle" onClick={handleToggle}>
+            {isStudyMode ? <FontAwesomeIcon icon={faHouse} size="2x" /> : <b>study mode</b>}
+          </Button>
           {/* <FontAwesomeIcon icon={isStudyMode ? faHouse : faBookOpen} size="2x" /> */}
-          <h2>study mode</h2>
-        </button>
-          
-        </tbody>
-      </Table>
-        </div>
+          {/* <h2>study mode</h2> */}
+
 
 
 

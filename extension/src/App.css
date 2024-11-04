@@ -454,6 +454,16 @@ body {
   transform: scale(1.1);
 }
 
+.study-mode-toggle{
+  background: none;
+}
+.study-mode-toggle:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+
+
 .settings-popup {
   position: absolute;
   top: 50px;
