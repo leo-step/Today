@@ -60,7 +60,7 @@ def setup_mongodb_indices():
         ("catalogNumber", 1)
     ], name="course_code_idx")
     
-    # Combined text index with weights for different fields
+    # Combined text index with weights and synonyms for thematic search
     courses.create_index([
         ("title", "text"),
         ("description", "text"),
@@ -68,11 +68,11 @@ def setup_mongodb_indices():
         ("evaluations.comments.comment", "text")
     ], weights={
         "title": 10,
-        "description": 5,
+        "description": 8,
         "assignments": 3,
-        "evaluations.comments.comment": 7
-    }, name="course_text_idx")
-
+         "evaluations.comments.comment": 5
+    }, default_language="english", name="course_text_idx")
+    
     print("MongoDB indices created successfully")
 
 setup_mongodb_indices()
@@ -345,147 +345,70 @@ def retrieve_princeton_courses(query_text):
                 "catalogNumber": num
             })
             if exact_course:
+                # get semester ID and courseID to construct full course ID (before i wasnt getting the semester ID)
+                semester_id = str(exact_course.get('semester', {}).get('_id', ''))
+                course_id = exact_course.get('courseID', '')
+                full_course_id = f"{semester_id}{course_id}"
                 return {
                     "main_course": exact_course,
                     "other_courses": [],
-                    "url": f"https://www.princetoncourses.com/course/{exact_course.get('courseID')}",
+                    "url": f"https://www.princetoncourses.com/course/{full_course_id}",
                     "is_current": True
                 }
-            else:
-                # Try to get course from princetoncourses.com as fallback
-                course_id = f"{dept.upper()}{num}"
-                url = f"https://www.princetoncourses.com/course/{course_id}"
-                try:
-                    response = requests.get(url)
-                    if response.ok:
-                        course_data = response.json()
-                        if course_data:
-                            fallback_course = {
-                                "_id": course_id,
-                                "department": dept.upper(),
-                                "catalogNumber": num,
-                                "title": course_data.get("title", ""),
-                                "description": course_data.get("description", ""),
-                                "assignments": course_data.get("assignments", []),
-                                "distribution": course_data.get("distribution", ""),
-                                "scores": course_data.get("scores", {}),
-                                "courseID": course_id,
-                                "evaluations": course_data.get("evaluations", {})
-                            }
-                            return {
-                                "main_course": fallback_course,
-                                "other_courses": [],
-                                "url": url,
-                                "is_current": True
-                            }
-                except:
-                    pass
 
-        # second: full-text search pipeline
-        text_pipeline = [
-            {
-                "$search": {
-                    "index": "full-text-search",
-                    "compound": {
-                        "should": [
-                            {
-                                "text": {
-                                    "query": query_text,
-                                    "path": {
-                                        "wildcard": "*"
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            },
-            {
-                "$addFields": {
-                    "searchScore": {
-                        "$meta": "searchScore"
-                    }
-                }
-            },
-            {
-                "$limit": 20
-            }
-        ]
-
-        # third: vector search pipeline
-        vector_pipeline = [
-            {
-                "$vectorSearch": {
-                    "queryVector": get_embedding(query_text),
-                    "path": "embedding",
-                    "numCandidates": 100,
-                    "limit": 20,
-                    "index": "vector_index"
-                }
-            },
-            {
-                "$addFields": {
-                    "vectorScore": {
-                        "$meta": "vectorSearchScore"
-                    }
-                }
-            }
-        ]
-
-        # run both searches
-        text_results = list(collection.aggregate(text_pipeline))
-        vector_results = list(collection.aggregate(vector_pipeline))
-
-        # combine results and remove depulicates
-        all_results = {}  # use dict to deduplicate by _id
+        # extract search terms and time context using prompt
+        search_info = openai_json_response([
+            extract_course_search_terms(),
+            user_query(query_text)
+        ])
         
-        for result in text_results + vector_results:
-            result_id = str(result['_id'])
-            if result_id not in all_results:
-                all_results[result_id] = result
-            else:
-                # if exists in both searches, combine scores
-                existing = all_results[result_id]
-                existing['combinedScore'] = (
-                    existing.get('searchScore', 0) + 
-                    existing.get('vectorScore', 0)
-                )
-
-        results = list(all_results.values())
-
-        # apply additional filters based on query
-        query_lower = query_text.lower()
-        
-        # distribution requirement filter
-        dist_requirements = []
-        if "ec" in query_lower:
-            dist_requirements.append("EC")
-        if "em" in query_lower:
-            dist_requirements.append("EM")
-        if "la" in query_lower:
-            dist_requirements.append("LA")
+        # build search terms for thematic search
+        search_terms = search_info.get("terms", [])
+        if not search_terms:
+            search_terms = [query_text]  # fallback to original query
             
-        if dist_requirements:
-            results = [r for r in results if r.get('distribution') in dist_requirements]
-
-        # problem set/assignment filter
-        if any(term in query_lower for term in ['pset', 'problem set', 'homework']):
-            results = [
-                r for r in results
-                if any(term in str(r.get('assignments', '')).lower() 
-                      for term in ['problem set', 'pset', 'homework', 'assignment'])
-                or any(term in str(r.get('evaluations', {}).get('comments', [])).lower()
-                      for term in ['problem set', 'pset', 'homework', 'assignment'])
-            ]
-
-        # quality/difficulty filter
-        if any(term in query_lower for term in ['good', 'best', 'quality', 'recommended']):
-            results.sort(
-                key=lambda x: float(x.get('scores', {}).get('Quality of Course', 0)), 
-                reverse=True
-            )
-
-        if not results:
+        # add variations for thematic searches
+        expanded_terms = []
+        for term in search_terms:
+            term_lower = term.lower()
+            if "entrepreneur" in term_lower:
+                expanded_terms.extend(["entrepreneurship", "business", "startup", "innovation", "leadership", "venture"])
+            elif term_lower == "ai":
+                expanded_terms.extend(["artificial intelligence", "machine learning", "data science", "neural networks"])
+            expanded_terms.append(term)
+            
+        # first: try text search w/ expanded terms
+        text_query = " ".join(expanded_terms)
+        text_results = list(collection.find(
+            {"$text": {"$search": text_query}},
+            {"score": {"$meta": "textScore"}}
+        ).sort([("score", {"$meta": "textScore"})]).limit(50))
+        
+        # if no results from text search -> try regex search
+        if not text_results:
+            regex_conditions = []
+            for term in expanded_terms:
+                regex_conditions.extend([
+                    {"title": {"$regex": f"\\b{re.escape(term)}\\b", "$options": "i"}},
+                    {"description": {"$regex": f"\\b{re.escape(term)}\\b", "$options": "i"}},
+                    {"evaluations.comments.comment": {"$regex": f"\\b{re.escape(term)}\\b", "$options": "i"}}
+                ])
+            
+            text_results = list(collection.find({"$or": regex_conditions}).limit(50))
+        
+        if not text_results:
+            # try one more time with partial matching
+            regex_conditions = []
+            for term in expanded_terms:
+                regex_conditions.extend([
+                    {"title": {"$regex": re.escape(term), "$options": "i"}},
+                    {"description": {"$regex": re.escape(term), "$options": "i"}},
+                    {"evaluations.comments.comment": {"$regex": re.escape(term), "$options": "i"}}
+                ])
+            
+            text_results = list(collection.find({"$or": regex_conditions}).limit(50))
+        
+        if not text_results:
             return {
                 "main_course": {},
                 "other_courses": [],
@@ -493,34 +416,69 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
-        # sort by combined relevance and quality
-        results.sort(
-            key=lambda x: (
-                x.get('combinedScore', 0),
-                float(x.get('scores', {}).get('Quality of Course', 0) or 0)
-            ),
-            reverse=True
-        )
+        # score and sort results
+        scored_results = []
+        for result in text_results:
+            # get base score (text score or 1 for regex matches)
+            base_score = result.get('score', 1)
+            
+            # get custom score
+            custom_score = score_course_document(result, search_info)
+            
+            # boost score for thematic matches
+            title = result.get('title', '').lower()
+            desc = result.get('description', '').lower()
+            
+            # count matches in title and description
+            title_matches = sum(1 for term in expanded_terms if term.lower() in title)
+            desc_matches = sum(1 for term in expanded_terms if term.lower() in desc)
+            
+            # boosts
+            if title_matches > 0:
+                custom_score *= (1 + (title_matches * 0.5))  # 50% boost per title match
+            if desc_matches > 0:
+                custom_score *= (1 + (desc_matches * 0.3))  # 30% boost per description match
+                
+            # apply thematic boost based on search terms
+            # check if any of the original search terms appear in the title
+            if any(term.lower() in title for term in search_terms):
+                custom_score *= 1.5  # 50% boost for direct matches with search terms (arbitrary weight for quick fix)
+            
+            # combine scores with weights
+            final_score = base_score * 0.4 + custom_score * 0.6
+            
+            scored_results.append({
+                "result": result,
+                "score": final_score
+            })
+        
+        # sort by final score
+        scored_results.sort(key=lambda x: x["score"], reverse=True)
 
-        # get course URL
-        course_id = str(results[0].get('courseID', ''))
-        link = f"https://www.princetoncourses.com/course/{course_id}"
+        # get top results
+        main_course = scored_results[0]["result"]
+        other_courses = [r["result"] for r in scored_results[1:5]]
 
-        # get related courses - keep as dictionaries with required fields
-        other_results = [{
+        # clea up main course object
+        main_course = {k:v for k,v in main_course.items() 
+                      if k not in ['_id', 'embedding', 'score']}
+
+        # format other courses
+        other_courses = [{
             "department": c.get("department", ""),
             "catalogNumber": c.get("catalogNumber", ""),
             "title": c.get("title", "")
-        } for c in results[1:5]]
+        } for c in other_courses]
 
-        # clean up main course object
-        main_course = {k:v for k,v in results[0].items() 
-                      if k not in ['_id', 'embedding', 'searchScore', 'vectorScore', 'combinedScore']}
+        # get semester ID and courseID to construct full course ID (before i wasnt getting the semester ID)
+        semester_id = str(main_course.get('semester', {}).get('_id', ''))
+        course_id = main_course.get('courseID', '')
+        full_course_id = f"{semester_id}{course_id}"
 
         return {
             "main_course": main_course,
-            "other_courses": other_results,
-            "url": link,
+            "other_courses": other_courses,
+            "url": f"https://www.princetoncourses.com/course/{full_course_id}",
             "is_current": True
         }
 

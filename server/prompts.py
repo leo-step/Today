@@ -24,12 +24,14 @@ def extract_course_search_terms():
         - "tips" (for advice/success strategies)
         - "difficulty" (for workload/challenge level)
         - "info" (for general course information)
+        - "thematic" (for subject/theme-based queries)
     - 'course_codes': array of specific course codes mentioned (e.g., ["COS217", "MAT201"])
     - 'focus': array of specific aspects to focus on:
         - For opinions: ["evaluations", "ratings", "comments"]
         - For comparisons: ["difficulty", "workload", "content"]
         - For tips: ["success", "preparation", "study"]
         - For difficulty: ["assignments", "exams", "time"]
+        - For thematic: ["subject_area", "field", "topic"]
         
     Examples:
     "what do people think about MAT201" -> {
@@ -37,6 +39,20 @@ def extract_course_search_terms():
         "query_type": "opinion",
         "course_codes": ["MAT201"],
         "focus": ["evaluations", "ratings", "comments"]
+    }
+    
+    "what are some good entrepreneur classes?" -> {
+        "terms": ["entrepreneur", "entrepreneurship", "business", "startup", "innovation", "leadership"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["subject_area", "field"]
+    }
+    
+    "what are good classes about AI and machine learning?" -> {
+        "terms": ["artificial intelligence", "AI", "machine learning", "ML", "data science", "neural networks"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["subject_area", "field"]
     }
     
     "should i take MAT201 or EGR156" -> {
@@ -51,13 +67,6 @@ def extract_course_search_terms():
         "query_type": "tips",
         "course_codes": ["COS217"],
         "focus": ["success", "preparation", "study"]
-    }
-    
-    "compare COS217 and COS226 difficulties" -> {
-        "terms": ["COS217", "COS226", "difficulty", "compare"],
-        "query_type": "comparison",
-        "course_codes": ["COS217", "COS226"],
-        "focus": ["difficulty", "workload"]
     }
     
     "what's the workload like in COS217" -> {
@@ -87,9 +96,12 @@ def extract_course_search_terms():
     3. For comparison queries, include both courses and comparison aspects
     4. For tips queries, include terms related to success strategies
     5. For difficulty queries, include workload-related terms
-    6. Never modify or expand acronyms/codes unless explicitly given
-    7. Include all relevant terms that might help find useful information"""
-
+    6. For thematic queries, include:
+       - Main topic/theme and related keywords
+       - Common variations of the theme (e.g., "entrepreneur" -> ["entrepreneur", "entrepreneurship"])
+       - Related concepts and subtopics
+    7. Never modify or expand acronyms/codes unless explicitly given
+    8. Include all relevant terms that might help find useful information"""
 @system_prompt
 def get_course_search_prompt():
     return """Extract specific search criteria from course-related queries. Return a JSON with:
