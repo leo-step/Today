@@ -13,6 +13,7 @@ import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 
 // import WidgetHeader from "./widget/WidgetHeader";
 import Button from 'react-bootstrap/Button';
+// import { ToggleButton } from "react-bootstrap";
 
 
 interface StudyModeProps {
@@ -218,6 +219,10 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
             <button ref={settingsButtonRef} onClick={toggleSettingsPopup} className="study-mode-button">
               <FontAwesomeIcon icon={faGear} size="2x" />
             </button>
+            {/* Turn off study mode */}
+             <button onClick={handleToggle} className="study-mode-button">
+                <FontAwesomeIcon icon={faHouse} size="2x" />
+            </button>
 
             {/* Popup for background color selection */}
             {showSettings && (
@@ -237,15 +242,12 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
         )}
 
           {/* Main Study Mode Toggle Button */}
-          <Button variant="outline-light" className="study-mode-toggle" onClick={handleToggle}>
-            {isStudyMode ? <FontAwesomeIcon icon={faHouse} size="2x" /> : <b>study mode</b>}
-          </Button>
-          {/* <FontAwesomeIcon icon={isStudyMode ? faHouse : faBookOpen} size="2x" /> */}
-          {/* <h2>study mode</h2> */}
-
-
-
-
+          { !isStudyMode && (
+            <Button variant="outline-light" className="study-mode-toggle" onClick={handleToggle}>
+               <b>study mode</b>
+            </Button>
+          )}
+          
         {/* Spotify Lofi Music Widget */}
       {isStudyMode && (
       <div className="spotify-widget" style={{ display: showSpotify ? "block" : "none" }}>

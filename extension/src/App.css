@@ -538,21 +538,6 @@ body {
   cursor: pointer;
 }
 
-/* Overlay background with fade effect */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
-  opacity: 0; /* Hidden by default */
-  transition: opacity 0.5s ease; /* Smooth transition */
-}
-
-.overlay-visible {
-  opacity: 1; 
-}
 
 .spotify-widget {
   position: fixed;
