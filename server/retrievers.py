@@ -28,6 +28,9 @@ DESCRIPTION_MATCH_SCORE = 5
 EVALUATION_MATCH_SCORE = 8
 COMMENT_MATCH_SCORE = 7
 ASSIGNMENT_MATCH_SCORE = 6
+COURSE_RATING_BELOW_35 = 5
+COURSE_RATING_ABOVE_4 = 8
+COURSE_QUALITY_DIFFICULTY = 10
 
 
 def setup_mongodb_indices():
@@ -255,9 +258,9 @@ def score_course_document(doc, search_info):
         # consider course ratings
         course_quality = float(doc.get("scores", {}).get("Quality of Course", 0) or 0)
         if course_quality > 4.0:
-            score += 8
+            score += COURSE_RATING_ABOVE_4
         elif course_quality > 3.5:
-            score += 5
+            score += COURSE_RATING_BELOW_35
 
     elif query_type == "comparison" or query_type == "difficulty":
         # for difficulty/comparison queries, focus on workload and evaluations
@@ -273,7 +276,7 @@ def score_course_document(doc, search_info):
         if "difficulty" in focus:
             course_quality = float(doc.get("scores", {}).get("Quality of Course", 0) or 0)
             if course_quality > 4.0:
-                score += 5
+                score += COURSE_QUALITY_DIFFICULTY
             
         # check comments for difficulty/workload mentions
         comments = doc.get("evaluations", {}).get("comments", [])
