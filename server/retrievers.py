@@ -370,6 +370,7 @@ def retrieve_princeton_courses(query_text):
         expanded_terms = [query_lower]
         
         # add common variations and related terms
+        # this should be done using openAI api but as a quick bandage fix this works for now tbh
         term_expansions = {
             'entrepreneur': ['entrepreneurship', 'startup', 'business', 'innovation', 'venture', 'leadership'],
             'business': ['entrepreneurship', 'management', 'leadership', 'organization', 'enterprise'],
