@@ -172,7 +172,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   }, [showSettings]);
 
   return (
-    <>
+    <div style={{height:"90vh", width:"100vw"}}>
       {isStudyMode && (
         <div
         style={{
@@ -193,13 +193,12 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
           justifyItems:"center"
         }}
       >
-
-        <StudyModeTimer />
       </div>
       )}
 
       {/* Main content with widgets */}
-      <div style={{ position: "relative", zIndex: 1 }}>
+
+      <div style={{ position: "relative", zIndex: 1, justifySelf:"right"}}>
         {isStudyMode && (
           <>
             <button onClick={toggleDuck} className="study-mode-button">
@@ -294,8 +293,15 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
          <img src={duckgif} alt="Moving Duck" width="50" />
        </div>
       )}
-      {/* {(isStudyMode) && ()} */}
-    </>
+      {(isStudyMode) && 
+      (
+        <div style={{position: "fixed", top:"25%", right:"25%", zIndex: 0, justifySelf:"center", alignSelf:"center", alignContent:"center", justifyItems:"center"}}>
+        <StudyModeTimer />
+      </div>
+      )}
+
+    </div>
+    
   );
 }
 
