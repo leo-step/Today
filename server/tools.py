@@ -122,9 +122,9 @@ def invoke_tool(tool: str, tool_input: str) -> str:
     if tool == Tool.EMAILS.value:
         documents = retrieve_emails(tool_input)
         return format_documents(documents)
-    elif tool == Tool.ALL_EMAILS.value:
-        documents = retrieve_any_emails(tool_input)
-        return format_documents(documents)
+    # elif tool == Tool.ALL_EMAILS.value:
+    #     documents = retrieve_any_emails(tool_input)
+    #     return format_documents(documents)
     elif tool == Tool.WIDGET_DATA.value:
         widget_data = retrieve_widget_data()
         return json.dumps(widget_data)
@@ -133,32 +133,44 @@ def invoke_tool(tool: str, tool_input: str) -> str:
         texts = [doc["text"] for doc in documents]
         return "\n\n".join(texts)
     elif tool == Tool.COURSES.value:
-        data, other_search_results, link, is_current_semester = retrieve_princeton_courses(tool_input)
-        if len(data.keys()) == 0:
+        result = retrieve_princeton_courses(tool_input)
+        if not result["main_course"]:
             return "Search results didn't return any courses."
-        if is_current_semester:
-            return f"""***IMPORTANT: you must return this link to the user if you use this information - {link}***
             
-            {json.dumps(data)}
+        if result["is_current"]:
+            # For comparison queries, include full details of other courses
+            if len(result["other_courses"]) > 0 and isinstance(result["other_courses"][0], dict):
+                return f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
+                
+                Main course:
+                {json.dumps(result["main_course"])}
 
-            Other related courses:
-            """ + '\n'.join(other_search_results)
+                Other relevant courses:
+                {json.dumps(result["other_courses"])}"""
+            else:
+                # For regular queries, just return main course and other course codes
+                return f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
+                
+                {json.dumps(result["main_course"])}
+
+                Other related courses:
+                """ + '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
         
         return f"""***[WARNING]: This class happened in a past semester.
         Please note that to the user so they are not confused. Also,
         everything you say should be in past tense!***
 
-        ***IMPORTANT: you must return this link to the user if you use this information - {link}***
+        ***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
 
-        {json.dumps(data)}
+        {json.dumps(result["main_course"])}
 
         Other related courses:
-        """ + '\n'.join(other_search_results)
+        """ + '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
     elif tool == Tool.EATING_CLUBS.value:
         documents = retrieve_eating_clubs(tool_input)
         return format_documents(documents)
     elif tool == Tool.CATCHALL.value:
-        documents = retrieve_any(tool_input)
+        documents = retrieve_any_emails(tool_input)
         return format_documents(documents)
     elif tool == Tool.NEARBY_PLACES.value:
         # Clean the tool_input to extract the main keyword
@@ -194,7 +206,7 @@ def choose_tool_and_rewrite(tools, memory, query_text):
 class Tool(Enum):
     CRAWL = 'crawl'  # added missing tool
     EMAILS = 'emails'
-    ALL_EMAILS = 'all_emails'
+    # ALL_EMAILS = 'all_emails'
     EATING_CLUBS = 'eating_clubs'
     WIDGET_DATA = 'widget_data'
     LOCATION = 'location'
@@ -240,20 +252,20 @@ tools: Tools = [
             professors, and other general public university information.
         """
     },
-    {
-        "name": Tool.ALL_EMAILS,
-        "description": """This tool accesses all past Princeton listserv emails
-            emails. Useful when you need to answer question about club and campus
-            life events that may or may not have happened already. 
-            ***IMPORTANT: you must use this tool when prompted about club related 
-            things that can be general questions or questions about events that
-            happened in the past. Don't refer to this tool for current or future
-            events or club information.***
+    # {
+    #     "name": Tool.ALL_EMAILS,
+    #     "description": """This tool accesses all past Princeton listserv emails
+    #         emails. Useful when you need to answer question about club and campus
+    #         life events that may or may not have happened already. 
+    #         ***IMPORTANT: you must use this tool when prompted about club related 
+    #         things that can be general questions or questions about events that
+    #         happened in the past. Don't refer to this tool for current or future
+    #         events or club information.***
             
-            Not useful for answering questions about academic facts, classes,
-            professors, and other general public university information.
-        """
-    },
+    #         Not useful for answering questions about academic facts, classes,
+    #         professors, and other general public university information.
+    #     """
+    # },
     {
         "name": Tool.EATING_CLUBS,
         "description": f"""This tool accesses information about eating clubs, which 
@@ -267,7 +279,7 @@ tools: Tools = [
         to the word ***street*** should also always invoke this tool!***
         
         ***IMPORTANT: if the user is asking about eating club events that happened in
-        the past, you should use the {Tool.ALL_EMAILS} tool. This tool will only access
+        the past, you should use the {Tool.CATCHALL} tool. This tool will only access
         the upcoming events or general eating club information.***"""
     },
     {
@@ -290,13 +302,42 @@ tools: Tools = [
     },
     {
         "name": Tool.COURSES,
-        "description": """This tool accesses the Princeton Courses API and
-        is able to retrieve any information about a course, including its
-        reviews, description, rating, grading policy, etc. ***IMPORTANT:
-        This tool operates on keywords and course codes. To look up a 
-        class effectively, you must provide reference a course code (e.g.
-        "COS217") or keywords for the name (e.g. "natural algorithms") in
-        the query rewriting stage.***"""
+        "description": """This tool provides comprehensive course information and analysis:
+
+        1. Course Information:
+        - Direct course code lookup (e.g., "MAT201", "COS226")
+        - Course descriptions, prerequisites, and requirements
+        - Distribution requirements and assignments
+        - Course evaluations and student feedback
+
+        2. Course Reviews & Opinions:
+        - Student evaluations and ratings
+        - Detailed student comments and feedback
+        - Overall course quality scores
+        - Historical course data and trends
+
+        3. Course Comparisons:
+        - Compare multiple courses by difficulty, workload, content
+        - Compare teaching styles and approaches
+        - Compare distribution requirements and prerequisites
+        - Analyze student experiences across courses
+
+        4. Course Selection Help:
+        - Find courses by specific criteria (e.g., "psets not papers")
+        - Get advice on course combinations
+        - Find courses that fulfill specific requirements
+        - Get tips for success in specific courses
+
+        ***IMPORTANT NOTES:***
+        - Can answer questions like:
+          * "What do people think about MAT201?"
+          * "Compare COS217 and COS226 difficulties"
+          * "Tips for success in COS217"
+          * "What's the workload like in COS217?"
+          * "What are good classes that have psets and not papers?"
+        - Results include links to Princeton Courses for verification
+        - Provides comprehensive analysis using course evaluations, comments, and ratings
+        """
     },
     {
         "name": Tool.NEARBY_PLACES,
