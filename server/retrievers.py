@@ -336,6 +336,9 @@ def retrieve_princeton_courses(query_text):
     collection = db_client["courses"]
     
     try:
+        # Convert query to lowercase for case-insensitive matching
+        query_lower = query_text.lower()
+        
         # first: direct course code lookup
         course_match = re.search(r'([A-Za-z]{2,3})\s*(\d{3}[A-Za-z]*)', query_text)
         if course_match:
@@ -370,56 +373,24 @@ def retrieve_princeton_courses(query_text):
                         "is_current": True
                     }
 
-        # second: full-text search pipeline
-        text_pipeline = [
-            {
-                "$search": {
-                    "index": "full-text-search",
-                    "compound": {
-                        "should": [
-                            {
-                                "text": {
-                                    "query": query_text,
-                                    "path": {
-                                        "wildcard": "*"
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            },
-            {
-                "$addFields": {
-                    "searchScore": {
-                        "$meta": "searchScore"
-                    }
-                }
-            },
-            {
-                "$limit": 20
-            }
-        ]
-
-        # third: vector search pipeline
-        vector_pipeline = [
-            {
-                "$vectorSearch": {
-                    "queryVector": get_embedding(query_text),
-                    "path": "embedding",
-                    "numCandidates": 100,
-                    "limit": 20,
-                    "index": "vector_index"
-                }
-            },
-            {
-                "$addFields": {
-                    "vectorScore": {
-                        "$meta": "vectorSearchScore"
-                    }
-                }
-            }
-        ]
+        # distribution requirement filter
+        dist_requirements = []
+        if "ec" in query_lower:
+            dist_requirements.append("EC")
+        if "em" in query_lower:
+            dist_requirements.append("EM")
+        if "la" in query_lower:
+            dist_requirements.append("LA")
+        if "ha" in query_lower:
+            dist_requirements.append("HA")
+        if "sa" in query_lower:
+            dist_requirements.append("SA")
+        if "qcr" in query_lower:
+            dist_requirements.append("QCR")
+        if "sel" in query_lower:
+            dist_requirements.append("SEL")
+        if "sen" in query_lower:
+            dist_requirements.append("SEN")
 
         # Extract search terms for thematic search
         search_info = openai_json_response([
@@ -480,6 +451,38 @@ def retrieve_princeton_courses(query_text):
                 "url": None,
                 "is_current": True
             }
+
+        # Apply distribution requirement filter if specified
+        if dist_requirements:
+            text_results = [r for r in text_results if r.get('distribution') in dist_requirements]
+
+        # Apply problem set/assignment filter
+        if any(term in query_lower for term in ['pset', 'problem set', 'homework']):
+            filtered_results = []
+            for r in text_results:
+                assignments = str(r.get('assignments', '')).lower()
+                evaluations = r.get('evaluations', {}).get('comments', [])
+                
+                # Check assignments field
+                if any(term in assignments for term in ['problem set', 'pset', 'homework']):
+                    filtered_results.append(r)
+                    continue
+                
+                # Check evaluation comments
+                for comment in evaluations:
+                    comment_text = str(comment.get('comment', '')).lower()
+                    if any(term in comment_text for term in ['problem set', 'pset', 'homework']):
+                        filtered_results.append(r)
+                        break
+            
+            text_results = filtered_results
+
+        # Apply quality/difficulty filter
+        if any(term in query_lower for term in ['good', 'best', 'quality', 'recommended']):
+            text_results.sort(
+                key=lambda x: float(x.get('scores', {}).get('Quality of Course', 0) or 0),
+                reverse=True
+            )
 
         # score and sort results
         scored_results = []
