@@ -40,6 +40,13 @@ def extract_course_search_terms():
         "course_codes": ["MAT201"],
         "focus": ["evaluations", "ratings", "comments"]
     }
+
+    "compare COS217 and COS226 difficulties" -> {
+        "terms": ["COS217", "COS226", "difficulty", "compare"],
+        "query_type": "comparison",
+        "course_codes": ["COS217", "COS226"],
+        "focus": ["difficulty", "workload"]
+    }
     
     "what are some good entrepreneur classes?" -> {
         "terms": ["entrepreneur", "entrepreneurship", "business", "startup", "innovation", "leadership"],
