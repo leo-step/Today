@@ -28,8 +28,8 @@ DESCRIPTION_MATCH_SCORE = 5
 EVALUATION_MATCH_SCORE = 8
 COMMENT_MATCH_SCORE = 7
 ASSIGNMENT_MATCH_SCORE = 6
-COURSE_RATING_BELOW_35 = 5
-COURSE_RATING_ABOVE_4 = 8
+COURSE_RATING_BELOW_35 = 1
+COURSE_RATING_ABOVE_4 = 3
 COURSE_QUALITY_DIFFICULTY = 10
 
 
@@ -237,7 +237,14 @@ def score_course_document(doc, search_info):
         # assignment matches
         if re.search(term, str(doc.get("assignments", "")), re.IGNORECASE):
             score += ASSIGNMENT_MATCH_SCORE
-    
+
+    # assign min positive score if any term matches title or description
+    if score == 0:
+        if any(term.lower() in str(doc.get("title", "")).lower() for term in terms):
+            score += 1
+        elif any(term.lower() in str(doc.get("description", "")).lower() for term in terms):
+            score += 1
+
     # query type specific scoring
     if query_type == "opinion":
         # for opinion queries, heavily weight evaluations and comments
@@ -289,9 +296,9 @@ def score_course_document(doc, search_info):
         # for tips queries focus on success strats in comments
         comments = doc.get("evaluations", {}).get("comments", [])
         for comment in comments:
-            comment_text = comment.get("comment", "").s()
+            comment_text = comment.get("comment", "").lower()
             if any(term in comment_text for term in ["tip", "advice", "recommend", "suggest", "help", "success"]):
-                score += COMMENT_MATCH_SCORE * 1.5  # Higher weight for tips
+                score += COMMENT_MATCH_SCORE * 1.5  # higher weight for tips
                 
     # handle assignment preferences
     assignments = str(doc.get("assignments", "")).lower()
@@ -358,93 +365,68 @@ def retrieve_princeton_courses(query_text):
                     "url": f"https://www.princetoncourses.com/course/{full_course_id}",
                     "is_current": True
                 }
-            else:
-                # Try to get course from princetoncourses.com as fallback
-                fallback_course = get_course_from_princetoncourses(dept.upper(), num)
-                if fallback_course:
-                    # For fallback courses, we'll use the current semester ID
-                    current_semester = "1252"  # Fall 2024
-                    course_id = fallback_course.get('courseID', '')
-                    full_course_id = f"{current_semester}{course_id}"
-                    return {
-                        "main_course": fallback_course,
-                        "other_courses": [],
-                        "url": f"https://www.princetoncourses.com/course/{full_course_id}",
-                        "is_current": True
-                    }
 
-        # distribution requirement filter
-        dist_requirements = []
-        if "ec" in query_lower:
-            dist_requirements.append("EC")
-        if "em" in query_lower:
-            dist_requirements.append("EM")
-        if "la" in query_lower:
-            dist_requirements.append("LA")
-        if "ha" in query_lower:
-            dist_requirements.append("HA")
-        if "sa" in query_lower:
-            dist_requirements.append("SA")
-        if "qcr" in query_lower:
-            dist_requirements.append("QCR")
-        if "sel" in query_lower:
-            dist_requirements.append("SEL")
-        if "sen" in query_lower:
-            dist_requirements.append("SEN")
-
-        # Extract search terms for thematic search
-        search_info = openai_json_response([
-            extract_course_search_terms(),
-            user_query(query_text)
-        ])
+        # expand search terms w/ related keywords
+        expanded_terms = [query_lower]
         
-        # build search terms for thematic search
-        search_terms = search_info.get("terms", [])
-        if not search_terms:
-            search_terms = [query_text]  # fallback to original query
-            
-        # add variations for thematic searches
-        expanded_terms = []
-        for term in search_terms:
-            term_lower = term.lower()
-            if "entrepreneur" in term_lower:
-                expanded_terms.extend(["entrepreneurship", "business", "startup", "innovation", "leadership", "venture"])
-            elif term_lower == "ai":
-                expanded_terms.extend(["artificial intelligence", "machine learning", "data science", "neural networks"])
-            expanded_terms.append(term)
-            
+        # add common variations and related terms
+        term_expansions = {
+            'entrepreneur': ['entrepreneurship', 'startup', 'business', 'innovation', 'venture', 'leadership'],
+            'business': ['entrepreneurship', 'management', 'leadership', 'organization', 'enterprise'],
+            'computer': ['programming', 'software', 'computing', 'computational', 'digital'],
+            'math': ['mathematics', 'mathematical', 'computational', 'quantitative'],
+            'history': ['historical', 'civilization', 'culture', 'society'],
+            'science': ['scientific', 'research', 'laboratory', 'experimental'],
+            'engineering': ['design', 'technology', 'technical', 'applied'],
+            'art': ['visual', 'creative', 'design', 'studio'],
+            'writing': ['composition', 'written', 'communication', 'literature'],
+            'research': ['methodology', 'analysis', 'investigation', 'study']
+        }
+
+        # add expanded terms
+        for base_term, expansions in term_expansions.items():
+            if base_term in query_lower:
+                expanded_terms.extend(expansions)
+
+        # remove duplicates while preserving order
+        expanded_terms = list(dict.fromkeys(expanded_terms))
+
+        text_query = ' '.join(expanded_terms)
+        
         # first: try text search w/ expanded terms
-        text_query = " ".join(expanded_terms)
-        text_results = list(collection.find(
+        results = list(collection.find(
             {"$text": {"$search": text_query}},
             {"score": {"$meta": "textScore"}}
         ).sort([("score", {"$meta": "textScore"})]).limit(50))
-        
-        # if no results from text search -> try regex search
-        if not text_results:
+
+        if not results:
+            # if no results from text search, try regex search
             regex_conditions = []
             for term in expanded_terms:
                 regex_conditions.extend([
-                    {"title": {"$regex": f"\\b{re.escape(term)}\\b", "$options": "i"}},
-                    {"description": {"$regex": f"\\b{re.escape(term)}\\b", "$options": "i"}},
-                    {"evaluations.comments.comment": {"$regex": f"\\b{re.escape(term)}\\b", "$options": "i"}}
+                    {"title": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}},
+                    {"description": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}},
+                    {"assignments": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}},
+                    {"evaluations.comments.comment": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}}
                 ])
             
-            text_results = list(collection.find({"$or": regex_conditions}).limit(50))
-        
-        if not text_results:
-            # try one more time with partial matching
+            results = list(collection.find({"$or": regex_conditions}).limit(50))
+
+        if not results:
+            # try one more time with partial word matching
             regex_conditions = []
             for term in expanded_terms:
-                regex_conditions.extend([
-                    {"title": {"$regex": re.escape(term), "$options": "i"}},
-                    {"description": {"$regex": re.escape(term), "$options": "i"}},
-                    {"evaluations.comments.comment": {"$regex": re.escape(term), "$options": "i"}}
-                ])
+                if len(term) > 3:  # only use terms longer than 3 characters
+                    regex_conditions.extend([
+                        {"title": {"$regex": re.escape(term), "$options": "i"}},
+                        {"description": {"$regex": re.escape(term), "$options": "i"}},
+                        {"assignments": {"$regex": re.escape(term), "$options": "i"}},
+                        {"evaluations.comments.comment": {"$regex": re.escape(term), "$options": "i"}}
+                    ])
             
-            text_results = list(collection.find({"$or": regex_conditions}).limit(50))
-        
-        if not text_results:
+            results = list(collection.find({"$or": regex_conditions}).limit(50))
+
+        if not results:
             return {
                 "main_course": {},
                 "other_courses": [],
@@ -452,83 +434,58 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
-        # Apply distribution requirement filter if specified
-        if dist_requirements:
-            text_results = [r for r in text_results if r.get('distribution') in dist_requirements]
-
-        # Apply problem set/assignment filter
-        if any(term in query_lower for term in ['pset', 'problem set', 'homework']):
-            filtered_results = []
-            for r in text_results:
-                assignments = str(r.get('assignments', '')).lower()
-                evaluations = r.get('evaluations', {}).get('comments', [])
-                
-                # Check assignments field
-                if any(term in assignments for term in ['problem set', 'pset', 'homework']):
-                    filtered_results.append(r)
-                    continue
-                
-                # Check evaluation comments
-                for comment in evaluations:
-                    comment_text = str(comment.get('comment', '')).lower()
-                    if any(term in comment_text for term in ['problem set', 'pset', 'homework']):
-                        filtered_results.append(r)
-                        break
-            
-            text_results = filtered_results
-
-        # Apply quality/difficulty filter
-        if any(term in query_lower for term in ['good', 'best', 'quality', 'recommended']):
-            text_results.sort(
-                key=lambda x: float(x.get('scores', {}).get('Quality of Course', 0) or 0),
-                reverse=True
-            )
-
-        # score and sort results
+        # score and rank results
         scored_results = []
-        for result in text_results:
-            # get base score (text score or 1 for regex matches)
-            base_score = result.get('score', 1)
+        for doc in results:
+            score = 0
             
-            # get custom score
-            custom_score = score_course_document(result, search_info)
+            # base score from text match
+            if hasattr(doc, 'score'):
+                score += doc.score * 2
             
-            # boost score for thematic matches
-            title = result.get('title', '').lower()
-            desc = result.get('description', '').lower()
+            # title match bonus
+            title = doc.get('title', '').lower()
+            if any(term in title for term in expanded_terms):
+                score += TITLE_MATCH_SCORE
             
-            # count matches in title and description
-            title_matches = sum(1 for term in expanded_terms if term.lower() in title)
-            desc_matches = sum(1 for term in expanded_terms if term.lower() in desc)
+            # desc match bonus
+            desc = doc.get('description', '').lower()
+            if any(term in desc for term in expanded_terms):
+                score += DESCRIPTION_MATCH_SCORE
             
-            # boosts
-            if title_matches > 0:
-                custom_score *= (1 + (title_matches * 0.5))  # 50% boost per title match
-            if desc_matches > 0:
-                custom_score *= (1 + (desc_matches * 0.3))  # 30% boost per description match
-                
-            # apply thematic boost based on search terms
-            # check if any of the original search terms appear in the title
-            if any(term.lower() in title for term in search_terms):
-                custom_score *= 1.5  # 50% boost for direct matches with search terms (arbitrary weight for quick fix)
+            # course rating bonus
+            course_quality = float(doc.get('scores', {}).get('Quality of Course', 0) or 0)
+            if course_quality > 4.0:
+                score += COURSE_RATING_ABOVE_4
+            elif course_quality > 3.5:
+                score += COURSE_RATING_BELOW_35
             
-            # combine scores with weights
-            final_score = base_score * 0.4 + custom_score * 0.6
+            # comment relevance bonus
+            comments = doc.get('evaluations', {}).get('comments', [])
+            relevant_comments = sum(1 for comment in comments 
+                                 if any(term in comment.get('comment', '').lower() 
+                                       for term in expanded_terms))
+            if relevant_comments > 0:
+                score += min(relevant_comments, 5)  # cap the bonus at 5 points (not sure why but AI recommends it)
+            
+            # minimum score (to prevent 0 score results)
+            if score == 0:
+                score = 0.1
             
             scored_results.append({
-                "result": result,
-                "score": final_score
+                "doc": doc,
+                "score": score
             })
-        
-        # sort by final score
+
+        # sort by score
         scored_results.sort(key=lambda x: x["score"], reverse=True)
 
         # get top results
-        main_course = scored_results[0]["result"]
-        other_courses = [r["result"] for r in scored_results[1:5]]
+        main_course = scored_results[0]["doc"]
+        other_courses = [r["doc"] for r in scored_results[1:5]]
 
-        # clea up main course object
-        main_course = {k:v for k,v in main_course.items() 
+        # clean up main course object
+        main_course = {k: v for k, v in main_course.items()
                       if k not in ['_id', 'embedding', 'score']}
 
         # format other courses
@@ -538,7 +495,7 @@ def retrieve_princeton_courses(query_text):
             "title": c.get("title", "")
         } for c in other_courses]
 
-        # get semester ID and courseID to construct full course ID (before i wasnt getting the semester ID)
+        # construct course URL
         semester_id = str(main_course.get('semester', {}).get('_id', ''))
         course_id = main_course.get('courseID', '')
         full_course_id = f"{semester_id}{course_id}"

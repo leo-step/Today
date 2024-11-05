@@ -108,7 +108,9 @@ def extract_course_search_terms():
        - Common variations of the theme (e.g., "entrepreneur" -> ["entrepreneur", "entrepreneurship"])
        - Related concepts and subtopics
     7. Never modify or expand acronyms/codes unless explicitly given
-    8. Include all relevant terms that might help find useful information"""
+    8. Include all relevant terms that might help find useful information
+    9. Never make up any courses, reviews, or opinions; if you could not find any information to answer the query, you should not make any up"""
+
 @system_prompt
 def get_course_search_prompt():
     return """Extract specific search criteria from course-related queries. Return a JSON with:
