@@ -355,8 +355,73 @@ def retrieve_princeton_courses(query_text):
                     "url": f"https://www.princetoncourses.com/course/{full_course_id}",
                     "is_current": True
                 }
+            else:
+                # Try to get course from princetoncourses.com as fallback
+                fallback_course = get_course_from_princetoncourses(dept.upper(), num)
+                if fallback_course:
+                    # For fallback courses, we'll use the current semester ID
+                    current_semester = "1252"  # Fall 2024
+                    course_id = fallback_course.get('courseID', '')
+                    full_course_id = f"{current_semester}{course_id}"
+                    return {
+                        "main_course": fallback_course,
+                        "other_courses": [],
+                        "url": f"https://www.princetoncourses.com/course/{full_course_id}",
+                        "is_current": True
+                    }
 
-        # extract search terms and time context using prompt
+        # second: full-text search pipeline
+        text_pipeline = [
+            {
+                "$search": {
+                    "index": "full-text-search",
+                    "compound": {
+                        "should": [
+                            {
+                                "text": {
+                                    "query": query_text,
+                                    "path": {
+                                        "wildcard": "*"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "$addFields": {
+                    "searchScore": {
+                        "$meta": "searchScore"
+                    }
+                }
+            },
+            {
+                "$limit": 20
+            }
+        ]
+
+        # third: vector search pipeline
+        vector_pipeline = [
+            {
+                "$vectorSearch": {
+                    "queryVector": get_embedding(query_text),
+                    "path": "embedding",
+                    "numCandidates": 100,
+                    "limit": 20,
+                    "index": "vector_index"
+                }
+            },
+            {
+                "$addFields": {
+                    "vectorScore": {
+                        "$meta": "vectorSearchScore"
+                    }
+                }
+            }
+        ]
+
+        # Extract search terms for thematic search
         search_info = openai_json_response([
             extract_course_search_terms(),
             user_query(query_text)
