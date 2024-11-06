@@ -20,7 +20,7 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
       name: "Ask me...",
       list: [
         "What events are happening tomorrow?",
-        "Should I take MAT201 or EGR156?",
+        "Should I take COS217 or COS226?",
       ],
     },
     // {
