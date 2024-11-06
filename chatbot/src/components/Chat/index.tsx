@@ -12,7 +12,7 @@ import { useSearchParams } from "react-router-dom";
 
 //Components
 import { Input } from "@/components/Input";
-import { FiSend, Fi, FiRefreshCcw } from "react-icons/fi";
+import { FiSend, FiThumbsUp, FiThumbsDown, FiRefreshCcw } from "react-icons/fi";
 import { Avatar, IconButton, Spinner, Stack, Text } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -220,33 +220,59 @@ export const Chat = ({ ...props }: ChatProps) => {
               return (
                 <Stack
                   key={key}
-                  direction="row"
-                  padding={4}
-                  rounded={8}
                   backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
-                  spacing={4}
-                >
-                  <Avatar
-                    name={emitter}
-                    mt={2}
-                    boxSize={"54px"}
-                    src={getAvatar()}
-                  />
-                  <Text
-                    className="children-spacing"
-                    // whiteSpace="pre-wrap"
-                    marginTop=".75em !important"
-                    // overflow="hidden"
+                > 
+                  <Stack
+                    direction="row"
+                    padding={4}
+                    rounded={8}
+                    // backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
+                    spacing={4}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        a: ExternalLink,
-                      }}
+                    <Avatar
+                      name={emitter}
+                      mt={2}
+                      boxSize={"54px"}
+                      src={getAvatar()}
+                    />
+                    <Text
+                      className="children-spacing"
+                      // whiteSpace="pre-wrap"
+                      marginTop=".75em !important"
+                      // overflow="hidden"
                     >
-                      {getMessage()}
-                    </ReactMarkdown>
-                  </Text>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          a: ExternalLink,
+                        }}
+                      >
+                        {getMessage()}
+                      </ReactMarkdown>
+                    </Text>
+                  </Stack>
+                  {/* style={{ fill: 'white' }} */}
+                  {emitter === "gpt" && <Stack
+                    direction="row"
+                    spacing={0}
+                    align="end"
+                    paddingRight={4}
+                    paddingBottom={4}
+                    style={{"justifyContent": "flex-end"}}
+                  >
+                    <IconButton 
+                      aria-label="thumbs-up"
+                      icon={<FiThumbsUp />} 
+                      backgroundColor="transparent"
+                      onClick={() => console.log("thumbs up")} 
+                    />
+                    <IconButton 
+                      aria-label="thumbs-down"
+                      icon={<FiThumbsDown />}
+                      backgroundColor="transparent"
+                      onClick={() => console.log("thumbs down")} 
+                    />
+                  </Stack>}
                 </Stack>
               );
             })
