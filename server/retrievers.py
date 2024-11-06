@@ -24,13 +24,36 @@ PROCESSED_RESULTS_SPECIFIC = 15
 
 # course scoring weights
 TITLE_MATCH_SCORE = 10
-DESCRIPTION_MATCH_SCORE = 5
-EVALUATION_MATCH_SCORE = 8
+DESCRIPTION_MATCH_SCORE = 6
 COMMENT_MATCH_SCORE = 7
-ASSIGNMENT_MATCH_SCORE = 3
-COURSE_RATING_BELOW_35 = 1
-COURSE_RATING_ABOVE_4 = 3
-COURSE_QUALITY_DIFFICULTY = 10
+ASSIGNMENT_MATCH_SCORE = 6
+COURSE_RATING_BELOW_35 = 4
+COURSE_RATING_ABOVE_4 = 5
+GRADING_COMPONENT_BOOST = 10
+
+# dist req mappings
+DISTRIBUTION_MAPPINGS = {
+    "humanities": ["LA", "HA", "SA", "EM", "CD", "EC"], 
+    "science": ["STL", "SEL", "SEN"],
+    "quantitative": ["QCR", "QR"],
+    "writing": ["EC", "SA", "WRI"],
+    "ethics": ["EM"],
+    "culture": ["CD"],
+    "history": ["HA"],
+    "arts": ["LA"],
+    "social": ["SA"],
+}
+
+# assignment type indicators
+PSET_INDICATORS = [
+    "problem set", "pset", "problem sets", "psets", 
+    "p-set", "problem-set", "computational assignment", "mathematical assignment"
+]
+
+PAPER_INDICATORS = [
+    "paper", "essay", "writing assignment", "written assignment",
+    "research paper", "term paper", "papers", "essays"
+]
 
 def setup_mongodb_indices():
     # Email indices
@@ -258,7 +281,45 @@ def score_course_document(doc, search_info):
     elif course_quality > 3.5:
         score += COURSE_RATING_BELOW_35
     
+    # scoring for assignments
+    assignments = doc.get("assignments", [])
+    if any("problem set" in assignment.lower() or "pset" in assignment.lower() 
+           for assignment in assignments):
+        score += GRADING_COMPONENT_BOOST  
+    
+    # scoring for grading components
+    grading = doc.get("grading", [])
+    if any(component.get("component", "").lower() in ["problem set(s)", "problem sets", "psets"] 
+           for component in grading):
+        score += GRADING_COMPONENT_BOOST 
+    
     return score
+
+def has_assignment_type(doc, indicators):
+    """Check if a course has a particular type of assignment"""
+    assignments = str(doc.get("assignments", "")).lower()
+    grading = str(doc.get("grading", "")).lower()
+    
+    # check assignments field
+    if any(indicator in assignments for indicator in indicators):
+        return True
+        
+    # check grading components
+    if isinstance(doc.get("grading"), list):
+        grading_text = " ".join(str(g.get("component", "")).lower() for g in doc["grading"])
+        if any(indicator in grading_text for indicator in indicators):
+            return True
+            
+    return False
+
+def matches_distribution(doc, dist_type):
+    """Check if a course matches a distribution requirement category"""
+    course_dist = str(doc.get("distribution", "")).split(" OR ")
+    
+    # get valid dist codes for the type
+    valid_codes = DISTRIBUTION_MAPPINGS.get(dist_type.lower(), [])
+    
+    return any(dist in valid_codes for dist in course_dist)
 
 def retrieve_princeton_courses(query_text):
     """Robust course retrieval with multiple search strategies"""
@@ -292,10 +353,11 @@ def retrieve_princeton_courses(query_text):
                 "catalogNumber": num
             })
             if exact_course:
-                # Get semester ID and course ID
+                # get semester ID and courseID to construct full course ID (before i wasnt getting the semester ID)
                 semester_id = str(exact_course.get('semester', {}).get('_id', ''))
-                course_id = str(exact_course.get('courseID', ''))
+                course_id = exact_course.get('courseID', '')
                 full_course_id = f"{semester_id}{course_id}"
+                
                 return {
                     "main_course": exact_course,
                     "other_courses": [],
@@ -318,9 +380,39 @@ def retrieve_princeton_courses(query_text):
         matches = list(collection.find(base_query))
         print(f"[DEBUG] Found {len(matches)} matching courses")
         
+        # apply extra filters on query
+        filtered_matches = []
+        query_lower = query_text.lower()
+        
+        # check dist reqs
+        dist_type = None
+        for dist, codes in DISTRIBUTION_MAPPINGS.items():
+            if dist in query_lower:
+                dist_type = dist
+                break
+        
+        # check assignment types
+        needs_psets = any(term in query_lower for term in ["pset", "problem set", "p-set", "problem-set"])
+        needs_papers = any(term in query_lower for term in ["paper", "essay", "writing", "written"])
+        
+        # filter based on reqs
+        for doc in matches:
+            matches_requirements = True
+            
+            if dist_type and not matches_distribution(doc, dist_type):
+                matches_requirements = False
+                
+            if needs_psets and not has_assignment_type(doc, PSET_INDICATORS):
+                matches_requirements = False
+            if needs_papers and not has_assignment_type(doc, PAPER_INDICATORS):
+                matches_requirements = False
+                
+            if matches_requirements:
+                filtered_matches.append(doc)
+        
         # score and sort
         scored_results = []
-        for doc in matches:
+        for doc in filtered_matches:
             score = score_course_document(doc, search_info)
             if score > 0:
                 doc["score"] = score
@@ -343,9 +435,9 @@ def retrieve_princeton_courses(query_text):
             "title": c.get("title", "")
         } for c in scored_results[1:5]]
         
-        # get semester ID and courseID to construct full course ID (before i wasnt getting the semester ID)
+        # Get semester ID and course ID to construct full course ID
         semester_id = str(main_course.get('semester', {}).get('_id', ''))
-        course_id = str(main_course.get('courseID', ''))
+        course_id = main_course.get('courseID', '')
         full_course_id = f"{semester_id}{course_id}"
         
         return {

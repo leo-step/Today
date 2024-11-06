@@ -144,7 +144,14 @@ def extract_course_search_terms():
     }
 
     "what are humanities classes with regular problem sets" -> {
-        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "AMS", "GSS", "ENV", "URB", "problem sets", "psets", "weekly problem", "regular problem"],
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem set", "pset"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
+    }
+
+    "are there any pset based courses that fulfill humanities requirements" -> {
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem sets", "psets", "pset", "problem set"],
         "query_type": "thematic",
         "course_codes": [],
         "focus": ["distribution", "assignments"]
@@ -185,7 +192,7 @@ def extract_course_search_terms():
        - Consider recommended background knowledge
        - Look for success indicators
     8. Distribution requirement mappings:
-       - "humanities" -> ["LA", "HA", "SA", "EM", "CD", "EC"] + cross-listed ["AMS", "GSS", "ENV", "URB"]
+       - "humanities" -> ["LA", "HA", "SA", "EM", "CD", "EC"] + cross-listed ["PSY", "POL", "ECO"]
        - "science" -> ["STL", "STN", "SEL", "SEN"]
        - "quantitative" -> ["QCR", "QR"]
        - "ethics" -> ["EM"]
