@@ -149,6 +149,12 @@ td {
   margin-bottom: 6% !important;
 }
 
+.header {
+  float: right;
+
+  /* margin-bottom: 6% !important; */
+}
+
 .greeting {
   color: white !important;
   font-size: 90px !important;
@@ -424,3 +430,164 @@ body {
   background-color: #212529;
   /* width: 500px;
   margin-left: 100px; */
+
+
+.study-mode-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 0; /* needs to stay under tay */
+}
+
+.study-mode-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ef853b;
+  margin-right: 10px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.study-mode-button:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+.study-mode-toggle{
+  background: none;
+}
+.study-mode-toggle:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+
+
+.settings-popup {
+  position: absolute;
+  top: 50px;
+  right: 20px;
+  background: white;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.settings-popup h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 100%;
+  cursor: pointer;
+}
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+
+
+.settings-bar {
+  position: fixed;
+  top: 0;
+  right: -300px; /* Start off-screen */
+  width: 250px;
+  height: 100%;
+  background: #ffffff;
+  padding: 15px;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  transition: right 0.3s ease;
+  z-index: 1000;
+}
+
+.settings-bar.open {
+  right: 0; /* Slide in when open */
+}
+
+.settings-bar h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 25px;
+  height: 25px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+
+.spotify-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+  width: 300px;
+  height: 152px;
+}
+
+.moving-duck {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 50px; /* Adjust size as needed */
+  animation: moveBackAndForth 5s linear infinite;
+  z-index: 9999; /* Ensures the duck is on top of all other elements */
+}
+
+/* Container to keep the widget centered even with shorter heights */
+.calc-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Calculator widget */
+.calc-widget {
+  display: none;
+  width: 400px;
+  height: 323px;
+  max-height: 90vh; /* Ensure it doesn't exceed viewport height */
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calc-widget.show {
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .calc-widget {
+    width: 90%;
+    height: 250px;
+  }
+}
