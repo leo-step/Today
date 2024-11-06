@@ -24,19 +24,88 @@ def extract_course_search_terms():
         - "tips" (for advice/success strategies)
         - "difficulty" (for workload/challenge level)
         - "info" (for general course information)
+        - "thematic" (for subject/theme-based queries)
+        - "professor" (for professor-specific queries)
+        - "prerequisites" (for prerequisite-related queries)
     - 'course_codes': array of specific course codes mentioned (e.g., ["COS217", "MAT201"])
     - 'focus': array of specific aspects to focus on:
-        - For opinions: ["evaluations", "ratings", "comments"]
-        - For comparisons: ["difficulty", "workload", "content"]
-        - For tips: ["success", "preparation", "study"]
-        - For difficulty: ["assignments", "exams", "time"]
+        - For opinions: ["evaluations", "ratings", "comments", "sentiment"]
+        - For comparisons: ["difficulty", "workload", "content", "prerequisites"]
+        - For tips: ["success", "preparation", "study", "resources"]
+        - For difficulty: ["assignments", "exams", "time", "weekly_work"]
+        - For thematic: ["subject_area", "field", "topic", "level"]
+        - For professor: ["teaching_style", "clarity", "availability"]
+        - For prerequisites: ["requirements", "preparation", "background"]
         
     Examples:
+    "what do people think about Professor X's teaching in MAT201" -> {
+        "terms": ["MAT201", "Professor X", "teaching"],
+        "query_type": "professor",
+        "course_codes": ["MAT201"],
+        "focus": ["teaching_style", "clarity", "evaluations"]
+    }
+
+    "what are good intro level humanities classes" -> {
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "intro", "100-level"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "level"]
+    }
+
+    "what's the weekly workload like in COS226" -> {
+        "terms": ["COS226", "workload", "weekly", "assignments"],
+        "query_type": "difficulty",
+        "course_codes": ["COS226"],
+        "focus": ["weekly_work", "time", "assignments"]
+    }
+
     "what do people think about MAT201" -> {
         "terms": ["MAT201", "opinion", "review", "feedback"],
         "query_type": "opinion",
         "course_codes": ["MAT201"],
         "focus": ["evaluations", "ratings", "comments"]
+    }
+
+    "what are humanities classes that have psets?" -> {
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "problem sets", "psets"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
+    }
+
+    "what courses fulfill the science requirement and have no papers?" -> {
+        "terms": ["science", "STL", "STN", "SEL", "SEN", "no papers"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
+    }
+
+    "what are some good writing intensive courses?" -> {
+        "terms": ["writing", "EC", "SA", "writing intensive"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
+    }
+
+    "compare COS217 and COS226 difficulties" -> {
+        "terms": ["COS217", "COS226", "difficulty", "compare"],
+        "query_type": "comparison",
+        "course_codes": ["COS217", "COS226"],
+        "focus": ["difficulty", "workload"]
+    }
+    
+    "what are some good entrepreneur classes?" -> {
+        "terms": ["entrepreneur", "entrepreneurship", "business", "startup", "innovation", "leadership"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["subject_area", "field"]
+    }
+    
+    "what are good classes about AI and machine learning?" -> {
+        "terms": ["artificial intelligence", "AI", "machine learning", "ML", "data science", "neural networks"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["subject_area", "field"]
     }
     
     "should i take MAT201 or EGR156" -> {
@@ -45,19 +114,12 @@ def extract_course_search_terms():
         "course_codes": ["MAT201", "EGR156"],
         "focus": ["difficulty", "workload", "content"]
     }
-    
-    "tips for success in COS217" -> {
-        "terms": ["COS217", "success", "tips", "advice"],
-        "query_type": "tips",
+
+    "what do I need to know before taking COS217" -> {
+        "terms": ["COS217", "prerequisites", "preparation"],
+        "query_type": "prerequisites",
         "course_codes": ["COS217"],
-        "focus": ["success", "preparation", "study"]
-    }
-    
-    "compare COS217 and COS226 difficulties" -> {
-        "terms": ["COS217", "COS226", "difficulty", "compare"],
-        "query_type": "comparison",
-        "course_codes": ["COS217", "COS226"],
-        "focus": ["difficulty", "workload"]
+        "focus": ["requirements", "preparation", "background"]
     }
     
     "what's the workload like in COS217" -> {
@@ -81,91 +143,74 @@ def extract_course_search_terms():
         "focus": ["difficulty", "workload", "evaluations"]
     }
 
-    ***IMPORTANT RULES:***
-    1. Always preserve exact course codes as given
-    2. For opinion queries, include terms that will help find student feedback
-    3. For comparison queries, include both courses and comparison aspects
-    4. For tips queries, include terms related to success strategies
-    5. For difficulty queries, include workload-related terms
-    6. Never modify or expand acronyms/codes unless explicitly given
-    7. Include all relevant terms that might help find useful information"""
-
-@system_prompt
-def get_course_search_prompt():
-    return """Extract specific search criteria from course-related queries. Return a JSON with:
-    - 'distribution': array of distribution requirement codes (e.g., ["EM", "EC", "LA", "CD"])
-    - 'assignments': object with preferences about assignments:
-        - 'wants': array of desired assignment types (e.g., ["problem sets", "psets", "homework"])
-        - 'avoids': array of unwanted assignment types (e.g., ["papers", "essays", "writing"])
-    - 'departments': object with department preferences:
-        - 'include': array of department codes to include
-        - 'exclude': array of department codes to exclude
-    - 'semester': string indicating semester preference ("fall", "spring", or null if not specified)
-    - 'search_terms': array of other relevant search terms (e.g., difficulty level, topics)
-    
-    Examples:
-
-    Input: "i want course recommendations for these distributions: EM, EC, LA, or CD. but i dont want classese that grade papers, instad i want psets"
-    Output: {
-        "distribution": ["EM", "EC", "LA", "CD"],
-        "assignments": {
-            "wants": ["problem sets", "psets"],
-            "avoids": ["papers", "essays", "writing"]
-        },
-        "departments": {
-            "include": [],
-            "exclude": []
-        },
-        "semester": null,
-        "search_terms": []
+    "what are humanities classes with regular problem sets" -> {
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem set", "pset"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
     }
 
-    Input: "okay, that's an alright suggestion, but i dont want to touch any types of music courses. also this course isn't offered in the spring semester, i need courses for the spring semester"
-    Output: {
-        "distribution": [],
-        "assignments": {
-            "wants": [],
-            "avoids": []
-        },
-        "departments": {
-            "include": [],
-            "exclude": ["MUS"]
-        },
-        "semester": "spring",
-        "search_terms": []
+    "are there any pset based courses that fulfill humanities requirements" -> {
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem sets", "psets", "pset", "problem set"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
     }
 
-    Input: "what are some easy COS classes?"
-    Output: {
-        "distribution": [],
-        "assignments": {
-            "wants": [],
-            "avoids": []
-        },
-        "departments": {
-            "include": ["COS"],
-            "exclude": []
-        },
-        "semester": null,
-        "search_terms": ["easy"]
+    "what are science classes with significant pset components" -> {
+        "terms": ["science", "STL", "STN", "SEL", "SEN", "problem sets", "psets", "weekly problem", "significant pset"],
+        "query_type": "thematic",
+        "course_codes": [],
+        "focus": ["distribution", "assignments"]
     }
 
     ***IMPORTANT RULES:***
-    1. For distribution requirements, only include valid codes (e.g., EC, EM, LA, CD, QR, etc.)
-    2. For assignments, identify preferences about problem sets, papers, projects, etc.
-    3. For departments:
-       - Include department codes when specifically mentioned
-       - Add to exclude list when user wants to avoid certain departments
-    4. For semester:
-       - Return "fall" or "spring" only when explicitly mentioned
-       - Return null if no semester preference is specified
-    5. For search terms, include:
-       - Difficulty indicators (e.g., easy, hard)
-       - Specific topics or subjects
-       - Never include generic terms like "class", "course", "requirement"
-    6. Preserve exact department codes and acronyms as given
-    7. Handle both initial queries and follow-up modifications
-    """
+    1. Always preserve exact course codes and professor names as given
+    2. For opinion queries:
+       - Include terms that will help find student feedback
+       - Consider both course and professor-specific feedback
+       - Look for sentiment indicators in comments
+    3. For comparison queries:
+       - Include both courses and comparison aspects
+       - Consider prerequisites and course levels
+       - Look for direct comparisons in comments
+    4. For difficulty queries:
+       - Include specific workload aspects (weekly work, assignments)
+       - Consider both time commitment and intellectual challenge
+       - Look for quantitative indicators (hours/week)
+    5. For thematic queries:
+       - Include main topic/theme and related keywords
+       - Consider course level (intro, advanced)
+       - Map to distribution requirements when relevant
+       - Include cross-listed departments for humanities
+    6. For professor queries:
+       - Include teaching style indicators
+       - Look for specific feedback about the professor
+       - Consider both recent and historical evaluations
+    7. For prerequisite queries:
+       - Include both formal and informal prerequisites
+       - Consider recommended background knowledge
+       - Look for success indicators
+    8. Distribution requirement mappings:
+       - "humanities" -> ["LA", "HA", "SA", "EM", "CD", "EC"] + cross-listed ["PSY", "POL", "ECO"]
+       - "science" -> ["STL", "STN", "SEL", "SEN"]
+       - "quantitative" -> ["QCR", "QR"]
+       - "ethics" -> ["EM"]
+       - "culture" -> ["CD"]
+       - "epistemology" -> ["EC"]
+       - "writing" -> ["EC", "SA"]
+       - "foreign language" -> ["LA"]
+       - "art" -> ["LA"]
+    9. Course level indicators:
+       - "intro" -> ["100-level", "introductory", "beginning"]
+       - "intermediate" -> ["200-level", "mid-level"]
+       - "advanced" -> ["300-level", "400-level", "upper-level"]
+    10. Workload indicators:
+        - Weekly commitment -> ["hours per week", "weekly time"]
+        - Assignment types -> ["problem sets", "psets", "weekly problem", "regular problem", "papers", "projects"]
+        - Assignment significance -> ["significant component", "regular assignments", "weekly assignments"]
+        - Exam structure -> ["midterms", "finals", "quizzes"]
+    11. Never make up any courses, reviews, or opinions"""
 
 @system_prompt
 def agent_system_prompt():

@@ -1,6 +1,6 @@
 from utils import get_embedding, openai_json_response, delete_dict_key_recursively, system_prompt, build_search_query
 from clients import db_client
-from prompts import get_course_search_prompt, user_query, extract_email_search_terms, email_search_query, extract_course_search_terms
+from prompts import user_query, extract_email_search_terms, email_search_query, extract_course_search_terms
 import time
 import requests
 import os
@@ -24,14 +24,36 @@ PROCESSED_RESULTS_SPECIFIC = 15
 
 # course scoring weights
 TITLE_MATCH_SCORE = 10
-DESCRIPTION_MATCH_SCORE = 5
-EVALUATION_MATCH_SCORE = 8
+DESCRIPTION_MATCH_SCORE = 6
 COMMENT_MATCH_SCORE = 7
 ASSIGNMENT_MATCH_SCORE = 6
-COURSE_RATING_BELOW_35 = 5
-COURSE_RATING_ABOVE_4 = 8
-COURSE_QUALITY_DIFFICULTY = 10
+COURSE_RATING_BELOW_35 = 4
+COURSE_RATING_ABOVE_4 = 5
+GRADING_COMPONENT_BOOST = 10
 
+# dist req mappings
+DISTRIBUTION_MAPPINGS = {
+    "humanities": ["LA", "HA", "SA", "EM", "CD", "EC"], 
+    "science": ["STL", "SEL", "SEN"],
+    "quantitative": ["QCR", "QR"],
+    "writing": ["EC", "SA", "WRI"],
+    "ethics": ["EM"],
+    "culture": ["CD"],
+    "history": ["HA"],
+    "arts": ["LA"],
+    "social": ["SA"],
+}
+
+# assignment type indicators
+PSET_INDICATORS = [
+    "problem set", "pset", "problem sets", "psets", 
+    "p-set", "problem-set", "computational assignment", "mathematical assignment"
+]
+
+PAPER_INDICATORS = [
+    "paper", "essay", "writing assignment", "written assignment",
+    "research paper", "term paper", "papers", "essays"
+]
 
 def setup_mongodb_indices():
     # Email indices
@@ -54,25 +76,26 @@ def setup_mongodb_indices():
     except:
         pass  # Index might not exist
         
-    # Regular index for course code lookups
     courses.create_index([
         ("department", 1),
         ("catalogNumber", 1)
     ], name="course_code_idx")
     
-    # Combined text index with weights for different fields
     courses.create_index([
         ("title", "text"),
         ("description", "text"),
         ("assignments", "text"),
-        ("evaluations.comments.comment", "text")
+        ("semesters.evaluations.comments.comment", "text")
     ], weights={
         "title": 10,
-        "description": 5,
+        "description": 8,
         "assignments": 3,
-        "evaluations.comments.comment": 7
-    }, name="course_text_idx")
-
+        "semesters.evaluations.comments.comment": 5
+    }, default_language="english", name="course_text_idx")
+    
+    courses.create_index([("semesters.semester._id", -1)])  # sorting by most recent semester
+    courses.create_index([("semesters.scores.Quality of Course", -1)])  # course quality lookups
+    
     print("MongoDB indices created successfully")
 
 setup_mongodb_indices()
@@ -218,11 +241,9 @@ def retrieve_eating_clubs(query_text):
     return hybrid_search(collection, query_text, "eatingclub", expiry=True)
 
 def score_course_document(doc, search_info):
-    """Score a course document based on search terms and query type"""
+    """Score a course document based on search terms"""
     score = 0
     terms = search_info.get("terms", [])
-    query_type = search_info.get("query_type", "info")
-    focus = search_info.get("focus", [])
     
     # base scoring for different fields
     for term in terms:
@@ -230,262 +251,92 @@ def score_course_document(doc, search_info):
         if re.search(term, str(doc.get("title", "")), re.IGNORECASE):
             score += TITLE_MATCH_SCORE
             
-        # description matches    
+        # desc matches    
         if re.search(term, str(doc.get("description", "")), re.IGNORECASE):
             score += DESCRIPTION_MATCH_SCORE
             
-        # assignment matches
+        # assingment matches
         if re.search(term, str(doc.get("assignments", "")), re.IGNORECASE):
             score += ASSIGNMENT_MATCH_SCORE
+            
+        # comment matches
+        if doc.get("semesters"):
+            for sem in doc["semesters"]:
+                if sem.get("evaluations", {}).get("comments"):
+                    for comment in sem["evaluations"]["comments"]:
+                        if re.search(term, str(comment.get("comment", "")), re.IGNORECASE):
+                            score += COMMENT_MATCH_SCORE
+                            break
     
-    # query type specific scoring
-    if query_type == "opinion":
-        # for opinion queries, heavily weight evaluations and comments
-        comments = doc.get("evaluations", {}).get("comments", [])
-        comment_score = 0
-        relevant_comments = 0
-        
-        for comment in comments:
-            comment_text = comment.get("comment", "").lower()
-            if any(term.lower() in comment_text for term in terms):
-                comment_score += COMMENT_MATCH_SCORE
-                relevant_comments += 1
-        
-        # boost score based on number of relevant comments
-        if relevant_comments > 0:
-            score += comment_score * (1 + (relevant_comments / 10))
-            
-        # consider course ratings
-        course_quality = float(doc.get("scores", {}).get("Quality of Course", 0) or 0)
-        if course_quality > 4.0:
-            score += COURSE_RATING_ABOVE_4
-        elif course_quality > 3.5:
-            score += COURSE_RATING_BELOW_35
-
-    elif query_type == "comparison" or query_type == "difficulty":
-        # for difficulty/comparison queries, focus on workload and evaluations
-        assignments = str(doc.get("assignments", "")).lower()
-        
-        # check for workload indicators in assignments
-        if any(term in assignments for term in ["problem set", "pset", "homework", "weekly"]):
-            score += 7
-        if any(term in assignments for term in ["paper", "essay", "project"]):
-            score += ASSIGNMENT_MATCH_SCORE # keep the same as assignment match score
-            
-        # consier course ratings
-        if "difficulty" in focus:
-            course_quality = float(doc.get("scores", {}).get("Quality of Course", 0) or 0)
-            if course_quality > 4.0:
-                score += COURSE_QUALITY_DIFFICULTY
-            
-        # check comments for difficulty/workload mentions
-        comments = doc.get("evaluations", {}).get("comments", [])
-        for comment in comments:
-            comment_text = comment.get("comment", "").lower()
-            if any(term in comment_text for term in ["difficult", "hard", "challenging", "easy", "workload"]):
-                score += COMMENT_MATCH_SCORE
-
-    elif query_type == "tips":
-        # for tips queries focus on success strats in comments
-        comments = doc.get("evaluations", {}).get("comments", [])
-        for comment in comments:
-            comment_text = comment.get("comment", "").s()
-            if any(term in comment_text for term in ["tip", "advice", "recommend", "suggest", "help", "success"]):
-                score += COMMENT_MATCH_SCORE * 1.5  # Higher weight for tips
-                
-    # handle assignment preferences
-    assignments = str(doc.get("assignments", "")).lower()
-    if "no paper" in str(terms).lower() and any(term in assignments for term in ["paper", "essay", "writing"]):
-        score = 0  # exclude if papers not wanted
+    # quality boost
+    course_quality = 0
+    if doc.get("semesters"):
+        for sem in doc["semesters"]:
+            if sem.get("scores", {}).get("Quality of Course"):
+                course_quality = float(sem["scores"]["Quality of Course"])
+                break
     
-    if any(term in str(terms).lower() for term in ["pset", "problem set"]):
-        if any(term in assignments for term in ["problem set", "pset", "homework"]):
-            score += 8 # unironically dont touch this if you can help it 
-            
-    # distribution requirements
-    distribution = doc.get("distribution", "")
-    terms_str = " ".join(terms).lower()
-    if any(dist in terms_str for dist in ["ec", "em", "la", "cd", "ha", "sa", "qcr", "sel", "sen"]):
-        if distribution and distribution.lower() in terms_str:
-            score += 15
-            
+    if course_quality > 4.0:
+        score += COURSE_RATING_ABOVE_4
+    elif course_quality > 3.5:
+        score += COURSE_RATING_BELOW_35
+    
+    # scoring for assignments
+    assignments = doc.get("assignments", [])
+    if any("problem set" in assignment.lower() or "pset" in assignment.lower() 
+           for assignment in assignments):
+        score += GRADING_COMPONENT_BOOST  
+    
+    # scoring for grading components
+    grading = doc.get("grading", [])
+    if any(component.get("component", "").lower() in ["problem set(s)", "problem sets", "psets"] 
+           for component in grading):
+        score += GRADING_COMPONENT_BOOST 
+    
     return score
 
-def process_course_doc(doc, score=1):
-    """Process a course document into standard format with all details"""
-    processed = {
-        "_id": doc["_id"],
-        "department": doc.get("department", ""),
-        "catalogNumber": doc.get("catalogNumber", ""),
-        "title": doc.get("title", ""),
-        "description": doc.get("description", ""),
-        "assignments": doc.get("assignments", []),
-        "distribution": doc.get("distribution", ""),
-        "scores": doc.get("scores", {}),
-        "score": score,
-        "courseID": doc.get("courseID", ""),
-        "evaluations": doc.get("evaluations", {})
-    }
+def has_assignment_type(doc, indicators):
+    """Check if a course has a particular type of assignment"""
+    assignments = str(doc.get("assignments", "")).lower()
+    grading = str(doc.get("grading", "")).lower()
     
-    processed["url"] = f"https://www.princetoncourses.com/course/{doc.get('courseID', '')}"
+    # check assignments field
+    if any(indicator in assignments for indicator in indicators):
+        return True
+        
+    # check grading components
+    if isinstance(doc.get("grading"), list):
+        grading_text = " ".join(str(g.get("component", "")).lower() for g in doc["grading"])
+        if any(indicator in grading_text for indicator in indicators):
+            return True
+            
+    return False
+
+def matches_distribution(doc, dist_type):
+    """Check if a course matches a distribution requirement category"""
+    course_dist = str(doc.get("distribution", "")).split(" OR ")
     
-    return processed
+    # get valid dist codes for the type
+    valid_codes = DISTRIBUTION_MAPPINGS.get(dist_type.lower(), [])
+    
+    return any(dist in valid_codes for dist in course_dist)
 
 def retrieve_princeton_courses(query_text):
-    """Robust course retrieval with multiple search strategies."""
+    """Robust course retrieval with multiple search strategies"""
     collection = db_client["courses"]
     
     try:
-        # first: direct course code lookup
-        course_match = re.search(r'([A-Za-z]{2,3})\s*(\d{3}[A-Za-z]*)', query_text)
-        if course_match:
-            dept, num = course_match.groups()
-            exact_course = collection.find_one({
-                "department": dept.upper(),
-                "catalogNumber": num
-            })
-            if exact_course:
-                return {
-                    "main_course": exact_course,
-                    "other_courses": [],
-                    "url": f"https://www.princetoncourses.com/course/{exact_course.get('courseID')}",
-                    "is_current": True
-                }
-            else:
-                # Try to get course from princetoncourses.com as fallback
-                course_id = f"{dept.upper()}{num}"
-                url = f"https://www.princetoncourses.com/course/{course_id}"
-                try:
-                    response = requests.get(url)
-                    if response.ok:
-                        course_data = response.json()
-                        if course_data:
-                            fallback_course = {
-                                "_id": course_id,
-                                "department": dept.upper(),
-                                "catalogNumber": num,
-                                "title": course_data.get("title", ""),
-                                "description": course_data.get("description", ""),
-                                "assignments": course_data.get("assignments", []),
-                                "distribution": course_data.get("distribution", ""),
-                                "scores": course_data.get("scores", {}),
-                                "courseID": course_id,
-                                "evaluations": course_data.get("evaluations", {})
-                            }
-                            return {
-                                "main_course": fallback_course,
-                                "other_courses": [],
-                                "url": url,
-                                "is_current": True
-                            }
-                except:
-                    pass
-
-        # second: full-text search pipeline
-        text_pipeline = [
-            {
-                "$search": {
-                    "index": "full-text-search",
-                    "compound": {
-                        "should": [
-                            {
-                                "text": {
-                                    "query": query_text,
-                                    "path": {
-                                        "wildcard": "*"
-                                    }
-                                }
-                            }
-                        ]
-                    }
-                }
-            },
-            {
-                "$addFields": {
-                    "searchScore": {
-                        "$meta": "searchScore"
-                    }
-                }
-            },
-            {
-                "$limit": 20
-            }
-        ]
-
-        # third: vector search pipeline
-        vector_pipeline = [
-            {
-                "$vectorSearch": {
-                    "queryVector": get_embedding(query_text),
-                    "path": "embedding",
-                    "numCandidates": 100,
-                    "limit": 20,
-                    "index": "vector_index"
-                }
-            },
-            {
-                "$addFields": {
-                    "vectorScore": {
-                        "$meta": "vectorSearchScore"
-                    }
-                }
-            }
-        ]
-
-        # run both searches
-        text_results = list(collection.aggregate(text_pipeline))
-        vector_results = list(collection.aggregate(vector_pipeline))
-
-        # combine results and remove depulicates
-        all_results = {}  # use dict to deduplicate by _id
+        # get search terms
+        search_info = openai_json_response([
+            extract_course_search_terms(),
+            user_query(query_text)
+        ])
         
-        for result in text_results + vector_results:
-            result_id = str(result['_id'])
-            if result_id not in all_results:
-                all_results[result_id] = result
-            else:
-                # if exists in both searches, combine scores
-                existing = all_results[result_id]
-                existing['combinedScore'] = (
-                    existing.get('searchScore', 0) + 
-                    existing.get('vectorScore', 0)
-                )
-
-        results = list(all_results.values())
-
-        # apply additional filters based on query
-        query_lower = query_text.lower()
+        search_terms = search_info.get("terms", [])
+        print(f"[DEBUG] Course search terms: {search_terms}")
         
-        # distribution requirement filter
-        dist_requirements = []
-        if "ec" in query_lower:
-            dist_requirements.append("EC")
-        if "em" in query_lower:
-            dist_requirements.append("EM")
-        if "la" in query_lower:
-            dist_requirements.append("LA")
-            
-        if dist_requirements:
-            results = [r for r in results if r.get('distribution') in dist_requirements]
-
-        # problem set/assignment filter
-        if any(term in query_lower for term in ['pset', 'problem set', 'homework']):
-            results = [
-                r for r in results
-                if any(term in str(r.get('assignments', '')).lower() 
-                      for term in ['problem set', 'pset', 'homework', 'assignment'])
-                or any(term in str(r.get('evaluations', {}).get('comments', [])).lower()
-                      for term in ['problem set', 'pset', 'homework', 'assignment'])
-            ]
-
-        # quality/difficulty filter
-        if any(term in query_lower for term in ['good', 'best', 'quality', 'recommended']):
-            results.sort(
-                key=lambda x: float(x.get('scores', {}).get('Quality of Course', 0)), 
-                reverse=True
-            )
-
-        if not results:
+        # if no terms return empty ig
+        if not search_terms:
             return {
                 "main_course": {},
                 "other_courses": [],
@@ -493,37 +344,109 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
-        # sort by combined relevance and quality
-        results.sort(
-            key=lambda x: (
-                x.get('combinedScore', 0),
-                float(x.get('scores', {}).get('Quality of Course', 0) or 0)
-            ),
-            reverse=True
-        )
+        # first: direct course code lookup
+        course_match = re.search(r'([A-Z]{2,4})\s*(\d{3}[A-Z]*)', query_text.upper())
+        if course_match:
+            dept, num = course_match.groups()
+            exact_course = collection.find_one({
+                "department": dept,
+                "catalogNumber": num
+            })
+            if exact_course:
+                # get semester ID and courseID to construct full course ID (before i wasnt getting the semester ID)
+                semester_id = str(exact_course.get('semester', {}).get('_id', ''))
+                course_id = exact_course.get('courseID', '')
+                full_course_id = f"{semester_id}{course_id}"
+                
+                return {
+                    "main_course": exact_course,
+                    "other_courses": [],
+                    "url": f"https://www.princetoncourses.com/course/{full_course_id}",
+                    "is_current": True
+                }
 
-        # get course URL
-        course_id = str(results[0].get('courseID', ''))
-        link = f"https://www.princetoncourses.com/course/{course_id}"
-
-        # get related courses - keep as dictionaries with required fields
-        other_results = [{
+        # regex pattern from search terms (regex is not ideal but mongodb saur idk)
+        combined_pattern = "|".join(re.escape(term) for term in search_terms)
+        
+        base_query = {
+            "$or": [
+                {"title": {"$regex": f".*({combined_pattern}).*", "$options": "i"}},
+                {"description": {"$regex": f".*({combined_pattern}).*", "$options": "i"}},
+                {"assignments": {"$regex": f".*({combined_pattern}).*", "$options": "i"}},
+                {"semesters.evaluations.comments.comment": {"$regex": f".*({combined_pattern}).*", "$options": "i"}}
+            ]
+        }
+        
+        matches = list(collection.find(base_query))
+        print(f"[DEBUG] Found {len(matches)} matching courses")
+        
+        # apply extra filters on query
+        filtered_matches = []
+        query_lower = query_text.lower()
+        
+        # check dist reqs
+        dist_type = None
+        for dist, codes in DISTRIBUTION_MAPPINGS.items():
+            if dist in query_lower:
+                dist_type = dist
+                break
+        
+        # check assignment types
+        needs_psets = any(term in query_lower for term in ["pset", "problem set", "p-set", "problem-set"])
+        needs_papers = any(term in query_lower for term in ["paper", "essay", "writing", "written"])
+        
+        # filter based on reqs
+        for doc in matches:
+            matches_requirements = True
+            
+            if dist_type and not matches_distribution(doc, dist_type):
+                matches_requirements = False
+                
+            if needs_psets and not has_assignment_type(doc, PSET_INDICATORS):
+                matches_requirements = False
+            if needs_papers and not has_assignment_type(doc, PAPER_INDICATORS):
+                matches_requirements = False
+                
+            if matches_requirements:
+                filtered_matches.append(doc)
+        
+        # score and sort
+        scored_results = []
+        for doc in filtered_matches:
+            score = score_course_document(doc, search_info)
+            if score > 0:
+                doc["score"] = score
+                scored_results.append(doc)
+        
+        scored_results.sort(key=lambda x: x.get("score", 0), reverse=True)
+        
+        if not scored_results:
+            return {
+                "main_course": {},
+                "other_courses": [],
+                "url": None,
+                "is_current": True
+            }
+        
+        main_course = scored_results[0]
+        other_courses = [{
             "department": c.get("department", ""),
             "catalogNumber": c.get("catalogNumber", ""),
             "title": c.get("title", "")
-        } for c in results[1:5]]
-
-        # clean up main course object
-        main_course = {k:v for k,v in results[0].items() 
-                      if k not in ['_id', 'embedding', 'searchScore', 'vectorScore', 'combinedScore']}
-
+        } for c in scored_results[1:5]]
+        
+        # Get semester ID and course ID to construct full course ID
+        semester_id = str(main_course.get('semester', {}).get('_id', ''))
+        course_id = main_course.get('courseID', '')
+        full_course_id = f"{semester_id}{course_id}"
+        
         return {
             "main_course": main_course,
-            "other_courses": other_results,
-            "url": link,
+            "other_courses": other_courses,
+            "url": f"https://www.princetoncourses.com/course/{full_course_id}",
             "is_current": True
         }
-
+        
     except Exception as e:
         print("[ERROR] Course retrieval failed:", e)
         return {
@@ -532,56 +455,6 @@ def retrieve_princeton_courses(query_text):
             "url": None,
             "is_current": True
         }
-
-# this does not fucking work, my brain is not working and i can't
-# youd think i could just copypaste from the old function to use this a fallback
-# but i *cannot* get it to work idk why but i going to bed before i cry
-def get_course_from_princetoncourses(dept, num):
-    """Attempt to get course information directly from princetoncourses.com"""
-    try:
-        # first try via course ID
-        search_url = f"https://princetoncourses.com/search/{dept}{num}"
-        search_response = requests.get(search_url)
-        if not search_response.ok:
-            return None
-        
-        search_data = search_response.json()
-        if not search_data or not search_data.get("courses"):
-            return None
-            
-        course_id = search_data["courses"][0].get("courseID")
-        if not course_id:
-            return None
-            
-        # get full course details
-        course_url = f"https://princetoncourses.com/course/{course_id}"
-        course_response = requests.get(course_url)
-        if not course_response.ok:
-            return None
-            
-        course_data = course_response.json()
-        if not course_data:
-            return None
-            
-        # process the course data into standard format
-        processed_course = {
-            "_id": course_id,
-            "department": dept,
-            "catalogNumber": num,
-            "title": course_data.get("title", ""),
-            "description": course_data.get("description", ""),
-            "assignments": course_data.get("assignments", []),
-            "distribution": course_data.get("distribution", ""),
-            "scores": course_data.get("scores", {}),
-            "courseID": course_id,
-            "evaluations": course_data.get("evaluations", {}),
-            "score": 1  # default score since direct lookup (i think this is how u do it)
-        }
-        
-        return processed_course
-    except Exception as e:
-        print(f"[ERROR] Failed to fetch course from princetoncourses: {e}")
-        return None
 
 def hybrid_search(collection, query, source=None, expiry=False, sort=None, max_results=10):
     query_vector = get_embedding(query)
