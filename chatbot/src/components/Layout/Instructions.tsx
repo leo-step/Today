@@ -19,8 +19,8 @@ export const Instructions = ({ onClick }: IInstructionsProps) => {
       icon: FiSun,
       name: "Ask me...",
       list: [
-        "What club meetings are happening soon?",
-        "How can I get involved in entrepreneurship here?",
+        "What events are happening tomorrow?",
+        "Should I take MAT201 or EGR156?",
       ],
     },
     // {
