@@ -40,7 +40,7 @@ export const Chat = ({ ...props }: ChatProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedChat, addMessage, editMessage, addChat, editChat, clearAll } =
     useChat();
-  const [, forceUpdate] = useReducer(x => x + 1, 0);
+  const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const selectedId = selectedChat?.id,
     selectedRole = selectedChat?.role;
 
@@ -227,12 +227,12 @@ export const Chat = ({ ...props }: ChatProps) => {
 
               const setFeedback = (feedback?: Feedback) => {
                 if (selectedChat.content[key].feedback == feedback) {
-                  selectedChat.content[key].feedback = undefined
+                  selectedChat.content[key].feedback = undefined;
                 } else {
-                  selectedChat.content[key].feedback = feedback
+                  selectedChat.content[key].feedback = feedback;
                 }
                 forceUpdate();
-              }
+              };
 
               return (
                 <Stack
@@ -280,13 +280,25 @@ export const Chat = ({ ...props }: ChatProps) => {
                     >
                       <IconButton
                         aria-label="thumbs-up"
-                        icon={<FiThumbsUp style={{ fill: feedback === "up" ? "white" : "none" }}/>}
+                        icon={
+                          <FiThumbsUp
+                            style={{
+                              fill: feedback === "up" ? "white" : "none",
+                            }}
+                          />
+                        }
                         backgroundColor="transparent"
                         onClick={() => setFeedback("up")}
                       />
                       <IconButton
                         aria-label="thumbs-down"
-                        icon={<FiThumbsDown style={{ fill: feedback === "down" ? "white" : "none" }}/>}
+                        icon={
+                          <FiThumbsDown
+                            style={{
+                              fill: feedback === "down" ? "white" : "none",
+                            }}
+                          />
+                        }
                         backgroundColor="transparent"
                         onClick={() => setFeedback("down")}
                       />
@@ -345,7 +357,11 @@ export const Chat = ({ ...props }: ChatProps) => {
             opacity={0.8}
           >
             We would love to hear your feedback! Please{" "}
-            <a href="https://forms.gle/zRBnuBA58QCDCqcX7">
+            <a
+              href="https://forms.gle/zRBnuBA58QCDCqcX7"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <u>submit this form</u>
             </a>
             .
