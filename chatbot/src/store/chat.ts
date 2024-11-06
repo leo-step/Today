@@ -21,9 +21,12 @@ type Chat = {
     content: ChatContent[]
 };
 
+export type Feedback = "up" | "down"
+
 type ChatContent = {
     emitter: ChatContentEmmiter,
-    message: string
+    message: string,
+    feedback?: Feedback
 };
 
 type ChatContentEmmiter = "gpt" | "user" | "error";

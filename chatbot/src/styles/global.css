@@ -43,9 +43,9 @@
 }
 
 @media only screen and (max-width: 600px) {
-  .disclaimer {
+  /* .disclaimer {
     display: none;
-  }
+  } */
 
   .extrapad {
     display: block;

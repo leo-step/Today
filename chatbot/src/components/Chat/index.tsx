@@ -1,7 +1,7 @@
 //Modules
 import warning from "@/assets/warning.svg";
-import { useRef, useEffect } from "react";
-import { useChat } from "@/store/chat";
+import { useRef, useEffect, useState, useReducer } from "react";
+import { Feedback, useChat } from "@/store/chat";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { OpenAIApi, Configuration } from "openai";
@@ -13,7 +13,14 @@ import { useSearchParams } from "react-router-dom";
 //Components
 import { Input } from "@/components/Input";
 import { FiSend, FiThumbsUp, FiThumbsDown, FiRefreshCcw } from "react-icons/fi";
-import { Avatar, IconButton, Spinner, Stack, Text } from "@chakra-ui/react";
+import {
+  Avatar,
+  Box,
+  IconButton,
+  Spinner,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Instructions } from "../Layout/Instructions";
@@ -33,6 +40,7 @@ export const Chat = ({ ...props }: ChatProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedChat, addMessage, editMessage, addChat, editChat, clearAll } =
     useChat();
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
   const selectedId = selectedChat?.id,
     selectedRole = selectedChat?.role;
 
@@ -59,19 +67,16 @@ export const Chat = ({ ...props }: ChatProps) => {
   });
 
   const getUuid = () => {
-    let uuid = searchParams.get("uuid") || window.localStorage.getItem("uuid")
+    let uuid = searchParams.get("uuid") || window.localStorage.getItem("uuid");
     if (!uuid) {
       uuid = uuidv4();
-      window.localStorage.setItem("uuid", uuid)
+      window.localStorage.setItem("uuid", uuid);
     }
-    return uuid
-  }
+    return uuid;
+  };
 
   const handleAsk = async ({ input: prompt }: ChatSchema) => {
-    const sendRequest = (
-      selectedId: string,
-      selectedChat: any
-    ) => {
+    const sendRequest = (selectedId: string, selectedChat: any) => {
       setValue("input", "");
 
       addMessage(selectedId, {
@@ -155,24 +160,27 @@ export const Chat = ({ ...props }: ChatProps) => {
     const event = {
       uuid,
       event: eventType,
-      properties
-    }
+      properties,
+    };
     try {
       fetch(config.URL + "/api/track", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(event)
-      })
+        body: JSON.stringify(event),
+      });
     } catch {}
-  }
+  };
 
   const ExternalLink = ({ href, children }: any) => {
     return (
-      <a href={href} onClick={() =>
-        trackEvent("citationLinkClick", href)
-      } target="_blank" rel="noopener noreferrer">
+      <a
+        href={href}
+        onClick={() => trackEvent("citationLinkClick", href)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {children}
       </a>
     );
@@ -197,7 +205,7 @@ export const Chat = ({ ...props }: ChatProps) => {
       >
         <Stack spacing={2} padding={2} ref={parentRef} height="full">
           {hasSelectedChat ? (
-            selectedChat.content.map(({ emitter, message }, key) => {
+            selectedChat.content.map(({ emitter, message, feedback }, key) => {
               const getAvatar = () => {
                 switch (emitter) {
                   case "gpt":
@@ -217,11 +225,20 @@ export const Chat = ({ ...props }: ChatProps) => {
                 return message;
               };
 
+              const setFeedback = (feedback?: Feedback) => {
+                if (selectedChat.content[key].feedback == feedback) {
+                  selectedChat.content[key].feedback = undefined
+                } else {
+                  selectedChat.content[key].feedback = feedback
+                }
+                forceUpdate();
+              }
+
               return (
                 <Stack
                   key={key}
                   backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
-                > 
+                >
                   <Stack
                     direction="row"
                     padding={4}
@@ -252,27 +269,29 @@ export const Chat = ({ ...props }: ChatProps) => {
                     </Text>
                   </Stack>
                   {/* style={{ fill: 'white' }} */}
-                  {emitter === "gpt" && <Stack
-                    direction="row"
-                    spacing={0}
-                    align="end"
-                    paddingRight={4}
-                    paddingBottom={4}
-                    style={{"justifyContent": "flex-end"}}
-                  >
-                    <IconButton 
-                      aria-label="thumbs-up"
-                      icon={<FiThumbsUp />} 
-                      backgroundColor="transparent"
-                      onClick={() => console.log("thumbs up")} 
-                    />
-                    <IconButton 
-                      aria-label="thumbs-down"
-                      icon={<FiThumbsDown />}
-                      backgroundColor="transparent"
-                      onClick={() => console.log("thumbs down")} 
-                    />
-                  </Stack>}
+                  {emitter === "gpt" && (
+                    <Stack
+                      direction="row"
+                      spacing={0}
+                      align="end"
+                      paddingRight={4}
+                      paddingBottom={4}
+                      style={{ justifyContent: "flex-end" }}
+                    >
+                      <IconButton
+                        aria-label="thumbs-up"
+                        icon={<FiThumbsUp style={{ fill: feedback === "up" ? "white" : "none" }}/>}
+                        backgroundColor="transparent"
+                        onClick={() => setFeedback("up")}
+                      />
+                      <IconButton
+                        aria-label="thumbs-down"
+                        icon={<FiThumbsDown style={{ fill: feedback === "down" ? "white" : "none" }}/>}
+                        backgroundColor="transparent"
+                        onClick={() => setFeedback("down")}
+                      />
+                    </Stack>
+                  )}
                 </Stack>
               );
             })
@@ -299,7 +318,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                 aria-label="new_convo_button"
                 icon={<FiRefreshCcw />}
                 backgroundColor="transparent"
-                onClick={clearAll} 
+                onClick={clearAll}
               />
             }
             inputRightAddon={
@@ -319,10 +338,20 @@ export const Chat = ({ ...props }: ChatProps) => {
             }}
             backgroundColor="whiteAlpha.200"
           />
-          <Text className="disclaimer" textAlign="center" fontSize="sm" opacity={0.5}>
-            ⚠️ Highly experimental. Responses may not be accurate. Not intended
+          <Text
+            className="disclaimer"
+            textAlign="center"
+            fontSize="md"
+            opacity={1}
+          >
+            We would love to hear your feedback! Please{" "}
+            <a href="https://forms.gle/zRBnuBA58QCDCqcX7">
+              <u>submit this form</u>
+            </a>
+            .
+            {/* ⚠️ Highly experimental. Responses may not be accurate. Not intended
             for academic use. Our goal is to make information accessible. Your
-            feedback will help us improve.
+            feedback will help us improve. */}
           </Text>
         </Stack>
       </Stack>
