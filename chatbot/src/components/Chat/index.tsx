@@ -342,7 +342,7 @@ export const Chat = ({ ...props }: ChatProps) => {
             className="disclaimer"
             textAlign="center"
             fontSize="md"
-            opacity={1}
+            opacity={0.8}
           >
             We would love to hear your feedback! Please{" "}
             <a href="https://forms.gle/zRBnuBA58QCDCqcX7">
