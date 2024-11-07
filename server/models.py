@@ -14,6 +14,12 @@ class ChatQueryInput(BaseModel):
     session_id: str
     text: str
 
+class Feedback(BaseModel):
+    uuid: str
+    session_id: str
+    msg_index: int
+    feedback: Optional[str]
+
 # ========= TOOLS ========= #
 
 class Tool(Enum):
