@@ -43,9 +43,6 @@
 }
 
 @media only screen and (max-width: 600px) {
-  /* .disclaimer {
-    display: none;
-  } */
 
   .extrapad {
     display: block;
@@ -55,11 +52,11 @@
   }
 
   .input-stack {
-    height: 12%;
+    height: 18%;
   }
 
   .output-stack {
-    height: 84%;
+    height: 78%;
   }
 
   .instruction-stack {
