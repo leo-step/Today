@@ -305,6 +305,8 @@ def tool_and_rewrite(tools: Tools, memory: Memory):
     ***VERY IMPORTANT: Never guess at any unknown acronyms that are supplied and rewrite them. Keep the acronyms as they
     are, especially any potentially relating to student groups or academic departments. You may only expand the 
     most obvious ones such as "AI" = artificial intelligence.***
+
+    The current date is {time_to_date_string()}.
     """
 
     return prompt
