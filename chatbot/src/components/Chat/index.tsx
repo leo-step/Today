@@ -370,7 +370,7 @@ export const Chat = ({ ...props }: ChatProps) => {
           <Text
             className="disclaimer"
             textAlign="center"
-            fontSize="md"
+            fontSize="sm"
             opacity={0.8}
           >
             We would love to hear your feedback! Please{" "}
