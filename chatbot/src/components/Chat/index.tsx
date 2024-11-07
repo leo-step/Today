@@ -226,7 +226,24 @@ export const Chat = ({ ...props }: ChatProps) => {
               };
 
               const setFeedback = (feedback?: Feedback) => {
-                if (selectedChat.content[key].feedback == feedback) {
+                const isDeselect = selectedChat.content[key].feedback == feedback;
+                try {
+                  fetch(config.URL + "/api/feedback", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                      uuid: getUuid(),
+                      session_id: selectedId,
+                      msg_index: key,
+                      feedback: isDeselect ? null : feedback
+                    }),
+                  });
+                } catch {
+                  return
+                }
+                if (isDeselect) {
                   selectedChat.content[key].feedback = undefined;
                 } else {
                   selectedChat.content[key].feedback = feedback;
@@ -354,7 +371,7 @@ export const Chat = ({ ...props }: ChatProps) => {
             className="disclaimer"
             textAlign="center"
             fontSize="md"
-            opacity={0.8}
+            opacity={1}
           >
             We would love to hear your feedback! Please{" "}
             <a
