@@ -13,6 +13,7 @@ from cas import CASClient
 from urllib.parse import urlparse, parse_qs
 import os
 import uuid
+import time
 
 load_dotenv()
 
@@ -105,7 +106,8 @@ def feedback():
             "uuid": feedback.uuid,
             "session_id": feedback.session_id,
             "msg_index": feedback.msg_index,
-            "feedback": feedback.feedback
+            "feedback": feedback.feedback,
+            "time": int(time.time())
         }
 
         collection.replace_one(filter, new_document, upsert=True)
