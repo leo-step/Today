@@ -373,15 +373,14 @@ export const Chat = ({ ...props }: ChatProps) => {
             fontSize="sm"
             opacity={0.8}
           >
-            We would love to hear your feedback! Please{" "}
             <a
               href="https://forms.gle/zRBnuBA58QCDCqcX7"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <u>submit this form</u>
+              <u>Submit your feedback</u>
             </a>
-            .
+            &nbsp;to help us improve.
             {/* ⚠️ Highly experimental. Responses may not be accurate. Not intended
             for academic use. Our goal is to make information accessible. Your
             feedback will help us improve. */}
