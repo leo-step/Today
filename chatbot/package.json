@@ -4,13 +4,14 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "vite --host",
 		"build": "tsc && vite build --emptyOutDir",
 		"preview": "vite preview"
 	},
 	"dependencies": {
 		"@capacitor/core": "^6.1.2",
 		"@capacitor/ios": "^6.1.2",
+		"@capacitor/keyboard": "^6.0.2",
 		"@chakra-ui/react": "^2.5.1",
 		"@emotion/react": "^11.10.6",
 		"@emotion/styled": "^11.10.6",

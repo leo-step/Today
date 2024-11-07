@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from mixpanel import Mixpanel
 from clients import db_client
 from datetime import datetime, timezone
-from models import Event, ChatQueryInput
+from models import Event, ChatQueryInput, Feedback
 from tools import tools, choose_tool_and_rewrite, invoke_tool
 from response import generate_response
 from memory import Memory, ToolInvocation, MessageType
@@ -13,6 +13,7 @@ from cas import CASClient
 from urllib.parse import urlparse, parse_qs
 import os
 import uuid
+import time
 
 load_dotenv()
 
@@ -83,6 +84,36 @@ def track():
 
 # ========== CHATBOT ==========
 
+@app.route('/api/feedback', methods=['POST'])
+def feedback():
+    data = request.get_json()
+    feedback = Feedback(**data)
+    collection = db_client["feedback"]
+
+    if not feedback.feedback:
+        collection.delete_one({
+            "uuid": feedback.uuid,
+            "session_id": feedback.session_id,
+            "msg_index": feedback.msg_index
+        })
+    else:
+        filter = {
+            "uuid": feedback.uuid,
+            "session_id": feedback.session_id,
+            "msg_index": feedback.msg_index
+        }
+        new_document = {
+            "uuid": feedback.uuid,
+            "session_id": feedback.session_id,
+            "msg_index": feedback.msg_index,
+            "feedback": feedback.feedback,
+            "time": int(time.time())
+        }
+
+        collection.replace_one(filter, new_document, upsert=True)
+
+    return '', 200
+    
 @app.route('/api/chat', methods=['POST'])
 def chat():
     # if not authenticated(request):
