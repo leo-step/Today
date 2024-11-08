@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 const CountdownTimer = () => {
-    const initialTime = 60 * 40; // Initial time in seconds (1 hour)
+    const initialTime = 5; // Initial time in seconds (1 hour)
     const [timeRemaining, setTimeRemaining] = useState(initialTime);
     const [startedTimer, setStartedTimer] = useState(false);
     const [timerIntervalId, setTimerIntervalId] = useState<NodeJS.Timeout | null>(null);
@@ -10,6 +10,8 @@ const CountdownTimer = () => {
     const hours = Math.floor(timeRemaining / 3600) < 10 ? "0" + Math.floor(timeRemaining / 3600) : Math.floor(timeRemaining / 3600);
     const minutes = (Math.floor((timeRemaining % 3600) / 60) < 10)? ("0" + Math.floor((timeRemaining % 3600) / 60)) : Math.floor((timeRemaining % 3600) / 60);
     const seconds = timeRemaining % 60 < 10 ? "0" + timeRemaining % 60 : timeRemaining % 60; 
+
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const onClickReset = () => {
         setTimeRemaining(initialTime);
@@ -27,7 +29,9 @@ const CountdownTimer = () => {
                 setTimeRemaining((prevTime) => {
                     if (prevTime === 0) {
                         clearInterval(intervalId);
-                        console.log("Countdown complete!");
+                        if(audioRef.current){
+                            audioRef.current.play();
+                        }
                         return 0;
                     } else {
                         return prevTime - 1;
@@ -63,7 +67,7 @@ const CountdownTimer = () => {
                 <button style={{width:"125px", height:"75px", margin:"15px", fontSize:"40px", color:"white", fontFamily:"Oswald", backgroundColor:"#ffc067", borderRadius:"50px", borderColor:"orange"}}
                 onClick={onStop}>Stop</button>
             </div>  
-            
+            <audio ref={audioRef} src="/timer_ring.mp3" preload="auto" />
         </div>
     );
 };
