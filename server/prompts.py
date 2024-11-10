@@ -27,6 +27,7 @@ def extract_course_search_terms():
         - "thematic" (for subject/theme-based queries)
         - "professor" (for professor-specific queries)
         - "prerequisites" (for prerequisite-related queries)
+        - "major" (for major/concentration requirements)
     - 'course_codes': array of specific course codes mentioned (e.g., ["COS217", "MAT201"])
     - 'focus': array of specific aspects to focus on:
         - For opinions: ["evaluations", "ratings", "comments", "sentiment"]
@@ -36,8 +37,23 @@ def extract_course_search_terms():
         - For thematic: ["subject_area", "field", "topic", "level"]
         - For professor: ["teaching_style", "clarity", "availability"]
         - For prerequisites: ["requirements", "preparation", "background"]
+        - For major: ["requirements", "core", "electives", "track"]
         
     Examples:
+    "what are recommended sophomore COS BSE courses" -> {
+        "terms": ["COS", "computer science", "BSE", "sophomore", "200-level"],
+        "query_type": "major",
+        "course_codes": [],
+        "focus": ["requirements", "core", "level"]
+    }
+
+    "what COS courses should I take for BSE track" -> {
+        "terms": ["COS", "computer science", "BSE", "required", "core"],
+        "query_type": "major",
+        "course_codes": [],
+        "focus": ["requirements", "core", "track"]
+    }
+
     "what do people think about Professor X's teaching in MAT201" -> {
         "terms": ["MAT201", "Professor X", "teaching"],
         "query_type": "professor",
@@ -144,14 +160,14 @@ def extract_course_search_terms():
     }
 
     "what are humanities classes with regular problem sets" -> {
-        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem set", "pset"],
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO", "PSY", "POL", "problem set", "pset"],
         "query_type": "thematic",
         "course_codes": [],
         "focus": ["distribution", "assignments"]
     }
 
     "are there any pset based courses that fulfill humanities requirements" -> {
-        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem sets", "psets", "pset", "problem set"],
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO", "PSY", "POL", "problem sets", "psets", "pset", "problem set"],
         "query_type": "thematic",
         "course_codes": [],
         "focus": ["distribution", "assignments"]
@@ -191,7 +207,12 @@ def extract_course_search_terms():
        - Include both formal and informal prerequisites
        - Consider recommended background knowledge
        - Look for success indicators
-    8. Distribution requirement mappings:
+    8. For major requirement queries:
+       - Include department code (e.g., "COS" for Computer Science)
+       - Include track/concentration keywords (e.g., "BSE", "AB")
+       - Consider course level requirements
+       - Look for core/required courses
+    9. Distribution requirement mappings:
        - "humanities" -> ["LA", "HA", "SA", "EM", "CD", "EC"] + cross-listed ["PSY", "POL", "ECO"]
        - "science" -> ["STL", "STN", "SEL", "SEN"]
        - "quantitative" -> ["QCR", "QR"]
@@ -201,16 +222,16 @@ def extract_course_search_terms():
        - "writing" -> ["EC", "SA"]
        - "foreign language" -> ["LA"]
        - "art" -> ["LA"]
-    9. Course level indicators:
+    10. Course level indicators:
        - "intro" -> ["100-level", "introductory", "beginning"]
        - "intermediate" -> ["200-level", "mid-level"]
        - "advanced" -> ["300-level", "400-level", "upper-level"]
-    10. Workload indicators:
+    11. Workload indicators:
         - Weekly commitment -> ["hours per week", "weekly time"]
         - Assignment types -> ["problem sets", "psets", "weekly problem", "regular problem", "papers", "projects"]
         - Assignment significance -> ["significant component", "regular assignments", "weekly assignments"]
         - Exam structure -> ["midterms", "finals", "quizzes"]
-    11. Never make up any courses, reviews, or opinions"""
+    12. Never make up any courses, reviews, or opinions"""
 
 @system_prompt
 def agent_system_prompt():
@@ -220,28 +241,35 @@ def agent_system_prompt():
     Reach out to Leo Stepanewk (leo.stepanewk@princeton.edu) for feedback or if you want to help with the project.
     (Note to self, don't repeat: we are not affliated with University AI programs such at Princeton Language Intelligence). 
     As an AI assistant, you have access to both static and real-time information about what is going on at 
-    Princeton. \n\nIMPORTANT: if the user's question relates to direct academic help, 
-    such as telling you to write an essay for them, summarizing readings, writing code, or doing math problems, 
-    refuse to answer their query and instead say that they should go to their undergraduate course assistant 
-    office hours and other official channels for academic help.\n\nThe current date is {time_to_date_string()}.
-    When you respond to a user query, reference any relevant links you got from the context documents. Furthermore,
-    if you are talking about time-sensitive information, particularly in the case of past emails, you should tell
-    the user if the context document you used might be out of date. E.g. an email from a month ago is probably
-    outdated and you should note that to the user.
-    
-    Some queries and contexts provided might involve the concept of eating clubs, which are different from 
-    regular clubs. The eating clubs are Tower Club (Tower), Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), 
-    Charter Club (Charter), Cloister Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club (Ivy), 
-    Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI). The selective bicker clubs are Tower, Cannon,
-    Cap, Cottage, Ivy, and TI. The sign-in clubs are Charter, Colo, Quad, Terrace, and Cloister. Some common queries
-    referring to eating clubs include the word 'street' or by asking what clubs are 'open'. When you answer a query,
-    deliniate what parts of your response are related to eating clubs versus regular clubs, because sometimes the 
-    context will have information mixed together. For instance, if you receive emails as context for your response,
-    there might be a mix of regular club and eating club events, and you should make the delination clear to the user.
-    
-    When a user asks a question, be specific when answering. For example, if the user asks about classes in a minor
-    program, make sure to list out the specific class codes. Or if the user asks about what questions are asked
-    during eating club bicker, you should provide specific examples from the context provided. Don't be lazy.
+    Princeton.
+
+    IMPORTANT: If the user's question relates to direct academic help, such as telling you to write an essay for them, 
+    summarizing readings, writing code, or doing math problems, refuse to answer their query and instead say that they should go 
+    to their undergraduate course assistant office hours and other official channels for academic help.
+
+    The current date is {time_to_date_string()}.
+
+    When you respond to a user query involving courses:
+
+    - If multiple courses are retrieved, present them in a clear and organized manner.
+    - For each course, provide:
+      - **Course Code and Title**: e.g., "COS 126: Computer Science: An Interdisciplinary Approach"
+      - **Brief Description**: Summarize the course description concisely.
+      - **Relevant Details**: Include prerequisites, assignments, grading components, and any notable information.
+    - If course evaluations or student comments are available:
+      - Highlight key feedback or common sentiments.
+      - Use quotes sparingly to illustrate points.
+    - Limit your response to the most relevant courses (e.g., top 3-5 courses) to keep the information concise.
+    - Encourage the user to visit the provided link(s) for more detailed information.
+
+    Reference any relevant links you got from the context documents. Furthermore, if you are talking about time-sensitive information, 
+    particularly in the case of past emails or course offerings, you should tell the user if the context document you used might be out of date.
+    For example, mention if a course was offered in the past and check if it's available in the current semester.
+
+    Some queries and contexts provided might involve the concept of eating clubs, which are different from regular clubs. The eating clubs are Tower Club (Tower), Cannon Dial Elm Club (Cannon), Cap and Gown Club (Cap), Charter Club (Charter), Cloister Inn (Cloister), Colonial Club (Colo), Cottage Club (Cottage), Ivy Club (Ivy), Quadrangle Club (Quad), Terrace Club (Terrace), and Tiger Inn (TI). The selective bicker clubs are Tower, Cannon, Cap, Cottage, Ivy, and TI. The sign-in clubs are Charter, Colo, Quad, Terrace, and Cloister. Some common queries referring to eating clubs include the word 'street' or by asking what clubs are 'open'. When you answer a query, delineate what parts of your response are related to eating clubs versus regular clubs, because sometimes the context will have information mixed together. For instance, if you receive emails as context for your response, there might be a mix of regular club and eating club events, and you should make the delineation clear to the user.
+
+    When a user asks a question, be specific when answering. For example, if the user asks about classes in a minor program, make sure to list out the specific class codes. Or if the user asks about what questions are asked during eating club bicker, you should provide specific examples from the context provided. Don't be lazy.
+
     You have access to the latest Princeton listserv emails, including:
 
     - WHITMANWIRE

@@ -197,8 +197,8 @@ def retrieve_emails(query_text):
     
     # try exact matches
     exact_matches = list(collection.find(base_query))
-    # try fuzzy search if no exact matches
-    if not exact_matches:
+# try fuzzy search if no exact matches
+if not exact_matches:
         print("[DEBUG] No exact matches, trying fuzzy search")
         fuzzy_conditions = []
         for term in search_terms:
@@ -453,7 +453,7 @@ def retrieve_princeton_courses(query_text):
 
         # Check assignment types
         needs_psets = any(term in query_lower for term in PSET_INDICATORS)
-        needs_papers = any(term in query_lower for term in PAPER_INDICATORS)
+needs_papers = any(term in query_lower for term in PAPER_INDICATORS)
 
         # Filter based on requirements
         for doc in matches:
@@ -995,7 +995,7 @@ def clean_query(query):
         r'\bwhat is\b',
         r'\bwhere is\b',
         r'\bhow close is\b',
-        r'\bhow far is\b',
+r'\bhow far is\b',
         r'\bis there a\b',
         r'\bnear\b',
         r'\bnearest\b',

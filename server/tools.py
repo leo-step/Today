@@ -134,38 +134,20 @@ def invoke_tool(tool: str, tool_input: str) -> str:
         return "\n\n".join(texts)
     elif tool == Tool.COURSES.value:
         result = retrieve_princeton_courses(tool_input)
-        if not result["main_course"]:
+        if not result["main_courses"]:
             return "Search results didn't return any courses."
-            
-        if result["is_current"]:
-            # For comparison queries, include full details of other courses
-            if len(result["other_courses"]) > 0 and isinstance(result["other_courses"][0], dict):
-                return f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
-                
-                Main course:
-                {json.dumps(result["main_course"])}
 
-                Other relevant courses:
-                {json.dumps(result["other_courses"])}"""
-            else:
-                # For regular queries, just return main course and other course codes
-                return f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
-                
-                {json.dumps(result["main_course"])}
+        courses_info = "\n\n".join([json.dumps(course) for course in result["main_courses"]])
+        other_courses_info = '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
 
-                Other related courses:
-                """ + '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
+        response = f"""***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
         
-        return f"""***[WARNING]: This class happened in a past semester.
-        Please note that to the user so they are not confused. Also,
-        everything you say should be in past tense!***
+{courses_info}
 
-        ***IMPORTANT: you must return this link to the user if you use this information - {result["url"]}***
+Other related courses:
+{other_courses_info}"""
 
-        {json.dumps(result["main_course"])}
-
-        Other related courses:
-        """ + '\n'.join([f"{c['department']} {c['catalogNumber']}: {c['title']}" for c in result["other_courses"]])
+        return response
     elif tool == Tool.EATING_CLUBS.value:
         documents = retrieve_eating_clubs(tool_input)
         return format_documents(documents)
