@@ -27,7 +27,6 @@ def extract_course_search_terms():
         - "thematic" (for subject/theme-based queries)
         - "professor" (for professor-specific queries)
         - "prerequisites" (for prerequisite-related queries)
-        - "major" (for major/concentration requirements)
     - 'course_codes': array of specific course codes mentioned (e.g., ["COS217", "MAT201"])
     - 'focus': array of specific aspects to focus on:
         - For opinions: ["evaluations", "ratings", "comments", "sentiment"]
@@ -37,23 +36,8 @@ def extract_course_search_terms():
         - For thematic: ["subject_area", "field", "topic", "level"]
         - For professor: ["teaching_style", "clarity", "availability"]
         - For prerequisites: ["requirements", "preparation", "background"]
-        - For major: ["requirements", "core", "electives", "track"]
         
     Examples:
-    "what are recommended sophomore COS BSE courses" -> {
-        "terms": ["COS", "computer science", "BSE", "sophomore", "200-level"],
-        "query_type": "major",
-        "course_codes": [],
-        "focus": ["requirements", "core", "level"]
-    }
-
-    "what COS courses should I take for BSE track" -> {
-        "terms": ["COS", "computer science", "BSE", "required", "core"],
-        "query_type": "major",
-        "course_codes": [],
-        "focus": ["requirements", "core", "track"]
-    }
-
     "what do people think about Professor X's teaching in MAT201" -> {
         "terms": ["MAT201", "Professor X", "teaching"],
         "query_type": "professor",
@@ -160,14 +144,14 @@ def extract_course_search_terms():
     }
 
     "what are humanities classes with regular problem sets" -> {
-        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO", "PSY", "POL", "problem set", "pset"],
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem set", "pset"],
         "query_type": "thematic",
         "course_codes": [],
         "focus": ["distribution", "assignments"]
     }
 
     "are there any pset based courses that fulfill humanities requirements" -> {
-        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO", "PSY", "POL", "problem sets", "psets", "pset", "problem set"],
+        "terms": ["humanities", "LA", "HA", "SA", "EM", "CD", "EC", "ECO, "PSY", "POL", "problem sets", "psets", "pset", "problem set"],
         "query_type": "thematic",
         "course_codes": [],
         "focus": ["distribution", "assignments"]
@@ -207,31 +191,26 @@ def extract_course_search_terms():
        - Include both formal and informal prerequisites
        - Consider recommended background knowledge
        - Look for success indicators
-    8. For major requirement queries:
-       - Include department code (e.g., "COS" for Computer Science)
-       - Include track/concentration keywords (e.g., "BSE", "AB")
-       - Consider course level requirements
-       - Look for core/required courses
-    9. Distribution requirement mappings:
+    8. Distribution requirement mappings:
        - "humanities" -> ["LA", "HA", "SA", "EM", "CD", "EC"] + cross-listed ["PSY", "POL", "ECO"]
        - "science" -> ["STL", "STN", "SEL", "SEN"]
        - "quantitative" -> ["QCR", "QR"]
        - "ethics" -> ["EM"]
        - "culture" -> ["CD"]
        - "epistemology" -> ["EC"]
-       - "writing" -> ["EC", "SA"]
+- "writing" -> ["EC", "SA"]
        - "foreign language" -> ["LA"]
        - "art" -> ["LA"]
-    10. Course level indicators:
+    9. Course level indicators:
        - "intro" -> ["100-level", "introductory", "beginning"]
        - "intermediate" -> ["200-level", "mid-level"]
        - "advanced" -> ["300-level", "400-level", "upper-level"]
-    11. Workload indicators:
+    10. Workload indicators:
         - Weekly commitment -> ["hours per week", "weekly time"]
         - Assignment types -> ["problem sets", "psets", "weekly problem", "regular problem", "papers", "projects"]
         - Assignment significance -> ["significant component", "regular assignments", "weekly assignments"]
         - Exam structure -> ["midterms", "finals", "quizzes"]
-    12. Never make up any courses, reviews, or opinions"""
+    11. Never make up any courses, reviews, or opinions"""
 
 @system_prompt
 def agent_system_prompt():
