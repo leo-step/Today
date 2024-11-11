@@ -272,10 +272,10 @@ def score_course_document(doc, search_info):
         if re.search(term, " ".join(doc.get("assignments", [])), re.IGNORECASE):
             score += ASSIGNMENT_MATCH_SCORE
 
-        # Comment matches - limit comment search for comparison queries
+        # Comment matches
         if doc.get("semesters"):
             comment_count = 0
-            max_comments = 5 if query_type != "comparison" else 2
+            max_comments = 5
             
             for sem in doc["semesters"][:2]:  # Only check last 2 semesters
                 if sem.get("evaluations", {}).get("comments"):
@@ -285,7 +285,6 @@ def score_course_document(doc, search_info):
                         if re.search(term, str(comment.get("comment", "")), re.IGNORECASE):
                             score += COMMENT_MATCH_SCORE
                             comment_count += 1
-                            break  # Only count one comment match per semester
 
     # Course level boost based on catalog number
     catalog_num = doc.get("catalogNumber", "")
@@ -375,8 +374,13 @@ def retrieve_princeton_courses(query_text):
             compare_conditions = []
             for code in course_codes:
                 if len(code) >= 3:
-                    dept = code[:3]
-                    num = code[3:]
+                    # Split the course code into department and number, handling spaces
+                    parts = code.split()
+                    if len(parts) == 2:
+                        dept, num = parts
+                    else:
+                        dept = code[:3]
+                        num = code[3:]
                     compare_conditions.append({
                         "$and": [
                             {"department": dept},
@@ -385,21 +389,8 @@ def retrieve_princeton_courses(query_text):
                     })
             base_query = {"$or": compare_conditions}
             
-            # For comparison queries, include semester data in the projection
-            matches = list(collection.find(base_query, {
-                "department": 1,
-                "catalogNumber": 1,
-                "title": 1,
-                "description": 1,
-                "prerequisites": 1,
-                "distribution": 1,
-                "assignments": 1,
-                "grading": 1,
-                "courseID": 1,
-                "semesters": {
-                    "$slice": ["$semesters", 2]  # Only get last 2 semesters
-                }
-            }))
+            # For comparison queries, include all semester data
+            matches = list(collection.find(base_query))
         else:
             # Build search conditions for non-comparison queries
             search_conditions = []
@@ -533,43 +524,32 @@ def retrieve_princeton_courses(query_text):
             if query_type == "comparison":
                 dept = course.get("department", "")
                 catalog = course.get("catalogNumber", "")
-                course_code = f"{dept}{catalog}"
+                # Try both formats to match course codes
+                course_code_with_space = f"{dept} {catalog}"
+                course_code_no_space = f"{dept}{catalog}"
                 
-                if course_code in course_codes:
-                    # Only include essential data for comparison
-                    processed_course = {
-                        "department": course.get("department", ""),
-                        "catalogNumber": course.get("catalogNumber", ""),
-                        "title": course.get("title", ""),
-                        "description": course.get("description", ""),
-                        "prerequisites": course.get("prerequisites", ""),
-                        "distribution": course.get("distribution", ""),
-                        "assignments": course.get("assignments", []),
-                        "grading": course.get("grading", []),
-                        "courseID": course.get("courseID", ""),
-                        "score": course.get("score", 0)
-                    }
+                if course_code_with_space in course_codes or course_code_no_space in course_codes:
+                    processed_course = course.copy()  # Keep all original data including semesters
                     
-                    # Include only the most recent semester with limited comments
-                    if course.get("semesters"):
-                        # Sort semesters by _id in descending order (most recent first)
-                        course["semesters"].sort(key=lambda x: x.get("semester", {}).get("_id", 0), reverse=True)
-                        recent_semester = course["semesters"][0]
+                    # Sort and limit semesters if they exist
+                    if processed_course.get("semesters"):
+                        processed_course["semesters"].sort(key=lambda x: x.get("semester", {}).get("_id", 0), reverse=True)
+                        processed_course["semesters"] = processed_course["semesters"][:2]  # Get 2 most recent semesters
                         
-                        # Include only relevant comments
-                        if recent_semester.get("evaluations", {}).get("comments"):
-                            comments = recent_semester["evaluations"]["comments"]
-                            relevant_comments = []
-                            for comment in comments:
-                                comment_text = comment.get("comment", "").lower()
-                                if any(term in comment_text for term in ["difficult", "easy", "workload", "recommend", "compared", "versus", "better", "worse"]):
-                                    relevant_comments.append(comment)
-                                if len(relevant_comments) >= 3:  # Limit to 3 most relevant comments
-                                    break
-                            
-                            recent_semester["evaluations"]["comments"] = relevant_comments
-                        
-                        processed_course["semesters"] = [recent_semester]
+                        # Process comments for each semester
+                        for semester in processed_course["semesters"]:
+                            if semester.get("evaluations", {}).get("comments"):
+                                comments = semester["evaluations"]["comments"]
+                                relevant_comments = []
+                                
+                                for comment in comments:
+                                    comment_text = comment.get("comment", "").lower()
+                                    if any(keyword in comment_text for keyword in ["difficult", "easy", "workload", "time", "hours", "assignments", "exams", "lectures"]):
+                                        relevant_comments.append(comment)
+                                    if len(relevant_comments) >= 5:  # Keep up to 5 relevant comments
+                                        break
+                                
+                                semester["evaluations"]["comments"] = relevant_comments
                     
                     processed_courses.append(processed_course)
             else:
@@ -798,7 +778,7 @@ def weighted_reciprocal_rank(doc_lists):
 # Map the sorted page_content back to the original document objects
     page_content_to_doc_map = {
         doc["text"]: doc for doc_list in doc_lists for doc in doc_list
-    }
+}
     sorted_docs = [
         page_content_to_doc_map[page_content] for page_content in sorted_documents
     ]
@@ -998,7 +978,7 @@ def clean_query(query):
         r'\bhow far is\b',
         r'\bis there a\b',
         r'\bnear\b',
-        r'\bnearest\b',
+r'\bnearest\b',
         r'\bthe\b',
         r'\baddress of\b',
         r'\blocation\b',
