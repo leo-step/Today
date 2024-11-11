@@ -433,6 +433,84 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
+        # check for course codes in search terms for all query types except comparison
+        # (since comparison needs to find multiple courses)
+        if query_type != "comparison":
+            exact_course_conditions = []
+            
+            # for code in course codes
+            for code in course_codes:
+                if len(code) >= 3:
+                    # handle both formats ("egr156" and "egr 156")
+                    parts = code.split()
+                    if len(parts) == 2:
+                        dept, num = parts
+                    else:
+                        # get dept and number
+                        dept = code[:3]
+                        num = code[3:]
+                    if num.isdigit():
+                        exact_course_conditions.append({
+                            "$and": [
+                                {"department": dept.upper()},
+                                {"catalogNumber": num}
+                            ]
+                        })
+            
+            # check search terms for course codes
+            for term in search_terms:
+                if len(term) >= 3:
+                    # first: try extracting dept and number from no space
+                    dept = term[:3]
+                    num = term[3:]
+                    if num.isdigit():
+                        exact_course_conditions.append({
+                            "$and": [
+                                {"department": dept.upper()},
+                                {"catalogNumber": num}
+                            ]
+                        })
+                    else:
+                        # then try space separated format
+                        parts = term.split()
+                        if len(parts) == 2 and len(parts[0]) >= 2 and parts[1].isdigit():
+                            dept, num = parts
+                            exact_course_conditions.append({
+                                "$and": [
+                                    {"department": dept.upper()},
+                                    {"catalogNumber": num}
+                                ]
+                            })
+            
+            # if found potential course codes, try exating match 
+            if exact_course_conditions:
+                print(f"[DEBUG] Trying exact course matches with conditions: {exact_course_conditions}")
+                exact_matches = list(collection.find({"$or": exact_course_conditions}))
+                if exact_matches:
+                    # for specific course queries only return the exact match with ALL info
+                    print(f"[DEBUG] Found exact course match")
+                    exact_match = exact_matches[0]  # takes the first exact match
+                    
+                    # get the most recent semester ID
+                    semester_id = ""
+                    if exact_match.get("semesters"):
+                        sorted_sems = sorted(exact_match["semesters"], 
+                                          key=lambda x: x.get("semester", {}).get("_id", 0), 
+                                          reverse=True)
+                        if sorted_sems:
+                            semester_id = str(sorted_sems[0].get("semester", {}).get("_id", ""))
+                    
+                    course_id = exact_match.get("courseID", "")
+                    full_course_id = f"{semester_id}{course_id}"
+                    
+                    return {
+                        "main_course": exact_match,
+                        "main_courses": [exact_match],  # include only exact match
+                        "other_courses": [],  # no other courses needed again
+                        "url": f"https://www.princetoncourses.com/course/{full_course_id}" if full_course_id else None,
+                        "is_current": True
+                    }
+
         # for comparison queries directly fetch the specific courses
         if query_type == "comparison" and course_codes:
             compare_conditions = []
@@ -936,7 +1014,7 @@ def weighted_reciprocal_rank(doc_lists):
     Returns:
         list: The final aggregated list of items sorted by their weighted RRF
                 scores in descending order.
-"""
+    """
     c=60 #c comes from the paper
     weights=[1]*len(doc_lists) #you can apply weights if you like, here they are all the same, ie 1
     
@@ -964,10 +1042,10 @@ def weighted_reciprocal_rank(doc_lists):
     sorted_documents = sorted(
         rrf_score_dic.keys(), key=lambda x: rrf_score_dic[x], reverse=True
     )
-# Map the sorted page_content back to the original document objects
+    # Map the sorted page_content back to the original document objects
     page_content_to_doc_map = {
         doc["text"]: doc for doc_list in doc_lists for doc in doc_list
-}
+    }
     sorted_docs = [
         page_content_to_doc_map[page_content] for page_content in sorted_documents
     ]
@@ -987,7 +1065,7 @@ def retrieve_nearby_places(query_text):
 
     # endpoint for nearby search
     endpoint_url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-# prep parameters
+    # prep parameters
     params = {
         'location': f"{location['latitude']},{location['longitude']}",
         'radius': 7000,  # metres; increased radius to 7km
@@ -998,7 +1076,6 @@ def retrieve_nearby_places(query_text):
     }
 
     response = requests.get(endpoint_url, params=params)
-
     try:
         data = response.json()
     except ValueError:
@@ -1134,8 +1211,7 @@ def get_next_event(opening_hours):
                     # future days
                     event_time = datetime.datetime.combine(
                         event_date,
-                        datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(),
-tzinfo=now.tzinfo
+                        datetime.datetime.strptime(str(open_time).zfill(4), '%H%M').time(), tzinfo=now.tzinfo
                     )
                     upcoming_events.append({'type': 'open', 'time': event_time})
 
@@ -1186,7 +1262,7 @@ def clean_query(query):
         query = pattern.sub('', query)
     # remove any extra whitespace
     query = ' '.join(query.split())
-# return the cleaned query to be used in api calls
+    # return the cleaned query to be used in api calls
     return query
 
 if __name__ == "__main__":
