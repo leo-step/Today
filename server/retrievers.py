@@ -245,9 +245,9 @@ def score_course_document(doc, search_info):
     terms = search_info.get("terms", [])
     course_codes = search_info.get("course_codes", [])
     query_type = search_info.get("query_type", "")
-    major_type = search_info.get("major_type", "").lower()  # Added major type handling
+    major_type = search_info.get("major_type", "").lower()  # added major handling
 
-    # For comparison queries, ensure both courses get a base score
+    # ensure both courses get a base score for comparison queries
     if query_type == "comparison" and course_codes:
         dept = doc.get("department", "")
         catalog = doc.get("catalogNumber", "")
@@ -255,43 +255,46 @@ def score_course_document(doc, search_info):
         if course_code in course_codes:
             score = 1  # Base score for compared courses
 
-    # Department matching (highest priority for major-specific queries)
+    # dept matching (highest priority for major specific queries)
     dept = doc.get("department", "")
     if query_type == "major":
-        # Direct department match gets highest score
+        # direct department match gets highest score
         if any(term.upper() == dept for term in terms):
-            score += TITLE_MATCH_SCORE * 4  # Significantly boost exact department matches
-        # Related department match gets lower score
+            score += TITLE_MATCH_SCORE * 4  # boost exact department matches
+        # related department match gets lower score
         elif any(term.upper() in dept or dept in term.upper() for term in terms):
             score += TITLE_MATCH_SCORE * 2
     else:
-        # Regular department matching for non-major queries
+        # regular department matching for non major queries
         for term in terms:
             if term.upper() == dept:
                 score += TITLE_MATCH_SCORE * 2.5
             elif re.search(f"^{re.escape(term)}$", dept, re.IGNORECASE):
                 score += TITLE_MATCH_SCORE * 2
 
-    # Base scoring for different fields
+    # base scoring for different fields
     for term in terms:
-        # Title matches
+        # title matches (highest weight)
         if re.search(term, str(doc.get("title", "")), re.IGNORECASE):
             score += TITLE_MATCH_SCORE
 
-        # Description matches
+        # desc matches
         if re.search(term, str(doc.get("description", "")), re.IGNORECASE):
             score += DESCRIPTION_MATCH_SCORE
 
-        # Assignment matches
+        # assingment matches
         if re.search(term, " ".join(doc.get("assignments", [])), re.IGNORECASE):
             score += ASSIGNMENT_MATCH_SCORE
 
-        # Comment matches
+        # comment matches
         if doc.get("semesters"):
             comment_count = 0
             max_comments = 5
             
-            for sem in doc["semesters"][:2]:  # Only check last 2 semesters
+            # only checking last 2 semesters now (supposedly)
+            # sometimes it'll get more than 2, but that's fine since it's alw less than 5
+            # not sure why it does that but still avoiding context limit issues
+            for sem in doc["semesters"][:2]:
                 if sem.get("evaluations", {}).get("comments"):
                     for comment in sem["evaluations"]["comments"]:
                         if comment_count >= max_comments:
@@ -300,19 +303,19 @@ def score_course_document(doc, search_info):
                             score += COMMENT_MATCH_SCORE
                             comment_count += 1
 
-    # Course level and prerequisite handling
+    # course level and prereq handling
     catalog_num = doc.get("catalogNumber", "")
     if catalog_num:
         level = int(catalog_num[0]) if catalog_num[0].isdigit() else 0
         
-        # Handle year-based level requirements
+        # handle year-based level requirements
         year_level_boost = 1.0
         if any("sophomore" in term.lower() for term in terms):
-            # For sophomores, boost 200 and appropriate 300 level courses
+            # ex: sophomores boost 200 and appropriate 300 level courses
             if level == 2:
-                year_level_boost = 2.5  # Higher boost for 200-level
+                year_level_boost = 2.5  # higher boost for 200-level
             elif level == 3:
-                year_level_boost = 1.5  # Lower boost for 300-level
+                year_level_boost = 1.5  # lower boost for 300-level
         elif any("junior" in term.lower() for term in terms):
             if level == 3:
                 year_level_boost = 2.5
@@ -326,20 +329,22 @@ def score_course_document(doc, search_info):
 
         score *= year_level_boost
 
-        # Major-specific handling
+        # major specific handling
         if major_type in ["bse", "ab"]:
             prereqs = str(doc.get("prerequisites", "")).lower()
             if major_type == "bse":
-                # Boost technical courses for BSE
+                # boost technical courses for BSE
+                # can prolly be done using openAI api, but this works really well act
                 if any(term in prereqs for term in ["calculus", "math", "physics", "chemistry"]):
                     score *= 1.4
-                # Extra boost for courses building on completed prerequisites
+                # extra boost for courses building on completed prerequisites
+                # bit of a hack but works well
                 if course_codes and any(code.lower() in prereqs for code in course_codes):
                     score *= 1.6
             elif major_type == "ab" and "no prior programming experience" in prereqs:
                 score *= 1.2
 
-    # Quality boost
+    # quality boost
     course_quality = 0
     if doc.get("semesters"):
         quality_scores = []
@@ -354,25 +359,26 @@ def score_course_document(doc, search_info):
     elif course_quality > 3.5:
         score += COURSE_RATING_BELOW_35
 
-    # Prerequisite handling
-    if course_codes:  # If user has taken courses
+    # prereq handling
+    if course_codes:  # if user has taken courses
         prereqs = str(doc.get("prerequisites", "")).lower()
         taken_courses_str = " ".join(course_codes).lower()
         
-        # Boost score if prerequisites are satisfied
+        # boost score if prereqs are satisfied
         if any(code.lower() in prereqs for code in course_codes):
             score *= 1.6  # Significant boost for courses where prereqs are met
         
-        # Penalize courses if prerequisites aren't met
+        # penalize courses if prerequisites aren't met
+        # seems like a harsh penalty, but works well in practice
         if "prerequisite" in prereqs and not any(code.lower() in prereqs for code in course_codes):
             score *= 0.4
 
-    # Scoring for assignments
+    # scoring for assignments
     assignments = doc.get("assignments", [])
     if any(indicator in assignment.lower() for assignment in assignments for indicator in PSET_INDICATORS):
         score += GRADING_COMPONENT_BOOST
 
-    # Scoring for grading components
+    # scoring for grading components
     grading = doc.get("grading", [])
     if any(indicator in component.get("component", "").lower() for component in grading for indicator in PSET_INDICATORS):
         score += GRADING_COMPONENT_BOOST
@@ -384,14 +390,14 @@ def has_assignment_type(doc, indicators):
     assignments = " ".join(doc.get("assignments", [])).lower()
     grading_components = " ".join(component.get("component", "").lower() for component in doc.get("grading", []))
 
-    # Check assignments and grading components
+    # check assignments and grading components
     return any(indicator in assignments for indicator in indicators) or any(indicator in grading_components for indicator in indicators)
 
 def matches_distribution(doc, dist_type):
     """Check if a course matches a distribution requirement category."""
     course_dist = str(doc.get("distribution", "")).split(" OR ")
 
-    # Get valid distribution codes for the type
+    # get valid dist codes for the type
     valid_codes = DISTRIBUTION_MAPPINGS.get(dist_type.lower(), [])
 
     return any(dist in valid_codes for dist in course_dist)
@@ -401,7 +407,7 @@ def retrieve_princeton_courses(query_text):
     collection = db_client["courses"]
 
     try:
-        # Get search terms
+        # get search terms
         search_info = openai_json_response([
             extract_course_search_terms(),
             user_query(query_text)
@@ -410,14 +416,14 @@ def retrieve_princeton_courses(query_text):
         search_terms = search_info.get("terms", [])
         course_codes = search_info.get("course_codes", [])
         query_type = search_info.get("query_type", "")
-        major_type = search_info.get("major_type", "").upper()  # Get major type in uppercase
+        major_type = search_info.get("major_type", "").upper()  # get major type in uppercase
         
         print(f"[DEBUG] Course search terms: {search_terms}")
         print(f"[DEBUG] Course codes: {course_codes}")
         print(f"[DEBUG] Query type: {query_type}")
         print(f"[DEBUG] Major type: {major_type}")
 
-        # If no terms, return empty results
+        # if no terms return empty ig
         if not search_terms:
             return {
                 "main_course": {},
@@ -427,12 +433,12 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
-        # For comparison queries, directly fetch the specific courses
+        # for comparison queries directly fetch the specific courses
         if query_type == "comparison" and course_codes:
             compare_conditions = []
             for code in course_codes:
                 if len(code) >= 3:
-                    # Split the course code into department and number, handling spaces
+                    # split the course code into department and number, handling spaces
                     parts = code.split()
                     if len(parts) == 2:
                         dept, num = parts
@@ -447,21 +453,21 @@ def retrieve_princeton_courses(query_text):
                     })
             base_query = {"$or": compare_conditions}
             
-            # For comparison queries, include all semester data
+            # include all semester data (only for comparison queries)
             matches = list(collection.find(base_query))
         else:
-            # Build search conditions for non-comparison queries
+            # build search conditions for non-comparison queries
             search_conditions = []
             
-            # For major-specific queries, prioritize department matches
+            # for major specific queries, prioritize dept matches
             if query_type == "major":
                 dept_conditions = []
                 other_conditions = []
                 
                 for term in search_terms:
-                    # Exact department match
+                    # exact dept match
                     dept_conditions.append({"department": term.upper()})
-                    # Other search conditions
+                    # other search conditions
                     other_conditions.extend([
                         {"title": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}},
                         {"description": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}},
@@ -469,20 +475,20 @@ def retrieve_princeton_courses(query_text):
                         {"catalogNumber": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}}
                     ])
 
-            # Initialize matches list and build search conditions
+            # init matches list and build search conditions
             matches = []
             search_conditions = []
             
-            # Build appropriate search conditions based on query type
+            # build search conditions based on query type
             if query_type == "major":
-                # Try exact department match first
+                # try exact department match first
                 for term in search_terms:
                     dept_query = {"department": term.upper()}
                     dept_matches = list(collection.find(dept_query))
                     if dept_matches:
                         matches.extend(dept_matches)
                 
-                # If no department matches, use other conditions
+                # if no dept match, use other conditions
                 if not matches:
                     for term in search_terms:
                         search_conditions.extend([
@@ -492,7 +498,7 @@ def retrieve_princeton_courses(query_text):
                             {"catalogNumber": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}}
                         ])
             else:
-                # For non-major queries, search across all relevant fields
+                # for non-major queries search across all relevant fields
                 for term in search_terms:
                     search_conditions.extend([
                         {"department": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}},
@@ -502,11 +508,12 @@ def retrieve_princeton_courses(query_text):
                         {"catalogNumber": {"$regex": f".*{re.escape(term)}.*", "$options": "i"}}
                     ])
             
-            # Execute search if we haven't found matches yet
+            # execute search if no matches found yet
             if not matches and search_conditions:
                 matches = list(collection.find({"$or": search_conditions}))
             
-            # Add exclusion for already taken courses
+            # add exclusion for already taken courses
+            # prolly doesn't have to be hardcoded but im not smart enough for that
             if matches and course_codes and query_type != "comparison":
                 filtered_matches = []
                 exclude_codes = set()
@@ -525,30 +532,33 @@ def retrieve_princeton_courses(query_text):
 
         print(f"[DEBUG] Found {len(matches)} matching courses")
 
-        # Apply extra filters on query
+        # apply extra filters on query
         filtered_matches = []
         query_lower = query_text.lower()
 
-        # Check distribution requirements
+        # check dist reqs
         dist_type = None
         for dist in DISTRIBUTION_MAPPINGS.keys():
             if dist in query_lower:
                 dist_type = dist
                 break
 
-        # Check assignment types
+        # check assignment types
         needs_psets = any(term in query_lower for term in PSET_INDICATORS)
         needs_papers = any(term in query_lower for term in PAPER_INDICATORS)
 
-        # Get major type and year level from search info
+        # get major type and year level from search info
         major_type = search_info.get("major_type", "").lower()
         year_level = search_info.get("year_level", "").lower()
 
-        # Filter based on requirements
+        # filter based on reqs
+        # many of the filters/boosts here would be better if not hardcoded, on paper
+        # but this works so well in practice saur dont touch it imo
         for doc in matches:
             matches_requirements = True
             
-            # Skip requirement filtering for comparison queries to ensure both courses are included
+            # skip req filtering for comparison queries
+            # to ensure both courses are found
             if query_type != "comparison":
                 if dist_type and not matches_distribution(doc, dist_type):
                     matches_requirements = False
@@ -558,84 +568,85 @@ def retrieve_princeton_courses(query_text):
                 if needs_papers and not has_assignment_type(doc, PAPER_INDICATORS):
                     matches_requirements = False
 
-                # Enhanced level-based filtering using catalog number
+                # better level-based filtering using catalog number
                 catalog_num = doc.get("catalogNumber", "")
                 if catalog_num and catalog_num.isdigit():
                     level = int(catalog_num[0])
                     dept = doc.get("department", "")
                     
-                    # Major-specific level filtering
+                    # major specific level filtering
                     if query_type == "major":
-                        # For major department courses, apply appropriate level filtering
+                        # major department courses -> apply appropriate level filtering
                         if any(term.upper() == dept for term in search_terms):
                             if year_level == "sophomore":
-                                # More lenient level filtering for BSE sophomores
+                                # ex: more lenient level filtering for bse sophomores
                                 if major_type == "bse":
-                                    # Allow 200-level and some 300-level courses
-                                    # Don't exclude any levels here, use scoring to prioritize
+                                    # allow 200-level and some 300-level courses
+                                    # dont't exclude any levels here; use scoring to prioritize
                                     pass
                                 else:
-                                    # Non-BSE sophomores: mainly 200-level
-                                    if level > 3:  # Only exclude very advanced courses
+                                    # ex: non-bse sophomores: mainly 200-level
+                                    if level > 4:  # only exclude very advanced courses
                                         matches_requirements = False
                             elif year_level == "junior":
-                                if level > 4:  # Only exclude very advanced courses
+                                if level > 4:  # only exclude very advanced courses
                                     matches_requirements = False
                             elif year_level == "senior":
-                                if level < 3:  # Only exclude very basic courses
+                                if level < 2:  # only exclude very basic courses
                                     matches_requirements = False
 
-                # Major-specific filtering
+                # major specific filtering
                 if major_type and query_type == "major":
                     prereqs = str(doc.get("prerequisites", "")).lower()
                     if major_type == "bse":
-                        # More lenient technical background check
-                        # Only check general technical terms, not specific courses
+                        # more lenient technical background check
+                        # only check general technical terms, not specific courses
                         has_technical_prereq = any(term in prereqs for term in [
                             "calculus", "math", "physics", "chemistry", "programming"
                         ])
-                        if not has_technical_prereq and level >= 3:  # Only apply to higher-level courses
+                        if not has_technical_prereq and level >= 3:  # only apply to higher level courses
                             matches_requirements = False
                     elif major_type == "ab":
-                        # For AB, only exclude courses that explicitly require no prior experience
+                        # ab: only exclude courses that explicitly require no prior experience
                         if "no prior programming experience" in prereqs and level >= 3:
                             matches_requirements = False
 
-                    # Check if prerequisites are satisfied using provided course codes
+                    # check if prereqs are satisfied using provided course codes
                     if "prerequisite" in prereqs and course_codes:
-                        # Check if any of the taken courses or their topics are mentioned
+                        # check if any of the taken courses or their topics are mentioned
                         prereq_terms = course_codes + ["programming", "data structures", "algorithms"]
                         has_prereq = any(term.lower() in prereqs for term in prereq_terms)
-                        if not has_prereq and level >= 3:  # Only apply to higher-level courses
+                        if not has_prereq and level >= 3:  # only apply to higher level courses
                             matches_requirements = False
 
             if matches_requirements:
                 filtered_matches.append(doc)
 
-        # Score and sort
+        # score and sort
         scored_results = []
         for doc in filtered_matches:
             score = score_course_document(doc, search_info)
             if score > 0:
-                # Department-specific scoring
+                # dept specific scoring
                 if query_type == "major":
                     dept = doc.get("department", "")
                     catalog_num = doc.get("catalogNumber", "")
                     level = int(catalog_num[0]) if catalog_num and catalog_num.isdigit() else 0
                     
-                    # Boost scores for courses in the major's department
+                    # boost scores for courses in the major's dept
                     if any(term.upper() == dept for term in search_terms):
-                        # Base department boost
+                        # base dept boost
                         score *= 2.5
                         
-                        # Level-appropriate scoring
+                        # lvl appropriate scoring
+                        # again, many arbitrary values here, but they work well in practice
                         if year_level == "sophomore":
                             if level == 2:
-                                score *= 2.0  # Highest priority for 200-level
+                                score *= 2.0  # highest priority
                             elif level == 3:
-                                score *= 1.5  # Medium priority for 300-level
+                                score *= 1.5  # med priorty
                             elif level == 1:
-                                score *= 0.5  # Lower priority for 100-level
+                                score *= 0.5  # lowest priority
                         elif year_level == "junior":
                             if level == 3:
                                 score *= 2.0
@@ -647,32 +658,32 @@ def retrieve_princeton_courses(query_text):
                             elif level == 5:
                                 score *= 1.5
 
-                        # Prerequisite-based scoring
+                        # prereq-based scoring
                         prereqs = str(doc.get("prerequisites", "")).lower()
                         if course_codes:
                             if any(code.lower() in prereqs for code in course_codes):
-                                score *= 1.5  # Boost for courses building on completed prereqs
+                                score *= 1.5  # boost for courses building on completed prereqs
                 elif query_type == "thematic":
-                    # Boost scores for courses that strongly match the theme
+                    # boost scores for courses that strongly match the theme
                     title = str(doc.get("title", "")).lower()
                     desc = str(doc.get("description", "")).lower()
                     
-                    # Higher boost for title matches
+                    # higher boost for title matches
                     if any(term.lower() in title for term in search_terms):
                         score *= 2.0
-                    # Lower boost for description matches
+                    # lowe boost for desc matches
                     if any(term.lower() in desc for term in search_terms):
                         score *= 1.5
 
-                # Boost scores based on query type
+                # boost scores based on query type
                 if search_info.get("query_type") == "difficulty":
-                    # Boost courses with clear workload information
+                    # Boost courses with clear workload info
                     if any("workload" in str(comment.get("comment", "")).lower() 
                           for sem in doc.get("semesters", [])
                           for comment in sem.get("evaluations", {}).get("comments", [])):
                         score *= 1.3
                 elif search_info.get("query_type") == "prerequisites":
-                    # Boost courses with clear prerequisite information
+                    # boost courses with clear prereq info
                     if doc.get("prerequisites"):
                         score *= 1.3
 
@@ -681,7 +692,7 @@ def retrieve_princeton_courses(query_text):
 
         scored_results.sort(key=lambda x: x.get("score", 0), reverse=True)
 
-        # Limit to top 10 results if not a comparison query
+        # limit to top 10 results if not a comparison query
         if query_type != "comparison" and len(scored_results) > 10:
             scored_results = scored_results[:10]
 
@@ -694,10 +705,10 @@ def retrieve_princeton_courses(query_text):
                 "is_current": True
             }
 
-        # Process all courses
+        # process all courses
         processed_courses = []
-        for course in scored_results:  # Process all scored courses
-            # For comparison queries, ensure both courses are included with minimal processing
+        for course in scored_results:
+            # comparison queries: ensure both courses are included w/ minimal processing
             if query_type == "comparison":
                 dept = course.get("department", "")
                 catalog = course.get("catalogNumber", "")
@@ -706,14 +717,14 @@ def retrieve_princeton_courses(query_text):
                 course_code_no_space = f"{dept}{catalog}"
                 
                 if course_code_with_space in course_codes or course_code_no_space in course_codes:
-                    processed_course = course.copy()  # Keep all original data including semesters
+                    processed_course = course.copy()  # keep all original data including semesters
                     
-                    # Sort and limit semesters if they exist
+                    # sort and limit semesters if they exist
                     if processed_course.get("semesters"):
                         processed_course["semesters"].sort(key=lambda x: x.get("semester", {}).get("_id", 0), reverse=True)
                         processed_course["semesters"] = processed_course["semesters"][:2]  # Get 2 most recent semesters
                         
-                        # Process comments for each semester
+                        # process comments for each semester
                         for semester in processed_course["semesters"]:
                             if semester.get("evaluations", {}).get("comments"):
                                 comments = semester["evaluations"]["comments"]
@@ -723,16 +734,16 @@ def retrieve_princeton_courses(query_text):
                                     comment_text = comment.get("comment", "").lower()
                                     if any(keyword in comment_text for keyword in ["difficult", "easy", "workload", "time", "hours", "assignments", "exams", "lectures"]):
                                         relevant_comments.append(comment)
-                                    if len(relevant_comments) >= 5:  # Keep up to 5 relevant comments
+                                    if len(relevant_comments) >= 5:  # keep up to 5 relevant comments
                                         break
                                 
                                 semester["evaluations"]["comments"] = relevant_comments
                     
                     processed_courses.append(processed_course)
             else:
-                # Normal processing for non-comparison queries
-                max_semesters = 2  # Default to 2 semesters
-                max_comments = 5   # Default to 5 comments per semester
+                # normal processing for non-comparison queries
+                max_semesters = 2  # default to 2 semesters
+                max_comments = 5   # default to 5 comments per semester
                 
                 if query_type == "major":
                     max_semesters = 2
@@ -744,7 +755,6 @@ def retrieve_princeton_courses(query_text):
                     max_semesters = 3
                     max_comments = 5
 
-                # Limit semesters and comments
                 if course.get("semesters"):
                     course["semesters"].sort(key=lambda x: x.get("semester", {}).get("_id", 0), reverse=True)
                     course["semesters"] = course["semesters"][:max_semesters]
@@ -769,7 +779,7 @@ def retrieve_princeton_courses(query_text):
                                 elif query_type == "prerequisites":
                                     is_relevant = any(term in comment_text for term in ["prerequisite", "background", "prepare", "need to know"])
                                 elif query_type == "thematic":
-                                    # For thematic queries, look for theme-related comments
+                                    # for thematic queries: look for theme-related comments
                                     is_relevant = any(term.lower() in comment_text for term in search_terms)
                                 else:
                                     is_relevant = True
@@ -783,7 +793,7 @@ def retrieve_princeton_courses(query_text):
                 
                 processed_courses.append(course)
 
-        # Get the top courses (all courses for comparison, up to 10 for others)
+        # get the top courses (all courses for comparison / >=1 0 for others)
         main_courses = processed_courses if query_type == "comparison" else processed_courses[:10]
 
         # Get semester ID and course ID to construct full course ID for first course
@@ -792,7 +802,7 @@ def retrieve_princeton_courses(query_text):
         course_id = first_course.get('courseID', '') if first_course else ''
         full_course_id = f"{semester_id}{course_id}"
 
-        # No other_courses needed since we're limiting to 10 total
+        # no other_courses needed anymore
         other_courses = []
 
         return {
