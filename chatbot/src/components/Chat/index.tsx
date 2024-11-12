@@ -35,7 +35,7 @@ interface ChatSchema {
 }
 
 // Minimum length for a message to be collapsible
-const MIN_COLLAPSIBLE_LENGTH = 1200;
+const MIN_COLLAPSIBLE_LENGTH = 2000;
 
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
@@ -45,7 +45,12 @@ export const Chat = ({ ...props }: ChatProps) => {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const [expandedMessageIds, setExpandedMessageIds] = useState<string[]>([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [collapsibleMessages, setCollapsibleMessages] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isAutoScrollingRef = useRef(false);
+  const userHasScrolledRef = useRef(false);
   const selectedId = selectedChat?.id;
   const selectedRole = selectedChat?.role;
 
@@ -80,18 +85,52 @@ export const Chat = ({ ...props }: ChatProps) => {
     return uuid;
   };
 
+  const isAtBottom = () => {
+    if (!scrollContainerRef.current) return false;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    return Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+  };
+
+  const scrollToBottomWithOffset = (offset = 0) => {
+    if (!scrollContainerRef.current) return;
+    
+    const container = scrollContainerRef.current;
+    const targetScroll = container.scrollHeight - container.clientHeight - offset;
+    
+    isAutoScrollingRef.current = true;
+    container.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth'
+    });
+
+    // Reset user scroll tracking and enable auto-scroll
+    userHasScrolledRef.current = false;
+    setAutoScrollEnabled(true);
+  };
+
   const handleAsk = async ({ input: prompt }: ChatSchema) => {
     const sendRequest = (selectedId: string, selectedChat: any) => {
       setValue("input", "");
-
+      
+      // Add user message
       addMessage(selectedId, {
         emitter: "user",
         message: prompt,
       });
 
-      const controller = new AbortController();
+      // Scroll to show the user's message
+      setTimeout(() => {
+        scrollToBottomWithOffset(0);
+      }, 100);
 
+      const controller = new AbortController();
       const uuid = getUuid();
+      const messageIndex = selectedChat ? selectedChat.content.length : 0;
+      const newMessageId = `${selectedId}-${messageIndex}`;
+      
+      setStreamingMessageId(newMessageId);
+      setAutoScrollEnabled(true);
+      userHasScrolledRef.current = false;
 
       fetch(config.URL + "/api/chat", {
         method: "POST",
@@ -109,6 +148,7 @@ export const Chat = ({ ...props }: ChatProps) => {
           const reader = response.body?.getReader();
           const decoder = new TextDecoder();
           let message = "";
+          
           if (reader) {
             addMessage(selectedId, {
               emitter: "gpt",
@@ -116,11 +156,34 @@ export const Chat = ({ ...props }: ChatProps) => {
             });
             while (true) {
               const { done, value } = await reader.read();
-              if (done) break;
+              
+              if (done) {
+                setStreamingMessageId(null);
+                // Check if message should be collapsible
+                if (message.length > MIN_COLLAPSIBLE_LENGTH) {
+                  setCollapsibleMessages(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(newMessageId);
+                    return newSet;
+                  });
+                  // Add to expanded messages by default
+                  setExpandedMessageIds(prev => [...prev, newMessageId]);
+                }
+                break;
+              }
+              
               let chunk = decoder.decode(value, { stream: true });
               message += chunk;
+              
               if (selectedChat) {
                 editMessage(selectedId, message);
+                if (autoScrollEnabled && !userHasScrolledRef.current) {
+                  requestAnimationFrame(() => {
+                    if (scrollContainerRef.current) {
+                      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+                    }
+                  });
+                }
               }
             }
 
@@ -131,6 +194,8 @@ export const Chat = ({ ...props }: ChatProps) => {
         })
         .catch((error) => {
           console.error("Streaming error:", error);
+          setStreamingMessageId(null);
+          setAutoScrollEnabled(false);
           addMessage(selectedId, {
             emitter: "error",
             message: "An error occurred while processing the request.",
@@ -148,19 +213,44 @@ export const Chat = ({ ...props }: ChatProps) => {
   };
 
   const handleScroll = () => {
-    if (!scrollContainerRef.current) return;
+    if (!scrollContainerRef.current || isAutoScrollingRef.current) {
+      isAutoScrollingRef.current = false;
+      return;
+    }
     
-    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+    const atBottom = isAtBottom();
+    setShowScrollButton(!atBottom);
     
-    setShowScrollButton(!isAtBottom);
+    if (!atBottom && streamingMessageId !== null) {
+      userHasScrolledRef.current = true;
+      setAutoScrollEnabled(false);
+    } else if (atBottom && streamingMessageId !== null) {
+      userHasScrolledRef.current = false;
+      setAutoScrollEnabled(true);
+    }
   };
 
   const scrollToBottom = () => {
     if (!scrollContainerRef.current) return;
     
+    isAutoScrollingRef.current = true;
     scrollContainerRef.current.scrollTo({
       top: scrollContainerRef.current.scrollHeight,
+      behavior: 'smooth'
+    });
+
+    // Reset user scroll tracking and enable auto-scroll
+    userHasScrolledRef.current = false;
+    setAutoScrollEnabled(true);
+    setShowScrollButton(false);
+  };
+
+  const scrollToPosition = (position: number) => {
+    if (!scrollContainerRef.current) return;
+    
+    isAutoScrollingRef.current = true;
+    scrollContainerRef.current.scrollTo({
+      top: position,
       behavior: 'smooth'
     });
   };
@@ -198,14 +288,40 @@ export const Chat = ({ ...props }: ChatProps) => {
         target="_blank"
         rel="noopener noreferrer"
       >
-        {children}
+      {children}
       </a>
     );
   };
 
   const toggleMessage = (messageId: string) => {
+    if (!scrollContainerRef.current) return;
+    
+    const messageElement = document.getElementById(messageId);
+    if (!messageElement) return;
+
+    // Store current scroll position and element position
+    const container = scrollContainerRef.current;
+    const scrollTop = container.scrollTop;
+    const messageRect = messageElement.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const relativeTop = messageRect.top - containerRect.top + container.scrollTop;
+    
     setExpandedMessageIds(prev => {
       const isExpanded = prev.includes(messageId);
+      
+      // Use RAF to ensure DOM has updated
+      requestAnimationFrame(() => {
+        const newMessageRect = messageElement.getBoundingClientRect();
+        const newRelativeTop = newMessageRect.top - containerRect.top + container.scrollTop;
+        const scrollAdjustment = newRelativeTop - relativeTop;
+        
+        isAutoScrollingRef.current = true;
+        container.scrollTo({
+          top: scrollTop + scrollAdjustment,
+          behavior: 'instant'
+        });
+      });
+      
       return isExpanded 
         ? prev.filter(id => id !== messageId)
         : [...prev, messageId];
@@ -297,12 +413,16 @@ export const Chat = ({ ...props }: ChatProps) => {
               const messageId = `${selectedId}-${key}`;
               const isLongMessage = message.length > MIN_COLLAPSIBLE_LENGTH;
               const isExpanded = isMessageExpanded(messageId);
+              const isStreaming = streamingMessageId === messageId;
+              const isCollapsible = collapsibleMessages.has(messageId);
+              const shouldShowCollapsed = isCollapsible && !isExpanded && !isStreaming;
 
               return (
                 <Box
+                  id={messageId}
                   key={key}
                   position="relative"
-                  paddingBottom={isLongMessage ? "40px" : undefined}
+                  paddingBottom={isCollapsible ? "40px" : undefined}
                 >
                   <Stack
                     backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
@@ -324,10 +444,11 @@ export const Chat = ({ ...props }: ChatProps) => {
                       <Stack flex={1} spacing={0}>
                         <Box>
                           <Box
-                            maxH={!isLongMessage || isExpanded ? undefined : "150px"}
-                            overflow={!isLongMessage || isExpanded ? undefined : "hidden"}
+                            maxH={shouldShowCollapsed ? "150px" : undefined}
+                            overflow={shouldShowCollapsed ? "hidden" : undefined}
                             position="relative"
                             className="markdown-content"
+                            transition="all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
                             sx={{
                               '& > *:first-of-type': { marginTop: 0 },
                               '& > *:last-of-type': { marginBottom: 0 },
@@ -381,7 +502,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                                 {getMessage()}
                               </ReactMarkdown>
                             </div>
-                            {isLongMessage && !isExpanded && (
+                            {shouldShowCollapsed && (
                               <Box
                                 position="absolute"
                                 bottom={0}
@@ -390,6 +511,8 @@ export const Chat = ({ ...props }: ChatProps) => {
                                 height="80px"
                                 background="linear-gradient(transparent 0%, #1e2022 70%)"
                                 pointerEvents="none"
+                                transition="opacity 0.5s ease-in-out"
+                                opacity={1}
                               />
                             )}
                           </Box>
@@ -434,7 +557,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                       </Stack>
                     )}
                   </Stack>
-                  {isLongMessage && (
+                  {isCollapsible && !isStreaming && (
                     <Box
                       position="absolute"
                       bottom={0}
@@ -448,6 +571,9 @@ export const Chat = ({ ...props }: ChatProps) => {
                       backgroundColor="#212529"
                       borderRadius="8px"
                       boxShadow="0 0 10px rgba(0,0,0,0.2)"
+                      transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+                      opacity={1}
+                      _hover={{ transform: "translateX(-50%) scale(1.1)" }}
                     >
                       <IconButton
                         aria-label={isExpanded ? "Show less" : "Show more"}
@@ -471,21 +597,30 @@ export const Chat = ({ ...props }: ChatProps) => {
       {showScrollButton && (
         <Box
           position="fixed"
-          bottom="100px"
+          bottom="220px"
           left="50%"
-          transform="translateX(-50%)"
+          transform={`translate(-50%, ${showScrollButton ? '0' : '100%'})`}
           zIndex={20}
+          opacity={showScrollButton ? 1 : 0}
+          visibility={showScrollButton ? "visible" : "hidden"}
+          transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
         >
           <IconButton
             aria-label="Scroll to bottom"
             icon={<FiChevronDown />}
-            onClick={scrollToBottom}
+            onClick={() => {
+              scrollToBottom();
+            }}
             size="lg"
             colorScheme="gray"
             rounded="full"
             boxShadow="lg"
             backgroundColor="rgba(33, 37, 41, 0.8)"
-            _hover={{ backgroundColor: "rgba(33, 37, 41, 0.9)" }}
+            _hover={{ 
+              backgroundColor: "rgba(33, 37, 41, 0.9)",
+              transform: "scale(1.1)",
+            }}
+            transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
           />
         </Box>
       )}
