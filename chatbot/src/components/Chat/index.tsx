@@ -1,18 +1,17 @@
-//Modules
-import warning from "@/assets/warning.svg";
+import warning from "assets/warning.svg";
 import { useRef, useEffect, useState, useReducer } from "react";
-import { Feedback, useChat } from "@/store/chat";
+import { Feedback, useChat } from "store/chat";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { OpenAIApi, Configuration } from "openai";
 import { useMutation } from "react-query";
-import TayAvatar from "@/assets/tayavatar.png";
-import UserAvatar from "@/assets/useravatar.png";
+import TayAvatar from "assets/tayavatar.png";
+import UserAvatar from "assets/useravatar.png";
 import { useSearchParams } from "react-router-dom";
 
 //Components
-import { Input } from "@/components/Input";
-import { FiSend, FiThumbsUp, FiThumbsDown, FiRefreshCcw } from "react-icons/fi";
+import { Input } from "components/Input";
+import { FiSend, FiThumbsUp, FiThumbsDown, FiRefreshCcw, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import {
   Avatar,
   Box,
@@ -24,8 +23,8 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Instructions } from "../Layout/Instructions";
-import { useAPI } from "@/store/api";
-import config from "@/config";
+import { useAPI } from "store/api";
+import config from "config";
 
 import { v4 as uuidv4 } from "uuid";
 
@@ -35,14 +34,21 @@ interface ChatSchema {
   input: string;
 }
 
+type MessageState = {
+  [key: number]: boolean;
+};
+
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedChat, addMessage, editMessage, addChat, editChat, clearAll } =
     useChat();
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
-  const selectedId = selectedChat?.id,
-    selectedRole = selectedChat?.role;
+  const [autoScroll, setAutoScroll] = useState(true);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [expandedMessages, setExpandedMessages] = useState<MessageState>({});
+  const selectedId = selectedChat?.id;
+  const selectedRole = selectedChat?.role;
 
   const hasSelectedChat = selectedChat && selectedChat?.content.length > 0;
 
@@ -116,6 +122,9 @@ export const Chat = ({ ...props }: ChatProps) => {
               message += chunk;
               if (selectedChat) {
                 editMessage(selectedId, message);
+                if (!isUserScrolling) {
+                  setAutoScroll(true);
+                }
               }
             }
 
@@ -145,11 +154,18 @@ export const Chat = ({ ...props }: ChatProps) => {
   const AlwaysScrollToBottom = () => {
     const elementRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-      if (elementRef.current) {
-        elementRef.current.scrollIntoView();
+      if (elementRef.current && autoScroll && !isUserScrolling) {
+        elementRef.current.scrollIntoView({ behavior: "smooth" });
       }
     });
     return <div ref={elementRef} />;
+  };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
+    setAutoScroll(isAtBottom);
+    setIsUserScrolling(!isAtBottom);
   };
 
   const trackEvent = async (eventType: string, properties: any) => {
@@ -186,6 +202,13 @@ export const Chat = ({ ...props }: ChatProps) => {
     );
   };
 
+  const toggleMessage = (index: number) => {
+    setExpandedMessages(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
   useEffect(() => {
     const query = searchParams.get("query");
     if (query && query != "") {
@@ -202,6 +225,7 @@ export const Chat = ({ ...props }: ChatProps) => {
         marginX="auto"
         overflow="auto"
         backgroundColor="#212529"
+        onScroll={handleScroll}
       >
         <Stack spacing={2} padding={2} ref={parentRef} height="full">
           {hasSelectedChat ? (
@@ -218,10 +242,6 @@ export const Chat = ({ ...props }: ChatProps) => {
               };
 
               const getMessage = () => {
-                // if (message.slice(0, 2) == "\n\n") {
-                //   return message.slice(2, Infinity);
-                // }
-
                 return message;
               };
 
@@ -251,16 +271,20 @@ export const Chat = ({ ...props }: ChatProps) => {
                 forceUpdate();
               };
 
+              const isLongMessage = message.length > 300;
+              const isExpanded = expandedMessages[key];
+
               return (
                 <Stack
                   key={key}
                   backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
+                  position="relative"
+                  paddingBottom={isLongMessage ? "40px" : undefined}
                 >
                   <Stack
                     direction="row"
                     padding={4}
                     rounded={8}
-                    // backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
                     spacing={4}
                   >
                     <Avatar
@@ -269,23 +293,62 @@ export const Chat = ({ ...props }: ChatProps) => {
                       boxSize={"54px"}
                       src={getAvatar()}
                     />
-                    <Text
-                      className="children-spacing"
-                      // whiteSpace="pre-wrap"
-                      marginTop=".75em !important"
-                      // overflow="hidden"
-                    >
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          a: ExternalLink,
-                        }}
-                      >
-                        {getMessage()}
-                      </ReactMarkdown>
-                    </Text>
+                    <Stack flex={1} spacing={0}>
+                      <Box position="relative">
+                        <Box
+                          maxH={!isLongMessage || isExpanded ? undefined : "200px"}
+                          overflow={!isLongMessage || isExpanded ? undefined : "hidden"}
+                          position="relative"
+                        >
+                          <Text
+                            className="children-spacing"
+                            marginTop=".75em !important"
+                            whiteSpace="pre-wrap"
+                            wordBreak="break-word"
+                          >
+                            <ReactMarkdown
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ExternalLink,
+                              }}
+                            >
+                              {getMessage()}
+                            </ReactMarkdown>
+                          </Text>
+                          {isLongMessage && !isExpanded && (
+                            <Box
+                              position="absolute"
+                              bottom={0}
+                              left={0}
+                              right={0}
+                              height="80px"
+                              background="linear-gradient(transparent, #1e2022)"
+                            />
+                          )}
+                        </Box>
+                        {isLongMessage && (
+                          <Box
+                            position="absolute"
+                            bottom={-40}
+                            left={0}
+                            right={0}
+                            height="40px"
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            <IconButton
+                              aria-label={isExpanded ? "Show less" : "Show more"}
+                              icon={isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                              onClick={() => toggleMessage(key)}
+                              variant="ghost"
+                              size="sm"
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Stack>
                   </Stack>
-                  {/* style={{ fill: 'white' }} */}
                   {emitter === "gpt" && (
                     <Stack
                       direction="row"
@@ -336,37 +399,47 @@ export const Chat = ({ ...props }: ChatProps) => {
         backgroundColor="#151719"
         justifyContent="center"
         alignItems="center"
-        overflow="hidden"
+        position="sticky"
+        bottom={0}
+        left={0}
+        right={0}
+        zIndex={1}
+        borderTop="1px solid"
+        borderColor="whiteAlpha.200"
       >
-        <Stack maxWidth="768px" width="100%">
-          <Input
-            autoFocus={true}
-            variant="filled"
-            inputLeftAddon={
-              <IconButton
-                aria-label="new_convo_button"
-                icon={<FiRefreshCcw />}
-                backgroundColor="transparent"
-                onClick={clearAll}
-              />
-            }
-            inputRightAddon={
-              <IconButton
-                aria-label="send_button"
-                icon={!isLoading ? <FiSend /> : <Spinner />}
-                backgroundColor="transparent"
-                onClick={handleSubmit(handleAsk)}
-              />
-            }
-            {...register("input")}
-            onSubmit={console.log}
-            onKeyDown={(e) => {
-              if (e.key == "Enter") {
-                handleAsk({ input: e.currentTarget.value });
+        <Stack 
+          maxWidth="768px" 
+          width="100%"
+          spacing={2}
+        >
+          <Box
+            position="relative"
+            width="100%"
+          >
+            <Input
+              autoFocus={true}
+              variant="filled"
+              inputLeftAddon={
+                <IconButton
+                  aria-label="new_convo_button"
+                  icon={<FiRefreshCcw />}
+                  backgroundColor="transparent"
+                  onClick={clearAll}
+                />
               }
-            }}
-            backgroundColor="whiteAlpha.200"
-          />
+              inputRightAddon={
+                <IconButton
+                  aria-label="send_button"
+                  icon={!isLoading ? <FiSend /> : <Spinner />}
+                  backgroundColor="transparent"
+                  onClick={handleSubmit(handleAsk)}
+                />
+              }
+              {...register("input")}
+              onSubmit={(value) => handleAsk({ input: value })}
+              backgroundColor="whiteAlpha.200"
+            />
+          </Box>
           <Text
             className="disclaimer"
             textAlign="center"
@@ -381,9 +454,6 @@ export const Chat = ({ ...props }: ChatProps) => {
               <u>Submit your feedback</u>
             </a>
             &nbsp;to help us improve.
-            {/* ⚠️ Highly experimental. Responses may not be accurate. Not intended
-            for academic use. Our goal is to make information accessible. Your
-            feedback will help us improve. */}
           </Text>
         </Stack>
       </Stack>
