@@ -34,7 +34,7 @@ interface ChatSchema {
   input: string;
 }
 
-// Minimum length for a message to be collapsible (approximately 20 lines)
+// Minimum length for a message to be collapsible
 const MIN_COLLAPSIBLE_LENGTH = 1200;
 
 export const Chat = ({ ...props }: ChatProps) => {
@@ -43,11 +43,8 @@ export const Chat = ({ ...props }: ChatProps) => {
   const { selectedChat, addMessage, editMessage, addChat, editChat, clearAll } =
     useChat();
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
-  const [autoScroll, setAutoScroll] = useState(true);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [expandedMessageIds, setExpandedMessageIds] = useState<string[]>([]);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const lastScrollPositionRef = useRef(0);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const selectedId = selectedChat?.id;
   const selectedRole = selectedChat?.role;
@@ -124,7 +121,6 @@ export const Chat = ({ ...props }: ChatProps) => {
               message += chunk;
               if (selectedChat) {
                 editMessage(selectedId, message);
-                setAutoScroll(true);
               }
             }
 
@@ -151,49 +147,26 @@ export const Chat = ({ ...props }: ChatProps) => {
     }
   };
 
-  const smoothScrollToBottom = () => {
-    if (!scrollContainerRef.current || !autoScroll) return;
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return;
     
-    const container = scrollContainerRef.current;
-    const targetScroll = container.scrollHeight - container.clientHeight;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
     
-    // Only scroll if we're not already at the bottom
-    if (Math.abs(container.scrollTop - targetScroll) > 10) {
-      container.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth'
-      });
-    }
+    setShowScrollButton(!isAtBottom);
   };
 
-  const AlwaysScrollToBottom = () => {
-    const elementRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    if (!scrollContainerRef.current) return;
     
-    useEffect(() => {
-      if (autoScroll) {
-        smoothScrollToBottom();
-      }
+    scrollContainerRef.current.scrollTo({
+      top: scrollContainerRef.current.scrollHeight,
+      behavior: 'smooth'
     });
-    
-    return <div ref={elementRef} />;
   };
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 100;
-    const isScrollingDown = scrollTop > lastScrollPositionRef.current;
-    
-    lastScrollPositionRef.current = scrollTop;
-
-    // Only update scroll state after scrolling has stopped
-    scrollTimeoutRef.current = setTimeout(() => {
-      setAutoScroll(isAtBottom);
-      setIsUserScrolling(!isAtBottom && !isScrollingDown);
-    }, 150);
+  const handleInputKeyDown = (value: string) => {
+    handleAsk({ input: value });
   };
 
   const trackEvent = async (eventType: string, properties: any) => {
@@ -261,6 +234,21 @@ export const Chat = ({ ...props }: ChatProps) => {
         backgroundColor="#212529"
         onScroll={handleScroll}
         ref={scrollContainerRef}
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: 'rgba(255, 255, 255, 0.3)',
+          },
+        }}
       >
         <Stack spacing={2} padding={2} ref={parentRef} height="full">
           {hasSelectedChat ? (
@@ -280,8 +268,8 @@ export const Chat = ({ ...props }: ChatProps) => {
                 return message;
               };
 
-              const setFeedback = (feedback?: Feedback) => {
-                const isDeselect = selectedChat.content[key].feedback == feedback;
+              const setFeedback = (newFeedback: Feedback | undefined) => {
+                const isDeselect = selectedChat.content[key].feedback === newFeedback;
                 try {
                   fetch(config.URL + "/api/feedback", {
                     method: "POST",
@@ -292,7 +280,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                       uuid: getUuid(),
                       session_id: selectedId,
                       msg_index: key,
-                      feedback: isDeselect ? null : feedback
+                      feedback: isDeselect ? null : newFeedback
                     }),
                   });
                 } catch {
@@ -301,7 +289,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                 if (isDeselect) {
                   selectedChat.content[key].feedback = undefined;
                 } else {
-                  selectedChat.content[key].feedback = feedback;
+                  selectedChat.content[key].feedback = newFeedback;
                 }
                 forceUpdate();
               };
@@ -478,58 +466,63 @@ export const Chat = ({ ...props }: ChatProps) => {
           ) : (
             <Instructions onClick={(text) => setValue("input", text)} />
           )}
-          <AlwaysScrollToBottom />
         </Stack>
       </Stack>
+      {showScrollButton && (
+        <Box
+          position="fixed"
+          bottom="100px"
+          left="50%"
+          transform="translateX(-50%)"
+          zIndex={20}
+        >
+          <IconButton
+            aria-label="Scroll to bottom"
+            icon={<FiChevronDown />}
+            onClick={scrollToBottom}
+            size="lg"
+            colorScheme="gray"
+            rounded="full"
+            boxShadow="lg"
+            backgroundColor="rgba(33, 37, 41, 0.8)"
+            _hover={{ backgroundColor: "rgba(33, 37, 41, 0.9)" }}
+          />
+        </Box>
+      )}
       <Stack
         className="input-stack"
         padding={4}
         backgroundColor="#151719"
         justifyContent="center"
         alignItems="center"
-        position="sticky"
-        bottom={0}
-        left={0}
-        right={0}
+        overflow="hidden"
+        position="relative"
         zIndex={10}
-        borderTop="1px solid"
-        borderColor="whiteAlpha.200"
       >
-        <Stack 
-          maxWidth="768px" 
-          width="100%"
-          spacing={2}
-        >
-          <Box
-            position="relative"
-            width="100%"
-          >
-            <Input
-              autoFocus={true}
-              variant="filled"
-              inputLeftAddon={
-                <IconButton
-                  aria-label="new_convo_button"
-                  icon={<FiRefreshCcw />}
-                  backgroundColor="transparent"
-                  onClick={clearAll}
-                  _hover={{ bg: 'whiteAlpha.200' }}
-                />
-              }
-              inputRightAddon={
-                <IconButton
-                  aria-label="send_button"
-                  icon={!isLoading ? <FiSend /> : <Spinner />}
-                  backgroundColor="transparent"
-                  onClick={handleSubmit(handleAsk)}
-                  _hover={{ bg: 'whiteAlpha.200' }}
-                />
-              }
-              {...register("input")}
-              onSubmit={(value) => handleAsk({ input: value })}
-              backgroundColor="whiteAlpha.200"
-            />
-          </Box>
+        <Stack maxWidth="768px" width="100%">
+          <Input
+            autoFocus={true}
+            variant="filled"
+            inputLeftAddon={
+              <IconButton
+                aria-label="new_convo_button"
+                icon={<FiRefreshCcw />}
+                backgroundColor="transparent"
+                onClick={clearAll}
+              />
+            }
+            inputRightAddon={
+              <IconButton
+                aria-label="send_button"
+                icon={!isLoading ? <FiSend /> : <Spinner />}
+                backgroundColor="transparent"
+                onClick={handleSubmit(handleAsk)}
+              />
+            }
+            {...register("input")}
+            onSubmit={handleInputKeyDown}
+            backgroundColor="whiteAlpha.200"
+          />
           <Text
             className="disclaimer"
             textAlign="center"
