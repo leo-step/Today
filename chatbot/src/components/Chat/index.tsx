@@ -34,9 +34,8 @@ interface ChatSchema {
   input: string;
 }
 
-type MessageState = {
-  [key: number]: boolean;
-};
+// Minimum length for a message to be collapsible (approximately 20 lines)
+const MIN_COLLAPSIBLE_LENGTH = 1200;
 
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
@@ -46,7 +45,10 @@ export const Chat = ({ ...props }: ChatProps) => {
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const [autoScroll, setAutoScroll] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const [expandedMessages, setExpandedMessages] = useState<MessageState>({});
+  const [expandedMessageIds, setExpandedMessageIds] = useState<string[]>([]);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollPositionRef = useRef(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const selectedId = selectedChat?.id;
   const selectedRole = selectedChat?.role;
 
@@ -122,9 +124,7 @@ export const Chat = ({ ...props }: ChatProps) => {
               message += chunk;
               if (selectedChat) {
                 editMessage(selectedId, message);
-                if (!isUserScrolling) {
-                  setAutoScroll(true);
-                }
+                setAutoScroll(true);
               }
             }
 
@@ -151,21 +151,49 @@ export const Chat = ({ ...props }: ChatProps) => {
     }
   };
 
+  const smoothScrollToBottom = () => {
+    if (!scrollContainerRef.current || !autoScroll) return;
+    
+    const container = scrollContainerRef.current;
+    const targetScroll = container.scrollHeight - container.clientHeight;
+    
+    // Only scroll if we're not already at the bottom
+    if (Math.abs(container.scrollTop - targetScroll) > 10) {
+      container.scrollTo({
+        top: targetScroll,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const AlwaysScrollToBottom = () => {
     const elementRef = useRef<HTMLDivElement>(null);
+    
     useEffect(() => {
-      if (elementRef.current && autoScroll && !isUserScrolling) {
-        elementRef.current.scrollIntoView({ behavior: "smooth" });
+      if (autoScroll) {
+        smoothScrollToBottom();
       }
     });
+    
     return <div ref={elementRef} />;
   };
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 50;
-    setAutoScroll(isAtBottom);
-    setIsUserScrolling(!isAtBottom);
+    const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 100;
+    const isScrollingDown = scrollTop > lastScrollPositionRef.current;
+    
+    lastScrollPositionRef.current = scrollTop;
+
+    // Only update scroll state after scrolling has stopped
+    scrollTimeoutRef.current = setTimeout(() => {
+      setAutoScroll(isAtBottom);
+      setIsUserScrolling(!isAtBottom && !isScrollingDown);
+    }, 150);
   };
 
   const trackEvent = async (eventType: string, properties: any) => {
@@ -202,11 +230,17 @@ export const Chat = ({ ...props }: ChatProps) => {
     );
   };
 
-  const toggleMessage = (index: number) => {
-    setExpandedMessages(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
+  const toggleMessage = (messageId: string) => {
+    setExpandedMessageIds(prev => {
+      const isExpanded = prev.includes(messageId);
+      return isExpanded 
+        ? prev.filter(id => id !== messageId)
+        : [...prev, messageId];
+    });
+  };
+
+  const isMessageExpanded = (messageId: string) => {
+    return expandedMessageIds.includes(messageId);
   };
 
   useEffect(() => {
@@ -226,6 +260,7 @@ export const Chat = ({ ...props }: ChatProps) => {
         overflow="auto"
         backgroundColor="#212529"
         onScroll={handleScroll}
+        ref={scrollContainerRef}
       >
         <Stack spacing={2} padding={2} ref={parentRef} height="full">
           {hasSelectedChat ? (
@@ -271,120 +306,173 @@ export const Chat = ({ ...props }: ChatProps) => {
                 forceUpdate();
               };
 
-              const isLongMessage = message.length > 300;
-              const isExpanded = expandedMessages[key];
+              const messageId = `${selectedId}-${key}`;
+              const isLongMessage = message.length > MIN_COLLAPSIBLE_LENGTH;
+              const isExpanded = isMessageExpanded(messageId);
 
               return (
-                <Stack
+                <Box
                   key={key}
-                  backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
                   position="relative"
                   paddingBottom={isLongMessage ? "40px" : undefined}
                 >
                   <Stack
-                    direction="row"
-                    padding={4}
-                    rounded={8}
-                    spacing={4}
+                    backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
+                    position="relative"
+                    spacing={0}
                   >
-                    <Avatar
-                      name={emitter}
-                      mt={2}
-                      boxSize={"54px"}
-                      src={getAvatar()}
-                    />
-                    <Stack flex={1} spacing={0}>
-                      <Box position="relative">
-                        <Box
-                          maxH={!isLongMessage || isExpanded ? undefined : "200px"}
-                          overflow={!isLongMessage || isExpanded ? undefined : "hidden"}
-                          position="relative"
-                        >
-                          <Text
-                            className="children-spacing"
-                            marginTop=".75em !important"
-                            whiteSpace="pre-wrap"
-                            wordBreak="break-word"
-                          >
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                a: ExternalLink,
-                              }}
-                            >
-                              {getMessage()}
-                            </ReactMarkdown>
-                          </Text>
-                          {isLongMessage && !isExpanded && (
-                            <Box
-                              position="absolute"
-                              bottom={0}
-                              left={0}
-                              right={0}
-                              height="80px"
-                              background="linear-gradient(transparent, #1e2022)"
-                            />
-                          )}
-                        </Box>
-                        {isLongMessage && (
-                          <Box
-                            position="absolute"
-                            bottom={-40}
-                            left={0}
-                            right={0}
-                            height="40px"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                          >
-                            <IconButton
-                              aria-label={isExpanded ? "Show less" : "Show more"}
-                              icon={isExpanded ? <FiChevronUp /> : <FiChevronDown />}
-                              onClick={() => toggleMessage(key)}
-                              variant="ghost"
-                              size="sm"
-                            />
-                          </Box>
-                        )}
-                      </Box>
-                    </Stack>
-                  </Stack>
-                  {emitter === "gpt" && (
                     <Stack
                       direction="row"
-                      spacing={0}
-                      align="end"
-                      paddingRight={4}
-                      paddingBottom={4}
-                      style={{ justifyContent: "flex-end" }}
+                      padding={4}
+                      rounded={8}
+                      spacing={4}
+                    >
+                      <Avatar
+                        name={emitter}
+                        mt={1}
+                        boxSize={"54px"}
+                        src={getAvatar()}
+                      />
+                      <Stack flex={1} spacing={0}>
+                        <Box>
+                          <Box
+                            maxH={!isLongMessage || isExpanded ? undefined : "150px"}
+                            overflow={!isLongMessage || isExpanded ? undefined : "hidden"}
+                            position="relative"
+                            className="markdown-content"
+                            sx={{
+                              '& > *:first-of-type': { marginTop: 0 },
+                              '& > *:last-of-type': { marginBottom: 0 },
+                              '& p': {
+                                marginY: 2,
+                                whiteSpace: 'pre-line'
+                              },
+                              '& h1, & h2, & h3, & h4, & h5, & h6': {
+                                marginTop: 4,
+                                marginBottom: 2,
+                                fontWeight: 'bold'
+                              },
+                              '& h1': { fontSize: '2xl' },
+                              '& h2': { fontSize: 'xl' },
+                              '& h3': { fontSize: 'lg' },
+                              '& ul, & ol': {
+                                marginY: 2,
+                                paddingLeft: 4,
+                                listStylePosition: 'outside'
+                              },
+                              '& li': {
+                                marginY: 1,
+                                paddingLeft: 1
+                              },
+                              '& code': {
+                                whiteSpace: 'pre-wrap',
+                                wordBreak: 'break-word',
+                                padding: '0.2em 0.4em',
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '4px'
+                              },
+                              '& pre': {
+                                padding: 3,
+                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                                borderRadius: '4px',
+                                overflow: 'auto'
+                              },
+                              '& pre code': {
+                                padding: 0,
+                                backgroundColor: 'transparent'
+                              }
+                            }}
+                          >
+                            <div className="markdown-wrapper">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                  a: ExternalLink
+                                }}
+                              >
+                                {getMessage()}
+                              </ReactMarkdown>
+                            </div>
+                            {isLongMessage && !isExpanded && (
+                              <Box
+                                position="absolute"
+                                bottom={0}
+                                left={0}
+                                right={0}
+                                height="80px"
+                                background="linear-gradient(transparent 0%, #1e2022 70%)"
+                                pointerEvents="none"
+                              />
+                            )}
+                          </Box>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                    {emitter === "gpt" && (
+                      <Stack
+                        direction="row"
+                        spacing={0}
+                        align="end"
+                        paddingRight={4}
+                        paddingBottom={2}
+                        style={{ justifyContent: "flex-end" }}
+                      >
+                        <IconButton
+                          aria-label="thumbs-up"
+                          icon={
+                            <FiThumbsUp
+                              style={{
+                                fill: feedback === "up" ? "white" : "none",
+                              }}
+                            />
+                          }
+                          backgroundColor="transparent"
+                          onClick={() => setFeedback("up")}
+                          _hover={{ bg: 'whiteAlpha.200' }}
+                        />
+                        <IconButton
+                          aria-label="thumbs-down"
+                          icon={
+                            <FiThumbsDown
+                              style={{
+                                fill: feedback === "down" ? "white" : "none",
+                              }}
+                            />
+                          }
+                          backgroundColor="transparent"
+                          onClick={() => setFeedback("down")}
+                          _hover={{ bg: 'whiteAlpha.200' }}
+                        />
+                      </Stack>
+                    )}
+                  </Stack>
+                  {isLongMessage && (
+                    <Box
+                      position="absolute"
+                      bottom={0}
+                      left="50%"
+                      transform="translateX(-50%)"
+                      width="40px"
+                      height="40px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      backgroundColor="#212529"
+                      borderRadius="8px"
+                      boxShadow="0 0 10px rgba(0,0,0,0.2)"
                     >
                       <IconButton
-                        aria-label="thumbs-up"
-                        icon={
-                          <FiThumbsUp
-                            style={{
-                              fill: feedback === "up" ? "white" : "none",
-                            }}
-                          />
-                        }
-                        backgroundColor="transparent"
-                        onClick={() => setFeedback("up")}
+                        aria-label={isExpanded ? "Show less" : "Show more"}
+                        icon={isExpanded ? <FiChevronUp /> : <FiChevronDown />}
+                        onClick={() => toggleMessage(messageId)}
+                        variant="ghost"
+                        size="sm"
+                        borderRadius="8px"
+                        _hover={{ bg: 'whiteAlpha.200' }}
                       />
-                      <IconButton
-                        aria-label="thumbs-down"
-                        icon={
-                          <FiThumbsDown
-                            style={{
-                              fill: feedback === "down" ? "white" : "none",
-                            }}
-                          />
-                        }
-                        backgroundColor="transparent"
-                        onClick={() => setFeedback("down")}
-                      />
-                    </Stack>
+                    </Box>
                   )}
-                </Stack>
+                </Box>
               );
             })
           ) : (
@@ -403,7 +491,7 @@ export const Chat = ({ ...props }: ChatProps) => {
         bottom={0}
         left={0}
         right={0}
-        zIndex={1}
+        zIndex={10}
         borderTop="1px solid"
         borderColor="whiteAlpha.200"
       >
@@ -425,6 +513,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                   icon={<FiRefreshCcw />}
                   backgroundColor="transparent"
                   onClick={clearAll}
+                  _hover={{ bg: 'whiteAlpha.200' }}
                 />
               }
               inputRightAddon={
@@ -433,6 +522,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                   icon={!isLoading ? <FiSend /> : <Spinner />}
                   backgroundColor="transparent"
                   onClick={handleSubmit(handleAsk)}
+                  _hover={{ bg: 'whiteAlpha.200' }}
                 />
               }
               {...register("input")}
