@@ -398,7 +398,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                       session_id: selectedId,
                       msg_index: key,
                       feedback: isDeselect ? null : newFeedback
-                    }),
+                  }),
                   });
                 } catch {
                   return
@@ -621,15 +621,21 @@ export const Chat = ({ ...props }: ChatProps) => {
             textAlign="center"
             fontSize="sm"
             opacity={0.8}
+            lineHeight="1"
+            marginTop="-4px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
           >
             <a
               href="https://forms.gle/zRBnuBA58QCDCqcX7"
               target="_blank"
               rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center' }}
             >
               <u>Submit your feedback</u>
             </a>
-            &nbsp;to help us improve.
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>&nbsp;to help us improve.</span>
           </Text>
         </Stack>
       </Stack>

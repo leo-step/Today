@@ -68,7 +68,8 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
             resetHeight();
         }
     }, [value]);
-const handleSubmit = (textarea: HTMLTextAreaElement) => {
+
+    const handleSubmit = (textarea: HTMLTextAreaElement) => {
         const trimmedValue = textarea.value.trim();
         if (onSubmit && trimmedValue) {
             // First reset height
@@ -101,8 +102,8 @@ const handleSubmit = (textarea: HTMLTextAreaElement) => {
     return (
         <FormControl isInvalid={Boolean(errorMessage)} isRequired={required}>
             {label && <FormLabel>{label}</FormLabel>}
-            <InputGroup alignItems="flex-start">
-                {inputLeftAddon && <InputLeftElement>{inputLeftAddon}</InputLeftElement>}
+            <InputGroup>
+                {inputLeftAddon && <InputLeftElement height="40px">{inputLeftAddon}</InputLeftElement>}
                 <Textarea
                     {...textareaProps}
                     ref={textareaRef}
@@ -112,11 +113,10 @@ const handleSubmit = (textarea: HTMLTextAreaElement) => {
                             if (isMobile) {
                                 // On mobile:
                                 // Only send if the actual Shift key is pressed (not Caps Lock)
-                                // getModifierState("Shift") checks the physical Shift key state
-                                // if (e.getModifierState("Shift")) {
-                                //     e.preventDefault();
-                                //     handleSubmit(e.currentTarget);
-                                // }
+                                if (e.getModifierState("Shift")) {
+                                    e.preventDefault();
+                                    handleSubmit(e.currentTarget);
+                                }
                                 // Otherwise always create new line
                             } else {
                                 // On desktop: Regular Enter sends, Shift+Enter creates new line
@@ -135,18 +135,20 @@ const handleSubmit = (textarea: HTMLTextAreaElement) => {
                     maxH="120px"
                     resize="none"
                     overflow="hidden"
-                    paddingY={2}
-                    paddingLeft={inputLeftAddon ? "40px" : undefined}
-                    paddingRight={inputRightAddon ? "40px" : undefined}
+                    paddingInlineStart={inputLeftAddon ? "40px" : "12px"}
+                    paddingInlineEnd={inputRightAddon ? "40px" : "12px"}
                     whiteSpace="pre-wrap"
                     wordBreak="break-word"
                     style={{
-                        lineHeight: "1.5",
+                        padding: 0,
+                        paddingLeft: inputLeftAddon ? "40px" : "12px",
+                        paddingRight: inputRightAddon ? "40px" : "12px",
+                        lineHeight: "35px",
                         transition: "height 0.1s ease-out",
                         overflowY: 'hidden'
                     }}
                 />
-                {inputRightAddon && <InputRightElement>{inputRightAddon}</InputRightElement>}
+                {inputRightAddon && <InputRightElement height="40px">{inputRightAddon}</InputRightElement>}
             </InputGroup>
             {!errorMessage ? (
                 helperText && <FormHelperText>{helperText}</FormHelperText>
@@ -156,3 +158,5 @@ const handleSubmit = (textarea: HTMLTextAreaElement) => {
         </FormControl>
     );
 });
+
+Input.displayName = "Input";
