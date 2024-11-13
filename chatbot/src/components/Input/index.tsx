@@ -68,7 +68,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
             resetHeight();
         }
     }, [value]);
-    const handleSubmit = (textarea: HTMLTextAreaElement) => {
+const handleSubmit = (textarea: HTMLTextAreaElement) => {
         const trimmedValue = textarea.value.trim();
         if (onSubmit && trimmedValue) {
             // First reset height
@@ -109,11 +109,22 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
                     value={value}
                     onKeyDown={(e) => {
                         if (e.key === 'Enter') {
-                            // On mobile, always treat Enter as submit
-                            // On desktop, only submit if not holding Shift
-                            if (isMobile || !e.shiftKey) {
-                                e.preventDefault();
-                                handleSubmit(e.currentTarget);
+                            if (isMobile) {
+                                // On mobile:
+                                // Only send if the actual Shift key is pressed (not Caps Lock)
+                                // getModifierState("Shift") checks the physical Shift key state
+                                // if (e.getModifierState("Shift")) {
+                                //     e.preventDefault();
+                                //     handleSubmit(e.currentTarget);
+                                // }
+                                // Otherwise always create new line
+                            } else {
+                                // On desktop: Regular Enter sends, Shift+Enter creates new line
+                                if (!e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSubmit(e.currentTarget);
+                                }
+                                // Let Shift+Enter create a new line (default behavior)
                             }
                         }
                     }}
@@ -145,5 +156,3 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
         </FormControl>
     );
 });
-
-Input.displayName = "Input";
