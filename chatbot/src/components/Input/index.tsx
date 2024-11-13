@@ -48,35 +48,35 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     const resetHeight = () => {
         if (textareaRef.current) {
             textareaRef.current.style.height = '40px';
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
         }
     };
 
     const adjustHeight = (textarea: HTMLTextAreaElement) => {
-        // Reset to base height
-        textarea.style.height = '40px';
-        
-        // If content is empty, keep at base height
-        if (!textarea.value.trim()) {
-            return;
-        }
-
-        // Calculate new height with lower max height
-        const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 120);
-        textarea.style.height = `${newHeight}px`;
+        textarea.style.height = '40px'; // Reset first
+        const scrollHeight = textarea.scrollHeight;
+        textarea.style.height = `${Math.min(scrollHeight, 120)}px`;
     };
 
     // Reset height when value changes to empty
     useEffect(() => {
         if (!value || value.trim().length === 0) {
+            if (textareaRef.current) {
+                textareaRef.current.style.height = '40px';
+            }
+        } else {
             resetHeight();
         }
     }, [value]);
-
     const handleSubmit = (textarea: HTMLTextAreaElement) => {
         const trimmedValue = textarea.value.trim();
         if (onSubmit && trimmedValue) {
+            // First reset height
+            textarea.style.height = '40px';
+            
+            // Then submit
             onSubmit(trimmedValue);
-            resetHeight();
+            
             if (onChange) {
                 const event = { target: { value: '' } } as React.ChangeEvent<HTMLTextAreaElement>;
                 onChange(event);
@@ -87,17 +87,16 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const textarea = e.currentTarget;
         
-        // If content is being deleted
-        if (textarea.value.length < (value?.length || 0)) {
-            resetHeight();
+        if (!textarea.value.trim()) {
+            textarea.style.height = '40px';
+        } else {
+            adjustHeight(textarea);
         }
         
-        // Adjust height based on new content
-        adjustHeight(textarea);
-        
-        // Call original onChange
         if (onChange) onChange(e);
     };
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     return (
         <FormControl isInvalid={Boolean(errorMessage)} isRequired={required}>
@@ -109,9 +108,13 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
                     ref={textareaRef}
                     value={value}
                     onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSubmit(e.currentTarget);
+                        if (e.key === 'Enter') {
+                            // On mobile, always treat Enter as submit
+                            // On desktop, only submit if not holding Shift
+                            if (isMobile || !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit(e.currentTarget);
+                            }
                         }
                     }}
                     onChange={handleChange}
@@ -128,7 +131,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
                     wordBreak="break-word"
                     style={{
                         lineHeight: "1.5",
-                        transition: "height 0.05s ease-out",
+                        transition: "height 0.1s ease-out",
                         overflowY: 'hidden'
                     }}
                 />

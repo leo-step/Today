@@ -8,6 +8,7 @@ import { useMutation } from "react-query";
 import TayAvatar from "assets/tayavatar.png";
 import UserAvatar from "assets/useravatar.png";
 import { useSearchParams } from "react-router-dom";
+import "styles/markdown.css";
 
 //Components
 import { Input } from "components/Input";
@@ -434,10 +435,10 @@ export const Chat = ({ ...props }: ChatProps) => {
                       padding={4}
                       rounded={8}
                       spacing={4}
+                      alignItems="flex-start"
                     >
                       <Avatar
                         name={emitter}
-                        mt={1}
                         boxSize={"54px"}
                         src={getAvatar()}
                       />
@@ -448,49 +449,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                             overflow={shouldShowCollapsed ? "hidden" : undefined}
                             position="relative"
                             className="markdown-content"
-                            transition="all 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
-                            sx={{
-                              '& > *:first-of-type': { marginTop: 0 },
-                              '& > *:last-of-type': { marginBottom: 0 },
-                              '& p': {
-                                marginY: 2,
-                                whiteSpace: 'pre-line'
-                              },
-                              '& h1, & h2, & h3, & h4, & h5, & h6': {
-                                marginTop: 4,
-                                marginBottom: 2,
-                                fontWeight: 'bold'
-                              },
-                              '& h1': { fontSize: '2xl' },
-                              '& h2': { fontSize: 'xl' },
-                              '& h3': { fontSize: 'lg' },
-                              '& ul, & ol': {
-                                marginY: 2,
-                                paddingLeft: 4,
-                                listStylePosition: 'outside'
-                              },
-                              '& li': {
-                                marginY: 1,
-                                paddingLeft: 1
-                              },
-                              '& code': {
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word',
-                                padding: '0.2em 0.4em',
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '4px'
-                              },
-                              '& pre': {
-                                padding: 3,
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '4px',
-                                overflow: 'auto'
-                              },
-                              '& pre code': {
-                                padding: 0,
-                                backgroundColor: 'transparent'
-                              }
-                            }}
                           >
                             <div className="markdown-wrapper">
                               <ReactMarkdown

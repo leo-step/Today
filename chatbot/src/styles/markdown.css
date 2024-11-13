@@ -1,0 +1,72 @@
+/* Markdown content styles */
+.markdown-content {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.markdown-content > *:first-of-type {
+  margin-top: 0;
+}
+
+.markdown-content > *:last-of-type {
+  margin-bottom: 0;
+}
+
+.markdown-content p {
+  margin: 0.5rem 0;
+  white-space: pre-line;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.markdown-content h1 {
+  font-size: 1.5rem;
+}
+
+.markdown-content h2 {
+  font-size: 1.25rem;
+}
+
+.markdown-content h3 {
+  font-size: 1.125rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0.5rem 0;
+  padding-left: 1rem;
+  list-style-position: outside;
+}
+
+.markdown-content li {
+  margin: 0.25rem 0;
+  padding-left: 0.25rem;
+}
+
+.markdown-content code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 0.2em 0.4em;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.markdown-content pre {
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: auto;
+}
+
+.markdown-content pre code {
+  padding: 0;
+  background-color: transparent;
+}
