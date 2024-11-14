@@ -38,7 +38,15 @@ def authenticated(request):
         if 'uuid' in query_params:
             return True
     
-    return cas_client.is_logged_in()
+    is_logged_in = cas_client.is_logged_in()
+    if is_logged_in:
+        netid = cas_client.authenticate()
+        db_client["logins"].insert_one({
+            "netid": netid, 
+            "time": int(time.time())
+        })
+
+    return is_logged_in
 
 # ========== UI ==========
 
