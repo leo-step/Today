@@ -22,7 +22,7 @@ export interface InputProps {
     label?: string;
     inputLeftAddon?: ReactNode;
     inputRightAddon?: ReactNode;
-    required?: boolean;
+    isRequired?: boolean;
     onSubmit?: (value: string) => void;
     onChange?: (e: any) => void;
     name?: string;
@@ -35,7 +35,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
         helperText,
         inputLeftAddon,
         inputRightAddon,
-        required,
+        isRequired,
         onSubmit,
         onChange,
         value,
@@ -100,7 +100,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     return (
-        <FormControl isInvalid={Boolean(errorMessage)} isRequired={required}>
+        <FormControl isInvalid={Boolean(errorMessage)} isRequired={isRequired}>
             {label && <FormLabel>{label}</FormLabel>}
             <InputGroup>
                 {inputLeftAddon && <InputLeftElement height="40px">{inputLeftAddon}</InputLeftElement>}
