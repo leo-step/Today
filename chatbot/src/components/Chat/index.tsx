@@ -20,6 +20,7 @@ import {
   Spinner,
   Stack,
   Text,
+  keyframes,
 } from "@chakra-ui/react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -38,6 +39,39 @@ interface ChatSchema {
 // Minimum length for a message to be collapsible
 const MIN_COLLAPSIBLE_LENGTH = 2000;
 
+const pulseKeyframes = keyframes`
+  0% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+  100% { opacity: 0.4; }
+`;
+
+const ThinkingIndicator = () => (
+  <Box
+    padding={4}
+    display="flex"
+    alignItems="center"
+    backgroundColor="#1e2022"
+    borderRadius={8}
+    marginBottom={2}
+  >
+    <Avatar
+      name="tay"
+      boxSize="54px"
+      src={TayAvatar}
+      marginRight={4}
+    />
+    <Stack direction="row" spacing={2} alignItems="center">
+      <Text
+        color="whiteAlpha.900"
+        animation={`${pulseKeyframes} 1.5s ease-in-out infinite`}
+      >
+        Tay is thinking
+      </Text>
+      <Spinner size="sm" color="whiteAlpha.700" />
+    </Stack>
+  </Box>
+);
+
 export const Chat = ({ ...props }: ChatProps) => {
   const { api } = useAPI();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +81,7 @@ export const Chat = ({ ...props }: ChatProps) => {
   const [expandedMessageIds, setExpandedMessageIds] = useState<string[]>([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [isThinking, setIsThinking] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const [collapsibleMessages, setCollapsibleMessages] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -119,6 +154,9 @@ export const Chat = ({ ...props }: ChatProps) => {
         message: prompt,
       });
 
+      // Show thinking indicator
+      setIsThinking(true);
+
       // Scroll to show the user's message
       setTimeout(() => {
         scrollToBottomWithOffset(0);
@@ -151,6 +189,7 @@ export const Chat = ({ ...props }: ChatProps) => {
           let message = "";
           
           if (reader) {
+            setIsThinking(false); // Hide thinking indicator when streaming starts
             addMessage(selectedId, {
               emitter: "gpt",
               message,
@@ -197,6 +236,7 @@ export const Chat = ({ ...props }: ChatProps) => {
           console.error("Streaming error:", error);
           setStreamingMessageId(null);
           setAutoScrollEnabled(false);
+          setIsThinking(false); // Hide thinking indicator on error
           addMessage(selectedId, {
             emitter: "error",
             message: "An error occurred while processing the request.",
@@ -398,7 +438,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                       session_id: selectedId,
                       msg_index: key,
                       feedback: isDeselect ? null : newFeedback
-                  }),
+}),
                   });
                 } catch {
                   return
@@ -550,6 +590,7 @@ export const Chat = ({ ...props }: ChatProps) => {
           ) : (
             <Instructions onClick={(text) => setValue("input", text)} />
           )}
+          {isThinking && <ThinkingIndicator />}
         </Stack>
       </Stack>
       {showScrollButton && (
