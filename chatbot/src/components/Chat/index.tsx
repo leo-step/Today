@@ -12,7 +12,7 @@ import "styles/markdown.css";
 
 //Components
 import { Input } from "components/Input";
-import { FiSend, FiThumbsUp, FiThumbsDown, FiRefreshCcw, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { FiSend, FiThumbsUp, FiThumbsDown, FiRefreshCcw, FiChevronDown } from "react-icons/fi";
 import {
   Avatar,
   Box,
@@ -35,9 +35,6 @@ export interface ChatProps {}
 interface ChatSchema {
   input: string;
 }
-
-// Minimum length for a message to be collapsible
-const MIN_COLLAPSIBLE_LENGTH = 2000;
 
 const pulseKeyframes = keyframes`
   0% { opacity: 0.4; }
@@ -78,12 +75,10 @@ export const Chat = ({ ...props }: ChatProps) => {
   const { selectedChat, addMessage, editMessage, addChat, editChat, clearAll } =
     useChat();
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
-  const [expandedMessageIds, setExpandedMessageIds] = useState<string[]>([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [isThinking, setIsThinking] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
-  const [collapsibleMessages, setCollapsibleMessages] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isAutoScrollingRef = useRef(false);
   const userHasScrolledRef = useRef(false);
@@ -199,16 +194,6 @@ export const Chat = ({ ...props }: ChatProps) => {
               
               if (done) {
                 setStreamingMessageId(null);
-                // Check if message should be collapsible
-                if (message.length > MIN_COLLAPSIBLE_LENGTH) {
-                  setCollapsibleMessages(prev => {
-                    const newSet = new Set(prev);
-                    newSet.add(newMessageId);
-                    return newSet;
-                  });
-                  // Add to expanded messages by default
-                  setExpandedMessageIds(prev => [...prev, newMessageId]);
-                }
                 break;
               }
               
@@ -333,46 +318,7 @@ export const Chat = ({ ...props }: ChatProps) => {
       </a>
     );
   };
-
-  const toggleMessage = (messageId: string) => {
-    if (!scrollContainerRef.current) return;
-    
-    const messageElement = document.getElementById(messageId);
-    if (!messageElement) return;
-
-    // Store current scroll position and element position
-    const container = scrollContainerRef.current;
-    const scrollTop = container.scrollTop;
-    const messageRect = messageElement.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const relativeTop = messageRect.top - containerRect.top + container.scrollTop;
-    
-    setExpandedMessageIds(prev => {
-      const isExpanded = prev.includes(messageId);
-      
-      // Use RAF to ensure DOM has updated
-      requestAnimationFrame(() => {
-        const newMessageRect = messageElement.getBoundingClientRect();
-        const newRelativeTop = newMessageRect.top - containerRect.top + container.scrollTop;
-        const scrollAdjustment = newRelativeTop - relativeTop;
-        
-        isAutoScrollingRef.current = true;
-        container.scrollTo({
-          top: scrollTop + scrollAdjustment,
-          behavior: 'instant'
-        });
-      });
-      
-      return isExpanded 
-        ? prev.filter(id => id !== messageId)
-        : [...prev, messageId];
-    });
-  };
-
-  const isMessageExpanded = (messageId: string) => {
-    return expandedMessageIds.includes(messageId);
-  };
-
+  
   useEffect(() => {
     const query = searchParams.get("query");
     if (query && query != "") {
@@ -438,7 +384,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                       session_id: selectedId,
                       msg_index: key,
                       feedback: isDeselect ? null : newFeedback
-}),
+                    }),
                   });
                 } catch {
                   return
@@ -452,18 +398,13 @@ export const Chat = ({ ...props }: ChatProps) => {
               };
 
               const messageId = `${selectedId}-${key}`;
-              const isLongMessage = message.length > MIN_COLLAPSIBLE_LENGTH;
-              const isExpanded = isMessageExpanded(messageId);
               const isStreaming = streamingMessageId === messageId;
-              const isCollapsible = collapsibleMessages.has(messageId);
-              const shouldShowCollapsed = isCollapsible && !isExpanded && !isStreaming;
 
               return (
                 <Box
                   id={messageId}
                   key={key}
                   position="relative"
-                  paddingBottom={isCollapsible ? "40px" : undefined}
                 >
                   <Stack
                     backgroundColor={emitter == "gpt" ? "#1e2022" : "transparent"}
@@ -485,8 +426,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                       <Stack flex={1} spacing={0}>
                         <Box>
                           <Box
-                            maxH={shouldShowCollapsed ? "150px" : undefined}
-                            overflow={shouldShowCollapsed ? "hidden" : undefined}
                             position="relative"
                             className="markdown-content"
                           >
@@ -500,19 +439,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                                 {getMessage()}
                               </ReactMarkdown>
                             </div>
-                            {shouldShowCollapsed && (
-                              <Box
-                                position="absolute"
-                                bottom={0}
-                                left={0}
-                                right={0}
-                                height="80px"
-                                background="linear-gradient(transparent 0%, #1e2022 70%)"
-                                pointerEvents="none"
-                                transition="opacity 0.5s ease-in-out"
-                                opacity={1}
-                              />
-                            )}
                           </Box>
                         </Box>
                       </Stack>
@@ -555,35 +481,6 @@ export const Chat = ({ ...props }: ChatProps) => {
                       </Stack>
                     )}
                   </Stack>
-                  {isCollapsible && !isStreaming && (
-                    <Box
-                      position="absolute"
-                      bottom={0}
-                      left="50%"
-                      transform="translateX(-50%)"
-                      width="40px"
-                      height="40px"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      backgroundColor="#212529"
-                      borderRadius="8px"
-                      boxShadow="0 0 10px rgba(0,0,0,0.2)"
-                      transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-                      opacity={1}
-                      _hover={{ transform: "translateX(-50%) scale(1.1)" }}
-                    >
-                      <IconButton
-                        aria-label={isExpanded ? "Show less" : "Show more"}
-                        icon={isExpanded ? <FiChevronUp /> : <FiChevronDown />}
-                        onClick={() => toggleMessage(messageId)}
-                        variant="ghost"
-                        size="sm"
-                        borderRadius="8px"
-                        _hover={{ bg: 'whiteAlpha.200' }}
-                      />
-                    </Box>
-                  )}
                 </Box>
               );
             })
