@@ -282,6 +282,7 @@ export const Chat = ({ ...props }: ChatProps) => {
   };
 
   const handleInputKeyDown = (value: string) => {
+    if (isSendDisabled) return; // dont't submit if sending is disabled
     handleAsk({ input: value });
   };
 
@@ -306,17 +307,10 @@ export const Chat = ({ ...props }: ChatProps) => {
     } catch {}
   };
 
-  const ExternalLink = ({ href, children }: any) => {
-    return (
-      <a
-        href={href}
-        onClick={() => trackEvent("citationLinkClick", href)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-      {children}
-      </a>
-    );
+  const handleClearAll = () => {
+    clearAll();
+    setIsThinking(false);
+    setStreamingMessageId(null);
   };
   
   useEffect(() => {
@@ -325,6 +319,9 @@ export const Chat = ({ ...props }: ChatProps) => {
       handleAsk({ input: query });
     }
   }, []);
+
+  // send button be disablee
+  const isSendDisabled = streamingMessageId !== null || isThinking;
 
   return (
     <Stack width="full" height="full" backgroundColor="#212529">
@@ -433,7 +430,16 @@ export const Chat = ({ ...props }: ChatProps) => {
                               <ReactMarkdown
                                 remarkPlugins={[remarkGfm]}
                                 components={{
-                                  a: ExternalLink
+                                  a: ({ href, children }) => (
+                                    <a
+                                      href={href}
+                                      onClick={() => trackEvent("citationLinkClick", href)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                    >
+                                      {children}
+                                    </a>
+                                  )
                                 }}
                               >
                                 {getMessage()}
@@ -534,12 +540,13 @@ export const Chat = ({ ...props }: ChatProps) => {
           <Input
             autoFocus={true}
             variant="filled"
+            isSendDisabled={isSendDisabled}
             inputLeftAddon={
               <IconButton
                 aria-label="new_convo_button"
                 icon={<FiRefreshCcw />}
                 backgroundColor="transparent"
-                onClick={clearAll}
+                onClick={handleClearAll}
               />
             }
             inputRightAddon={
@@ -548,6 +555,7 @@ export const Chat = ({ ...props }: ChatProps) => {
                 icon={!isLoading ? <FiSend /> : <Spinner />}
                 backgroundColor="transparent"
                 onClick={handleSubmit(handleAsk)}
+                isDisabled={isSendDisabled}
               />
             }
             {...register("input")}
