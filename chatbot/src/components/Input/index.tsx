@@ -14,6 +14,7 @@ export interface InputProps {
     value?: string;
     placeholder?: string;
     isDisabled?: boolean;
+    isSendDisabled?: boolean;
     autoFocus?: boolean;
     variant?: string;
     backgroundColor?: string;
@@ -24,7 +25,7 @@ export interface InputProps {
     inputRightAddon?: ReactNode;
     isRequired?: boolean;
     onSubmit?: (value: string) => void;
-    onChange?: (e: any) => void;
+    onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     name?: string;
 }
 
@@ -39,6 +40,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
         onSubmit,
         onChange,
         value,
+        isSendDisabled,
         ...textareaProps
     } = props;
 
@@ -70,6 +72,8 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     }, [value]);
 
     const handleSubmit = (textarea: HTMLTextAreaElement) => {
+        if (isSendDisabled) return; // dont submit if send disabled
+        
         const trimmedValue = textarea.value.trim();
         if (onSubmit && trimmedValue) {
             // First reset height
