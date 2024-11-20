@@ -48,7 +48,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     const textareaRef = (forwardedRef as React.RefObject<HTMLTextAreaElement>) || internalRef;
 
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const maxMobileLines = 3;
+    const maxMobileLines = 1;
     const baseHeight = 40;
     const lineHeight = 35;
 
