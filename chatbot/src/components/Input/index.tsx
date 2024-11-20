@@ -47,39 +47,44 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     const internalRef = useRef<HTMLTextAreaElement>(null);
     const textareaRef = (forwardedRef as React.RefObject<HTMLTextAreaElement>) || internalRef;
 
-    const resetHeight = () => {
-        if (textareaRef.current) {
-            textareaRef.current.style.height = '40px';
-            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const maxMobileLines = 3;
+    const baseHeight = 40;
+    const lineHeight = 35;
+
+    const getLineCount = (text: string): number => {
+        if (!text) return 1;
+        return text.split('\n').length;
+    };
+
+    const calculateHeight = (text: string): number => {
+        const lineCount = getLineCount(text);
+        const contentHeight = baseHeight + ((lineCount - 1) * lineHeight);
+        
+        if (isMobile) {
+            return Math.min(contentHeight, baseHeight + ((maxMobileLines - 1) * lineHeight));
+        } else {
+            return Math.min(contentHeight, 120);
         }
     };
 
-    const adjustHeight = (textarea: HTMLTextAreaElement) => {
-        textarea.style.height = '40px'; // Reset first
-        const scrollHeight = textarea.scrollHeight;
-        textarea.style.height = `${Math.min(scrollHeight, 120)}px`;
+    const updateHeight = (textarea: HTMLTextAreaElement) => {
+        const newHeight = calculateHeight(textarea.value);
+        textarea.style.height = `${newHeight}px`;
     };
 
-    // Reset height when value changes to empty
     useEffect(() => {
-        if (!value || value.trim().length === 0) {
-            if (textareaRef.current) {
-                textareaRef.current.style.height = '40px';
-            }
-        } else {
-            resetHeight();
+        if (textareaRef.current) {
+            updateHeight(textareaRef.current);
         }
     }, [value]);
 
     const handleSubmit = (textarea: HTMLTextAreaElement) => {
-        if (isSendDisabled) return; // dont submit if send disabled
+        if (isSendDisabled) return;
         
         const trimmedValue = textarea.value.trim();
         if (onSubmit && trimmedValue) {
-            // First reset height
-            textarea.style.height = '40px';
-            
-            // Then submit
+            textarea.style.height = `${baseHeight}px`;
             onSubmit(trimmedValue);
             
             if (onChange) {
@@ -92,51 +97,82 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const textarea = e.currentTarget;
         
-        if (!textarea.value.trim()) {
-            textarea.style.height = '40px';
-        } else {
-            adjustHeight(textarea);
+        if (isMobile) {
+            const lines = textarea.value.split('\n');
+            if (lines.length > maxMobileLines) {
+                const newValue = lines.slice(0, maxMobileLines).join('\n');
+                textarea.value = newValue;
+                if (onChange) {
+                    e.target.value = newValue;
+                    onChange(e);
+                }
+            }
         }
+
+        // Immediately update height based on content
+        updateHeight(textarea);
         
         if (onChange) onChange(e);
     };
 
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key !== 'Enter') return;
+
+        if (isMobile) {
+            e.preventDefault();
+            
+            if (e.shiftKey) {
+                handleSubmit(e.currentTarget);
+                return;
+            }
+
+            const textarea = e.currentTarget;
+            const lines = textarea.value.split('\n');
+            
+            if (lines.length < maxMobileLines) {
+                const cursorPos = textarea.selectionStart;
+                const value = textarea.value;
+                const newValue = value.slice(0, cursorPos) + '\n' + value.slice(cursorPos);
+                textarea.value = newValue;
+                
+                // Trigger onChange
+                if (onChange) {
+                    const event = { target: textarea } as React.ChangeEvent<HTMLTextAreaElement>;
+                    onChange(event);
+                }
+                
+                // Update height immediately
+                updateHeight(textarea);
+                
+                // Set cursor position
+                requestAnimationFrame(() => {
+                    textarea.selectionStart = cursorPos + 1;
+                    textarea.selectionEnd = cursorPos + 1;
+                });
+            }
+        } else {
+            if (!e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e.currentTarget);
+            }
+        }
+    };
 
     return (
         <FormControl isInvalid={Boolean(errorMessage)} isRequired={isRequired}>
             {label && <FormLabel>{label}</FormLabel>}
             <InputGroup>
-                {inputLeftAddon && <InputLeftElement height="40px">{inputLeftAddon}</InputLeftElement>}
+                {inputLeftAddon && <InputLeftElement height={`${baseHeight}px`}>{inputLeftAddon}</InputLeftElement>}
                 <Textarea
                     {...textareaProps}
                     ref={textareaRef}
                     value={value}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            if (isMobile) {
-                                // On mobile:
-                                // Only send if the actual Shift key is pressed (not Caps Lock)
-                                if (e.getModifierState("Shift")) {
-                                    e.preventDefault();
-                                    handleSubmit(e.currentTarget);
-                                }
-                                // Otherwise always create new line
-                            } else {
-                                // On desktop: Regular Enter sends, Shift+Enter creates new line
-                                if (!e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSubmit(e.currentTarget);
-                                }
-                                // Let Shift+Enter create a new line (default behavior)
-                            }
-                        }
-                    }}
+                    onKeyDown={handleKeyDown}
                     onChange={handleChange}
                     rows={1}
-                    height="40px"
-                    minH="40px"
-                    maxH="120px"
+                    height={`${baseHeight}px`}
+                    minH={`${baseHeight}px`}
+                    maxH={isMobile ? `${baseHeight + ((maxMobileLines - 1) * lineHeight)}px` : "120px"}
                     resize="none"
                     overflow="hidden"
                     paddingInlineStart={inputLeftAddon ? "40px" : "12px"}
@@ -152,7 +188,7 @@ export const Input = forwardRef<HTMLTextAreaElement, InputProps>((props, forward
                         overflowY: 'hidden'
                     }}
                 />
-                {inputRightAddon && <InputRightElement height="40px">{inputRightAddon}</InputRightElement>}
+                {inputRightAddon && <InputRightElement height={`${baseHeight}px`}>{inputRightAddon}</InputRightElement>}
             </InputGroup>
             {!errorMessage ? (
                 helperText && <FormHelperText>{helperText}</FormHelperText>
