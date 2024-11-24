@@ -179,6 +179,10 @@ export const Chat = ({ ...props }: ChatProps) => {
         signal: controller.signal,
       })
         .then(async (response) => {
+          if (!response.ok) {
+            throw new Error('Server error');
+          }
+          
           const reader = response.body?.getReader();
           const decoder = new TextDecoder();
           let message = "";
@@ -194,6 +198,10 @@ export const Chat = ({ ...props }: ChatProps) => {
               
               if (done) {
                 setStreamingMessageId(null);
+                // handle empty/blank responses
+                if (!message.trim()) {
+                  editMessage(selectedId, "I apologize, but I'm not sure how to respond to that. Could you please provide more context or rephrase your question?");
+                }
                 break;
               }
               
@@ -221,10 +229,17 @@ export const Chat = ({ ...props }: ChatProps) => {
           console.error("Streaming error:", error);
           setStreamingMessageId(null);
           setAutoScrollEnabled(false);
-          setIsThinking(false); // Hide thinking indicator on error
+          setIsThinking(false); // hide thinking indicator on error
+          
+          // provide specific error messages
+          let errorMessage = "I apologize, but I cannot assist with that request. Please try asking something else.";
+          if (error.message === 'Server error') {
+            errorMessage = "I apologize, but I cannot process that type of request. Please try asking something else that aligns with appropriate and constructive dialogue.";
+          }
+          
           addMessage(selectedId, {
             emitter: "error",
-            message: "An error occurred while processing the request.",
+            message: errorMessage,
           });
         });
     };
