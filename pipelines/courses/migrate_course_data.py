@@ -36,6 +36,7 @@ def get_embedding(query_text, model="text-embedding-3-large", dimensions=256):
 if __name__ == "__main__":
     print("Enter semester ID: ", end="")
     semester_id = int(input())
+    db_client["courses"].delete_many({"semester._id": semester_id})
     course_ids = get_course_ids(semester_id)
     for course_id in tqdm(course_ids):
         data = get_course_data(course_id)
