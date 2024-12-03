@@ -9,6 +9,8 @@ import background4 from "../images/study/forestfield.jpeg"
 import background5 from "../images/study/layinginsun.jpeg"
 import duckgif from "../images/walkingduck.gif"
 import { EventTypes, useMixpanel } from "../context/MixpanelContext";
+import { useAtom } from "jotai";
+import { timerState } from "./study_mode_state";
 // import { useStorage } from "../context/StorageContext";
 
 // import WidgetHeader from "./widget/WidgetHeader";
@@ -30,12 +32,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [movingRight, setMovingRight] = useState(true);
   const [showCalculator, setShowCalculator] = useState(false);
   const [showDuck, setShowDuck] = useState(false);
-  // const [playlistUrl, setPlaylistUrl] = useState("https://open.spotify.com/embed/playlist/37i9dQZF1DX8Uebhn9wzrS?utm_source=generator&theme=0");
-
-
+  const [showColors, setShowColors] = useState(true);
   const popupRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [timerNumber, setTimerNumber] = useAtom(timerState);
+  const [hours, setHours] = useState<number | string>(Math.floor(timerNumber / 60));
+  const [minutes, setMinutes] = useState<number | string>(timerNumber % 60);
 
 
   // List of background images
@@ -114,7 +117,12 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       mixpanel.trackEvent(EventTypes.SHOW_SPOTIFY, "spotify")
     }
   };
-
+  const showBackgroundColors = () => {
+    setShowColors(true);
+  }
+  const showTimerSettings = () => {
+    setShowColors(false);
+  }
   const handleBackgroundChange = (background: string) => {
     setIsImageLoaded(false); // Set loading state
     const img = new Image();
@@ -124,6 +132,28 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       setIsImageLoaded(true); // Reset loading state
     };
     mixpanel.trackEvent(EventTypes.CHANGED_STUDYBG, background)
+  };
+
+  // const handleBlur = (
+  //   value: string | number,
+  //   setValue: React.Dispatch<React.SetStateAction<number | string>>
+  // ) => {
+  //   if (value === "" || value === "-" || value === 0) {
+  //     setValue(""); // Reset to 0 if empty or invalid
+  //   }
+  // };
+
+  // const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault();
+  //   const totalTime = Number(hours) * 3600 + Number(minutes) * 60;
+  //   setTimerNumber(totalTime);
+  //   console.log(totalTime);
+  // };
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Convert hours and minutes to seconds and save to the atom
+    const totalTime = Number(hours) * 3600 + Number(minutes) * 60;
+    setTimerNumber(totalTime); // Update the atom
   };
 
   useEffect(() => {
@@ -148,7 +178,13 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       return () => clearInterval(interval);
     }
   }, [isStudyMode, movingRight]);
-  
+
+  useEffect(() => {
+    // Sync local `hours` and `minutes` state with `timerNumber` when it changes
+    setHours(Math.floor(timerNumber / 3600));
+    setMinutes((timerNumber % 3600) / 60);
+  }, [timerNumber]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -171,6 +207,20 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showSettings]);
 
+  const handleFocus = (
+    setValue: React.Dispatch<React.SetStateAction<number | string>>
+  ) => {
+    setValue(""); // Clear the field when focused
+  };
+  
+  const handleBlur = (
+    value: string | number,
+    setValue: React.Dispatch<React.SetStateAction<number | string>>
+  ) => {
+    if (value === "" || isNaN(Number(value))) {
+      setValue(0); // Reset to 0 if empty or invalid
+    }
+  };
   return (
     <div style={{height:"90vh", width:"100vw"}}>
       {isStudyMode && (
@@ -197,7 +247,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
 
       {/* Main content with widgets */}
-
+      {/* Popup for background color selection */}
       <div style={{ position: "relative", zIndex: 1, justifySelf:"right"}}>
         {isStudyMode && (
           <>
@@ -219,31 +269,15 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
               <FontAwesomeIcon icon={faGear} size="2x" />
             </button>
             {/* Turn off study mode */}
-             <button onClick={handleToggle} className="study-mode-button">
+            <button onClick={handleToggle} className="study-mode-button">
                 <FontAwesomeIcon icon={faHouse} size="2x" />
             </button>
-
-            {/* Popup for background color selection */}
-            {showSettings && (
-              <div ref={popupRef} className="settings-popup">
-                <div className ="color-options">
-                {backgrounds.map(([bg, color]) => (
-                   <button
-                     className="color-btn"
-                     style={{ backgroundColor: color }}
-                     onClick={(event) => handleBackgroundChange(bg)}
-                   />
-                 ))}
-                </div>
-              </div>
-            )}
           </>
         )}
-
           {/* Main Study Mode Toggle Button */}
           { !isStudyMode && (
             <Button variant="outline-light" className="study-mode-toggle" onClick={handleToggle}>
-               <b>study mode</b>
+              <b>study mode</b>
             </Button>
           )}
           
@@ -280,24 +314,83 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
       
       {(isStudyMode && showDuck) && (
-         <div
-         className="moving-duck"
-         style={{
-           position: "fixed",
-           bottom: 0,
-           left: `${duckPosition}px`,
-           transform: movingRight ? "scaleX(1)" : "scaleX(-1)",
-           transition: "left 0.02s linear",
-         }}
-       >
-         <img src={duckgif} alt="Moving Duck" width="50" />
-       </div>
+        <div
+        className="moving-duck"
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: `${duckPosition}px`,
+          transform: movingRight ? "scaleX(1)" : "scaleX(-1)",
+          transition: "left 0.02s linear",
+        }}
+      >
+        <img src={duckgif} alt="Moving Duck" width="50" />
+      </div>
       )}
       {(isStudyMode) && 
       (
         <div style={{position: "fixed", top:"25%", right:"25%", zIndex: 0, justifySelf:"center", alignSelf:"center", alignContent:"center", justifyItems:"center"}}>
         <StudyModeTimer />
       </div>
+      )}
+      {showSettings && (
+        <div ref={popupRef} className="settings-popup">
+          <div className = "settings-sidebar">
+          <button className = "settings-side-button" onClick={showBackgroundColors}>Colors</button>
+          <button className = "settings-side-button" onClick={showTimerSettings}>Set Timer</button>
+          </div>
+          <div className = "settings-box">
+            {showColors && <div className ="color-options">
+              {backgrounds.map(([bg, color]) => (
+                  <button
+                    className="color-btn"
+                    style={{ backgroundColor: color }}
+                    onClick={(event) => handleBackgroundChange(bg)}
+                  />
+              ))}
+            </div>}
+            {!showColors && <div className ="timer-settings">
+              <br/>
+              <form
+                onSubmit={handleSubmit}
+                style={{ display: "flex", flexDirection: "column", maxWidth: "300px" }}
+              >
+                <label>
+                  Hours:
+                  <input
+                    onFocus={() => handleFocus(setHours)}
+                    onBlur={() => handleBlur(hours, setHours)}
+                    type="number"
+                    value={hours === "" ? "" : hours} // Show empty cursor if blank
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      // Allow empty or numeric input, including 0
+                      setHours(newValue === "" ? "" : Number(newValue));
+                    }}
+                  />
+                </label>
+                <label>
+                  Minutes:
+                  <input
+                    onFocus={() => handleFocus(setMinutes)}
+                    onBlur={() => handleBlur(minutes, setMinutes)}
+                    type="number"
+                    value={minutes === "" ? "" : minutes} // Show empty cursor if blank
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      // Allow empty or numeric input, including 0
+                      setMinutes(newValue === "" ? "" : Number(newValue));
+                    }}
+                  />
+                </label>
+                <button type="submit" className="settings-submit">
+                  Save
+                </button>
+              </form>
+
+            </div>}
+          </div>
+        </div>
       )}
 
     </div>
