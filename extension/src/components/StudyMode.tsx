@@ -43,11 +43,11 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
 
   // List of background images
   const backgrounds = [
-    [background1, "#5f5b69"],
-    [background2, "#b2293d"],
-    [background3, "#fee594"],
-    [background4, "#8dae35"],
-    [background5, "#e6c2a0"]
+    [background1, "#5f5b69", "Cat on lawn"],
+    [background2, "#b2293d", "Cat in the city"],
+    [background3, "#ADD8E6", "Flower field"],
+    [background4, "#8dae35", "Enchanted forest"],
+    [background5, "#e6c2a0", "Lakeside view"]
   ];
 
   // const storage = useStorage()
@@ -179,11 +179,11 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     }
   }, [isStudyMode, movingRight]);
 
-  useEffect(() => {
-    // Sync local `hours` and `minutes` state with `timerNumber` when it changes
-    setHours(Math.floor(timerNumber / 3600));
-    setMinutes((timerNumber % 3600) / 60);
-  }, [timerNumber]);
+  // useEffect(() => {
+  //   // Sync local `hours` and `minutes` state with `timerNumber` when it changes
+  //   setHours(Math.floor(timerNumber / 3600));
+  //   setMinutes((timerNumber % 3600) / 60);
+  // }, [timerNumber]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -335,58 +335,82 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
       )}
       {showSettings && (
         <div ref={popupRef} className="settings-popup">
+          <button 
+            className="settings-close-button" 
+            onClick={() => setShowSettings(false)}
+          >
+            &times;
+          </button>
           <div className = "settings-sidebar">
-          <button className = "settings-side-button" onClick={showBackgroundColors}>Colors</button>
+          <button className = "settings-side-button" onClick={showBackgroundColors}>Backgrounds</button>
           <button className = "settings-side-button" onClick={showTimerSettings}>Set Timer</button>
           </div>
           <div className = "settings-box">
-            {showColors && <div className ="color-options">
-              {backgrounds.map(([bg, color]) => (
-                  <button
-                    className="color-btn"
-                    style={{ backgroundColor: color }}
-                    onClick={(event) => handleBackgroundChange(bg)}
-                  />
+            {showColors && <div className="color-options">
+              {backgrounds.map(([bg, color, desc], index) => (
+                <button
+                  key={index}
+                  className="color-btn-rect"
+                  style={{
+                    backgroundColor: color,
+                    color: "#ffffff", // Ensure text is readable
+                    width: "200px",
+                    height: "50px",
+                    margin: "10px 0", // Add spacing between buttons
+                    fontSize: "16px",
+                    border: "1px solid #000",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                  onClick={() => handleBackgroundChange(bg)}
+                >
+                  {desc} {/* Placeholder text */}
+                </button>
               ))}
             </div>}
             {!showColors && <div className ="timer-settings">
               <br/>
-              <form
-                onSubmit={handleSubmit}
-                style={{ display: "flex", flexDirection: "column", maxWidth: "300px" }}
-              >
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", maxWidth: "300px" }}>
                 <label>
                   Hours:
                   <input
+                    type="text" // Use text for full control over input
+                    value={hours}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove any non-numeric characters (including negative signs)
+                      const sanitizedValue = value.replace(/[^0-9]/g, "");
+                      // Ensure the value is at most 2 digits
+                      if (sanitizedValue.length <= 2) {
+                        setHours(sanitizedValue);
+                      }
+                    }}
                     onFocus={() => handleFocus(setHours)}
                     onBlur={() => handleBlur(hours, setHours)}
-                    type="number"
-                    value={hours === "" ? "" : hours} // Show empty cursor if blank
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      // Allow empty or numeric input, including 0
-                      setHours(newValue === "" ? "" : Number(newValue));
-                    }}
                   />
                 </label>
                 <label>
                   Minutes:
                   <input
+                    type="text" // Use text for full control over input
+                    value={minutes}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Remove any non-numeric characters (including negative signs)
+                      const sanitizedValue = value.replace(/[^0-9]/g, "");
+                      // Ensure the value is at most 2 digits
+                      if (sanitizedValue.length <= 2) {
+                        setMinutes(sanitizedValue);
+                      }
+                    }}
                     onFocus={() => handleFocus(setMinutes)}
                     onBlur={() => handleBlur(minutes, setMinutes)}
-                    type="number"
-                    value={minutes === "" ? "" : minutes} // Show empty cursor if blank
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      // Allow empty or numeric input, including 0
-                      setMinutes(newValue === "" ? "" : Number(newValue));
-                    }}
                   />
                 </label>
-                <button type="submit" className="settings-submit">
-                  Save
-                </button>
+                <button type="submit" className="settings-submit">Save</button>
               </form>
+
 
             </div>}
           </div>
