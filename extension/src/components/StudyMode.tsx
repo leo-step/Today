@@ -382,7 +382,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
                       // Remove any non-numeric characters (including negative signs)
                       const sanitizedValue = value.replace(/[^0-9]/g, "");
                       // Ensure the value is at most 2 digits
-                      if (sanitizedValue.length <= 2) {
+                      if (sanitizedValue.length <= 2 && Number(sanitizedValue) <= 59) {
                         setHours(sanitizedValue);
                       }
                     }}
@@ -400,7 +400,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
                       // Remove any non-numeric characters (including negative signs)
                       const sanitizedValue = value.replace(/[^0-9]/g, "");
                       // Ensure the value is at most 2 digits
-                      if (sanitizedValue.length <= 2) {
+                      if (sanitizedValue.length <= 2 && Number(sanitizedValue) <= 59) {
                         setMinutes(sanitizedValue);
                       }
                     }}

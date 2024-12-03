@@ -3,7 +3,7 @@ import { useAtomValue } from "jotai";
 import { timerState } from "./study_mode_state";
 
 const CountdownTimer = () => {
-    const timerValue = useAtomValue(timerState); // Get the initial time from the atom
+    const timerValue = useAtomValue(timerState) * 60; // Get the initial time from the atom
     const [timeRemaining, setTimeRemaining] = useState(timerValue); // Local state for time remaining
     const [startedTimer, setStartedTimer] = useState(false);
     const [timerIntervalId, setTimerIntervalId] = useState<NodeJS.Timeout | null>(null);
