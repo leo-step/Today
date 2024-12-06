@@ -1,15 +1,21 @@
 import React, { useRef, useState, useEffect } from "react";
-import { useAtomValue } from "jotai";
-import { timerState } from "./study_mode_state";
+import { useAtomValue, useAtom } from "jotai";
+import { timerState, timerReset} from "./study_mode_state";
 
 const CountdownTimer = () => {
-    const timerValue = useAtomValue(timerState) * 60; // Get the initial time from the atom
+    const [timerStoppedState, changeTimerStopped] = useAtom(timerReset)
+    const timerValue = useAtomValue(timerState); // Get the initial time from the atom
     const [timeRemaining, setTimeRemaining] = useState(timerValue); // Local state for time remaining
     const [startedTimer, setStartedTimer] = useState(false);
     const [timerIntervalId, setTimerIntervalId] = useState<NodeJS.Timeout | null>(null);
-
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
+    useEffect(() => {
+        if (timerStoppedState){
+            onClickReset();
+            changeTimerStopped(false);
+        }
+    }, [timerValue])
     // Sync `timeRemaining` with `timerValue` only when the atom value changes
     useEffect(() => {
         if (!startedTimer && timerIntervalId === null) {
@@ -45,7 +51,7 @@ const CountdownTimer = () => {
             setTimerIntervalId(intervalId); // Save interval ID
         }
     };
-
+    
     const onStop = () => {
         if (timerIntervalId) {
             clearInterval(timerIntervalId); // Stop the countdown
@@ -64,7 +70,7 @@ const CountdownTimer = () => {
     const seconds = (timeRemaining % 60).toString().padStart(2, "0");
 
     return (
-        <div style={{ zIndex: 2, width: "700px", alignItems: "center" }}>
+        <div style={{ position: "fixed", top: "25%", left: "23.5%", zIndex: 2, width: "700px", alignItems: "center"}}>
             <div
                 style={{
                     fontSize: "175px",

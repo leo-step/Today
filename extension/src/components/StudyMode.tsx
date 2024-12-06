@@ -1,3 +1,4 @@
+// TODO: MAKE IT SO THAT WHEN YOU SET A TIME, THEN IT RESETS
 import React, { useState, useRef, useEffect } from "react";
 import StudyModeTimer from "./StudyModeTimer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -10,7 +11,7 @@ import background5 from "../images/study/layinginsun.jpeg"
 import duckgif from "../images/walkingduck.gif"
 import { EventTypes, useMixpanel } from "../context/MixpanelContext";
 import { useAtom } from "jotai";
-import { timerState } from "./study_mode_state";
+import { timerState, timerReset} from "./study_mode_state";
 // import { useStorage } from "../context/StorageContext";
 
 // import WidgetHeader from "./widget/WidgetHeader";
@@ -39,8 +40,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const [timerNumber, setTimerNumber] = useAtom(timerState);
   const [hours, setHours] = useState<number | string>(Math.floor(timerNumber / 60));
   const [minutes, setMinutes] = useState<number | string>(timerNumber % 60);
-
-
+  const [timerResetState, setTimerReset] = useAtom(timerReset);
   // List of background images
   const backgrounds = [
     [background1, "#5f5b69", "Cat on lawn"],
@@ -153,7 +153,9 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
     e.preventDefault();
     // Convert hours and minutes to seconds and save to the atom
     const totalTime = Number(hours) * 3600 + Number(minutes) * 60;
-    setTimerNumber(totalTime); // Update the atom
+    setTimerNumber(totalTime);
+    console.log(timerResetState); // Update the atom
+    setTimerReset(true);
   };
 
   useEffect(() => {
