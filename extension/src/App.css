@@ -1,3 +1,168 @@
+/* Settings Popup Container */
+.settings-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 500px;
+  background: linear-gradient(135deg, #ffffff, #f7f7f7);
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* Sidebar for Options */
+.settings-sidebar {
+  background-color: #f5f5f5;
+  width: 150px;
+  height: 100%;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.settings-side-button {
+  font-size: 16px;
+  width: 100%;
+  text-align: center;
+  padding: 10px 0;
+  background-color: transparent;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.settings-side-button:hover {
+  background-color: #ef853b;
+  color: #fff;
+  border-radius: 8px;
+}
+
+/* Main Content Area */
+.settings-box {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Header for Settings Content */
+.settings-box h4 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.color-options {
+  display: flex;
+  flex-direction: column;
+  align-items: 20px;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.color-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-weight: bold;
+  transition: transform 0.3s ease;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.settings-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #333;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.settings-close-button:hover {
+  color: red;
+  transform: scale(1.2);
+}
+
+/* Timer Settings Form */
+.timer-settings form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.timer-settings label {
+  font-size: 16px;
+  color: #555;
+}
+
+.timer-settings input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+}
+
+.timer-settings input:focus {
+  outline: none;
+  border-color: #ef853b;
+}
+
+.settings-submit {
+  background-color: #ef853b;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.3s;
+}
+
+.settings-submit:hover {
+  background-color: #e05d22;
+}
+
+/* Smooth Transitions for Opening */
+.settings-popup {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
 .slide-pane__content {
   padding: 0;
   overflow-y: hidden;
@@ -147,6 +312,12 @@ td {
 .name-row {
   margin-top: 5% !important;
   margin-bottom: 6% !important;
+}
+
+.header {
+  float: right;
+
+  /* margin-bottom: 6% !important; */
 }
 
 .greeting {
@@ -424,3 +595,195 @@ body {
   background-color: #212529;
   /* width: 500px;
   margin-left: 100px; */
+
+
+.study-mode-top-right {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 0; /* needs to stay under tay */
+}
+
+.study-mode-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #ef853b;
+  margin-right: 10px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.study-mode-button:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+.study-mode-toggle{
+  background: none;
+}
+.study-mode-toggle:hover {
+  color: white;
+  transform: scale(1.1);
+}
+
+/* .settings-submit{
+  
+}
+.settings-sidebar{
+  background-color:#ff00dd;
+  width: 100px;
+  height: 100%;
+}
+.settings-side-button {
+  position: relative;
+  align-self: left;
+  outline: none;
+  font-size: 20px;
+  width: 100px;
+  padding: 10px;
+  background-color:white;
+}
+
+.settings-popup {
+  position: relative;
+  align-self: right;
+  justify-self: center;
+  width: 600px;
+  height: 600px;
+  background: white;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display:flex;
+}
+.settings-box {
+  position: relative;
+  align-self: right;
+  justify-self: center;
+  width: 600px;
+  height: 100%;
+  background: white;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.settings-popup h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 100%;
+  cursor: pointer;
+}
+.color-btn:hover {
+  transform: scale(1.1);
+} */
+
+
+
+.settings-bar {
+  position: fixed;
+  top: 0;
+  right: -300px; /* Start off-screen */
+  width: 250px;
+  height: 100%;
+  background: #ffffff;
+  padding: 15px;
+  border-left: 1px solid #ccc;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.2);
+  transition: right 0.3s ease;
+  z-index: 1000;
+}
+
+.settings-bar.open {
+  right: 0; /* Slide in when open */
+}
+
+.settings-bar h4 {
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+.color-options {
+  display: flex;
+  gap: 8px;
+}
+
+.color-btn {
+  width: 25px;
+  height: 25px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+
+.spotify-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 10;
+  width: 300px;
+  height: 152px;
+}
+
+.moving-duck {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 50px; /* Adjust size as needed */
+  animation: moveBackAndForth 5s linear infinite;
+  z-index: 9999; /* Ensures the duck is on top of all other elements */
+}
+
+/* Container to keep the widget centered even with shorter heights */
+.calc-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Calculator widget */
+.calc-widget {
+  display: none;
+  width: 400px;
+  height: 323px;
+  max-height: 90vh; /* Ensure it doesn't exceed viewport height */
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.calc-widget.show {
+  display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .calc-widget {
+    width: 90%;
+    height: 250px;
+  }
+}

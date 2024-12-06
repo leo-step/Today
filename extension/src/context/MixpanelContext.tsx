@@ -12,7 +12,14 @@ export enum EventTypes {
   DHALL_CHANGE = "dhallChange",
   CAROUSEL_CHANGE = "carouselChange",
   NAME_CHANGE = "nameChange",
-  OPENED_CHAT = "openedChat"
+  OPENED_CHAT = "openedChat",
+
+  OPENED_STUDYMODE = "openedStudyMode",
+  SHOW_CALC = "showCalc",
+  SHOW_SPOTIFY = "showSpotify",
+  SHOW_DUCK = "showDuck",
+  FULL_SCREEN = "fullScreen",
+  CHANGED_STUDYBG = "changedStudyBG"
 }
 
 type EventData = {
