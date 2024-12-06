@@ -38,8 +38,8 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [timerNumber, setTimerNumber] = useAtom(timerState);
-  const [hours, setHours] = useState<number | string>(Math.floor(timerNumber / 60));
-  const [minutes, setMinutes] = useState<number | string>(timerNumber % 60);
+  const [hours, setHours] = useState<number | string>(Math.floor(timerNumber / 3600));
+  const [minutes, setMinutes] = useState<number | string>((timerNumber / 60) % 60);
   const [timerResetState, setTimerReset] = useAtom(timerReset);
   // List of background images
   const backgrounds = [
