@@ -38,17 +38,25 @@
   margin-top: 6px; /* Adjust the margin size as needed */
 }
 
+.extrapad {
+  display: none;
+}
+
 @media only screen and (max-width: 600px) {
-  .disclaimer {
-    display: none;
+
+  .extrapad {
+    display: block;
+    height: 4%;
+    background-color: #151719;
+    margin-top: 0px !important;
   }
 
   .input-stack {
-    height: 12%;
+    height: 18%;
   }
 
   .output-stack {
-    height: 88%;
+    height: 78%;
   }
 
   .instruction-stack {

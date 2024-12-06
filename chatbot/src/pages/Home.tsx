@@ -12,6 +12,7 @@ export default function Home() {
             width="full"
             height="full"
             spacing={0}
+            style={{ paddingTop: 32, backgroundColor: "#222529" }}
         >
             {/* <Sidebar
                 isResponsive={isResponsive}
