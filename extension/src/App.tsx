@@ -40,7 +40,10 @@ function App() {
         </div>
 
         {showWidgets && (
-          <Row className="name-row">
+          <Row
+            className="name-row"
+            style={{ zIndex: 10, position: "relative" }}
+          >
             <Col>
               <h1 className="centered greeting">
                 Good {time.timeOfDay} <Name />
@@ -51,7 +54,7 @@ function App() {
         )}
 
         {showWidgets && (
-          <Row className="gx-5">
+          <Row className="gx-5" style={{ zIndex: 10, position: "relative" }}>
             <Col>
               <DHallTable />
             </Col>
