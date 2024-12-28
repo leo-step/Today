@@ -267,7 +267,7 @@ function StudyMode({ toggleWidgets }: StudyModeProps) {
 
       {/* Main content with widgets */}
       {/* Popup for background color selection */}
-      <div style={{ position: "relative", zIndex: 1, justifySelf: "right" }}>
+      <div style={{ position: "fixed", top: 0, right: 0, padding: "16px" }}>
         {isStudyMode && (
           <>
             <button onClick={toggleDuck} className="study-mode-button">
