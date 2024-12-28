@@ -26,18 +26,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 cas_client = CASClient()
 
-def authenticated(request):
-    if request.args.get('uuid'):
-        return True
-    
-    referer = request.headers.get('Referer')
-    if referer:
-        parsed_url = urlparse(referer)
-        query_params = parse_qs(parsed_url.query)
-        
-        if 'uuid' in query_params:
-            return True
-    
+def authenticated():
     is_logged_in = cas_client.is_logged_in()
     if is_logged_in:
         netid = cas_client.authenticate()
@@ -52,13 +41,13 @@ def authenticated(request):
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
-    # if not authenticated(request):
-    #     abort(401)
+    if not authenticated():
+        abort(401)
     return send_from_directory('dist', filename)
 
 @app.route('/')
 def index():
-    if not authenticated(request):
+    if not authenticated():
         return redirect(url_for("login"))
     return send_from_directory('dist', 'index.html')
 
@@ -94,6 +83,8 @@ def track():
 
 @app.route('/api/feedback', methods=['POST'])
 def feedback():
+    if not authenticated():
+        abort(401)
     data = request.get_json()
     feedback = Feedback(**data)
     collection = db_client["feedback"]
@@ -124,8 +115,8 @@ def feedback():
     
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    # if not authenticated(request):
-    #     abort(401)
+    if not authenticated():
+        abort(401)
     data = request.get_json()
     query = ChatQueryInput(**data)
     memory = Memory(query.uuid, query.session_id)
@@ -142,38 +133,6 @@ def chat():
     mp.track(query.uuid, "chat", {'session_id': query.session_id})
 
     return generate_response(memory, tool_use), {"Content-Type": "text/plain"}
-
-# ========== iOS SHORTCUT ==========
-
-@app.route("/api/ios_chat", methods=['GET'])
-def ios_chat():
-    query = request.args.get('query')
-
-    temp_uuid = "ios_chat"
-    temp_session_id = str(uuid.uuid4())
-
-    memory = Memory(temp_uuid, temp_session_id)
-
-    tool, query_rewrite = choose_tool_and_rewrite(tools, memory, query)
-    tool_result = invoke_tool(tool, query_rewrite)
-    tool_use = ToolInvocation(
-        tool=tool,
-        input=query_rewrite,
-        output=tool_result
-    )
-
-    memory.add_message(MessageType.HUMAN, query)
-    mp.track(temp_uuid, "chat", {'session_id': temp_session_id})
-
-    # use list to collect the repsonse chunks
-    response_chunks = []
-    for chunk in generate_response(memory, tool_use):
-        response_chunks.append(chunk)
-    
-    # join all chunks into single response
-    full_response = ''.join(response_chunks)
-    
-    return jsonify({"response": full_response})
 
 if __name__ == '__main__':
     app.run(host="localhost", port=6001, debug=True)
