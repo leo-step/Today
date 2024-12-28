@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.4.6",
+  "version": "1.4.7",
   "short_name": "New Tab",
   "name": "Today @ Princeton",
   "action": {
