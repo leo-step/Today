@@ -332,7 +332,7 @@ const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
               alt={link.alt}
               className="link-icon"
               src={link.src}
-              style={link.style}
+              
             />
           </a>
         </Col>
