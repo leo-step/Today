@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
 import threading
 import os
 
-MAX_DEPTH = 12
+MAX_DEPTH = 50
 
 def remove_fragment(url):
     parsed_url = urlparse(url)
