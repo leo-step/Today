@@ -13,8 +13,10 @@ from pymongo import MongoClient
 from langchain_text_splitters import HTMLSectionSplitter
 import os
 import re # stolen from populate.py
+from dotenv import load_dotenv
+load_dotenv()
 
-client = MongoClient("mongodb+srv://shreyas:3dchcV4llemeQ2CS@cluster0.jx6ja.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("mongodb+srv://shreyas:MONGOCLIENT_PASSWORD@cluster0.jx6ja.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 visited = set()
 session = requests.Session()
 session.headers.update({
