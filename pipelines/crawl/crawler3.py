@@ -1,3 +1,5 @@
+
+
 import requests 
 from bs4 import BeautifulSoup
 import logging
@@ -5,6 +7,8 @@ from collections import deque
 import time
 from urllib.parse import urljoin, urlparse, urlunparse
 from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 from tqdm import tqdm
 import datetime
 import pandas as pd
@@ -21,9 +25,11 @@ lock = threading.Lock()
 
 client = MongoClient("mongodb+srv://shreyas:MONGOCLIENT_PASSWORD@cluster0.jx6ja.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 visited = dict()
-linksNoProtocol = set()
 timeoutDomains = dict()
 session = requests.Session()
+adapter = HTTPAdapter(pool_connections=50, pool_maxsize=50, max_retries=Retry(total=3))
+session.mount("http://", adapter)
+session.mount("https://", adapter)
 session.headers.update({
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
 })
@@ -32,17 +38,13 @@ dataframe = pd.DataFrame(columns=['time', 'url', 'content', 'hashed_content'])
 dataframe.index.name = 'website_url'
 curr_page = 0
 fWrite = open('visited.txt', 'w')
-fWrite2 = open('currUrl.txt', 'w')
-fWrite3 = open('times.txt', 'w')
+fTime = open('times.txt', 'w')
 fRead = open('visited.txt', 'r')
+fTimeout = open('timedoutdomains.txt', 'w')
 
-# Chunking stuff
-
-text_splitter = HTMLSectionSplitter(headers_to_split_on=[("h1", "Header 1"), ("h2", "Header 2")])
 
 def load_previous_links():
     try:
-    
         visited = set(fRead.read().splitlines())
     except FileNotFoundError:
         return set()
@@ -53,45 +55,63 @@ def cache_link(link):
 def get_hash(s):
     return hashlib.sha256(s.encode()).hexdigest()
 
+def extract_text_with_inline_tags(soup):
+    output = []
+    index = 0
+    raw_text = soup.get_text(separator=" ", strip=True)  # Preserve all text
+
+    for element in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "li"]):
+        tag_start = f"<{element.name}>"  # Opening tag
+        tag_end = f"</{element.name}>"  # Closing tag
+        element_text = element.get_text(strip=True)  # Extract text inside the tag
+
+        if element_text:
+            # Find where this element’s text appears in the raw text
+            pos = raw_text.find(element_text, index) # Can be optimized
+            if pos != -1:
+                # Insert the tag before the element
+                raw_text = raw_text[:pos] + tag_start + element_text + tag_end + raw_text[pos + len(element_text):]
+                index = pos + len(tag_start) + len(element_text) + len(tag_end)  # Move index forward
+
+    return raw_text
+
 def process_url(currUrl, timeout=15):
     global curr_page
     try:
-        fWrite3.write("SUCCESS: request to " + currUrl + " at time " + str(datetime.datetime.now()) + "\n")
+        fTime.write("SUCCESS: request to " + currUrl + " at time " + str(datetime.datetime.now()) + "\n")
         response = session.get(currUrl, timeout=timeout)
         links = get_links(currUrl, response, 'princeton.edu')
         if len(links) == 0: 
             return [], [], []
         soup = BeautifulSoup(response.text, features='html.parser')
-        hash = get_hash(response.text)
-        text = soup.get_text(separator=' ', strip=True)
+
+        text = extract_text_with_inline_tags(soup)
         time.sleep(0.01)
         print("SUCCESS:", currUrl)
         for link in tqdm(links):
-            if 'princeton.edu' in link and (link not in visited):
-                visited[link] = False
+            if 'princeton.edu' in link and (remove_formatting(link) not in visited):
+                visited[remove_formatting(link)] = False
                 queue.append(link)
                 
-        visited[currUrl] = True
+        visited[remove_formatting(currUrl)] = True
         curr_page += 1
         return currUrl, text, hash
 
     except requests.RequestException as e:
-        fWrite3.write("FAIL: request to " + currUrl + " at time " + str(datetime.datetime.now()) + "\n")
+        fTime.write("FAIL: request to " + currUrl + " at time " + str(datetime.datetime.now()) + "\n")
         logging.error("FAIL: %s %s", currUrl, e)
-        if currUrl not in visited:
-            visited[currUrl] = False
+        if remove_formatting(currUrl) not in visited:
+            visited[remove_formatting(currUrl)] = False
             queue.append(currUrl)
-        return [], [], []
-
-    
+        return [], [], []    
 
 def remove_fragment(url):
     parsed_url = urlparse(url)
     return urlunparse((parsed_url.scheme, parsed_url.netloc, 
         parsed_url.path, parsed_url.params, parsed_url.query, ''))
 
-def remove_https(url: str) -> str:
-    return url.replace("https://", "").replace("http://", "")
+def remove_formatting(url: str) -> str:
+    return url.replace("https://", "").replace("http://", "").replace("www.", "").rstrip("/")
 
 def get_links(url, response, allowed_domain):
     try:
@@ -155,23 +175,21 @@ def parseDomain(url: str) -> str:
     parsed_url = urlparse(url)
     return parsed_url.netloc
 
-def validUrl(url):
+def validUrl(url, queue):
     if parseDomain(url) in timeoutDomains and timeoutDomains[parseDomain(url)] > 2:
         return False
-    return not visited[url] and len(queue) >= 0
+    return not visited[remove_formatting(url)] and len(queue) >= 0
 def crawl(queue, num_workers, max_pages):
     global visited
     global curr_page
-    while queue and curr_page < 200000: 
-        print(curr_page)
+    while queue and curr_page < max_pages: 
         # Submit tasks for multiple URLs
-        max_workers = 25
-        worker_amt = min(max_workers, len(queue))
+        worker_amt = min(num_workers, len(queue))
         total_amount = len(queue)
         next_batch = []
         while len(next_batch) < worker_amt and queue:
             url = queue.popleft()
-            if validUrl(url):
+            if validUrl(url, queue):
                 next_batch.append(url)
         with ThreadPoolExecutor(max_workers=len(next_batch)) as executor:
             futures = dict()
@@ -186,34 +204,27 @@ def crawl(queue, num_workers, max_pages):
                         dataframe.loc[curr_page] = pd.Series({
                         'time': datetime.datetime.now(),
                         'url': result[0],
-                        'content': str(result[1][:200]),  # Ensure it's a string
+                        'content': str(result[1]),  # Ensure it's a string
                         'hashed_content': str(result[2])  # Ensure it's a string
                         })
+                        print("Adding", result[0], "to data.")
                     if (curr_page % 100 == 0):
-                        dataframe.to_csv("data.csv", index=False)
+                        dataframe.to_csv("data.csv", index=True)
                     cache_link(str(result[0]))
                 except Exception as e:
                     print(f"Error processing {url}: {e}")
-            for url in results:
-                fWrite2.write(str(url) + "\n")
-            print("RESULTS ARE", results)
-            print("ADDING TO SHEET")
-                
-            visited[str(result[0])] = True  
-            # cache_link(str(result[0]))
+            visited[remove_formatting(str(result[0]))] = True  
             total_amount -= len(next_batch)
                 
 
-queue = deque(["http://example.com:81"])
-visited["http://example.com:81"] = False
-num_workers = 5 
-max_pages = 30
-# num_pages_crawled = crawl(queue, num_workers, max_pages)
-print(remove_fragment("https://princeton.edu"))
-
-
-#print("# leftover pages in queue", len(queue))
+queue = deque(["http://princeton.edu"])
+visited[remove_formatting("http://princeton.edu")] = False
+num_workers = 30
+max_pages = 100000
+num_pages_crawled = crawl(queue, num_workers, max_pages)
+fTimeout.writelines(str(_) + "\n" for _ in timeoutDomains)
 fWrite.close()
-fWrite2.close()
-fWrite3.close()
+fTime.close()
+fTimeout.close()
 fRead.close()
+
