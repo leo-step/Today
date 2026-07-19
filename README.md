@@ -1,5 +1,24 @@
 # Today
 
+<table>
+  <tr>
+    <td>
+      <img
+        src="https://github.com/user-attachments/assets/bf73a6c4-0998-4968-bdd8-cff409a131c3"
+        alt="Screenshot_2024-11-13_at_3_43_01_PM"
+        width="100%"
+      />
+    </td>
+    <td>
+      <img
+        src="https://github.com/user-attachments/assets/dcfe02de-c509-491b-8fcb-de1f3aa12a4b"
+        alt="IMG_2363"
+        width="48%"
+      />
+    </td>
+  </tr>
+</table>
+
 ## Folder Structure
 ```
 .github/workflows - contains yaml files defining cron jobs
