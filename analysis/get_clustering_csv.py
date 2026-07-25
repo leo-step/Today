@@ -37,7 +37,7 @@ def user_prompt(func):
         }
     return wrapper
 
-def openai_json_response(messages, model="gpt-4o-mini", temp=1, max_tokens=1024):
+def openai_json_response(messages, model="gpt-4.1", temp=1, max_tokens=4096):
     response = openai_client.chat.completions.create(
         model=model,
         messages=messages,
