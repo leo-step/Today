@@ -6,6 +6,7 @@ export enum StorageKeys {
   WIDGET = "campusWidget",
   NAME = "name",
   DHALL = "dhall",
+  LINKS = "links"
 }
 
 type Storage = {
@@ -67,6 +68,8 @@ const storageContext: Storage = {
           return [key, value];
         }
       })
+
+      
     );
   
     delete localStorageObject[StorageKeys.DATA];
